@@ -2,27 +2,31 @@
 
 这一章的目标是让你直接提交自然语言任务。你不需要先阅读内部语言、合约或研究章节。需要 Python 3.11+，以及一个可访问的模型服务；安装包不包含模型权重或 API 额度。
 
-## 1. 安装发布包
+## 1. 从代码仓库安装
 
 Flora（芙洛拉）是本项目的名称，与其他同名软件独立。发行包名为 `flora-lang`，import 和 CLI 名为 `flora`；`pip install flora` 不是本项目的安装命令。
 
-解压本次交付的 ZIP，进入含 `pyproject.toml` 的目录。使用其中的固定版本 wheel，可离线安装，核心运行时没有第三方依赖。为本项目单独创建虚拟环境，不要复用已安装其他同名 `flora` 模块的环境。
+克隆代码仓库的 main 分支，进入含 `pyproject.toml` 的目录。核心运行时没有第三方依赖，源码构建需要 setuptools 和 wheel。为本项目创建独立虚拟环境。
 
 Linux / macOS：
 
 ```bash
+git clone --branch main https://github.com/wongzbb/Flora.git
+cd Flora
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --no-index dist/flora_lang-0.1.0-py3-none-any.whl
+python -m pip install .
 flora --version
 ```
 
 Windows PowerShell：
 
 ```powershell
+git clone --branch main https://github.com/wongzbb/Flora.git
+cd Flora
 py -3 -m venv .venv
 .venv\Scripts\Activate.ps1
-python -m pip install --no-index dist/flora_lang-0.1.0-py3-none-any.whl
+python -m pip install .
 flora --version
 ```
 
@@ -110,13 +114,13 @@ flora demo pagination
 
 ## 源码运行与项目文件
 
-无需安装包时，在解压目录中运行：
+无需安装包时，在 main 分支的仓库根目录运行：
 
 ```bash
 PYTHONPATH=src python -m flora --help
 ```
 
-Windows 可先设置 `$env:PYTHONPATH="src"`。修改源码后，可使用 `python -m pip install -e .` 安装开发版本；这需要环境中已具备构建 backend。发布环境建议安装固定 wheel。
+Windows 可先设置 `$env:PYTHONPATH="src"`。修改源码后，可使用 `python -m pip install -e .` 安装开发版本；这需要环境中已具备构建 backend。需要离线部署时，可在具备构建依赖的环境执行 `python -m pip wheel --no-deps . -w dist`，再传输生成的 wheel。
 
 ```python
 import flora
@@ -127,11 +131,10 @@ print(flora.__file__)
 | 路径 | 用途 |
 | --- | --- |
 | `src/flora/` | Python API、CLI、标准工具和执行内核 |
-| `dist/*.whl` | 可离线安装的发行包 |
 | `examples/` | 用户示例与可检查的离线程序 |
 | `configs/` | 低层运行参数示例 |
-| `docs/`、`manual.html` | 手册源码与离线成品 |
+| 独立 `docs` 分支 | 手册源码、生成脚本和 HTML 成品 |
 | `schemas/` | 供内核开发者使用的程序格式 schema |
-| `VALIDATION.md` | 本次实际验证范围和结果 |
+| `reports/` | 验证范围与实验记录 |
 
-包名为 `flora-lang`，import 和 CLI 名为 `flora`。测试源码按交付要求单独保管，不进入 ZIP。
+包名为 `flora-lang`，import 和 CLI 名为 `flora`。测试源码独立保管，不进入代码仓库。

@@ -138,12 +138,6 @@
       "group": "研究与内部实现",
       "title": "术语、设计取舍与来源",
       "file": "16-glossary.md"
-    },
-    {
-      "id": "migration",
-      "group": "升级与迁移",
-      "title": "从 OpenHarness 迁移",
-      "file": "23-migration.md"
     }
   ]
 }

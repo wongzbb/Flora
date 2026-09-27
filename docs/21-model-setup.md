@@ -8,7 +8,7 @@ Flora 自身不提供模型。你需要可访问的 Chat Completions 兼容服�
 
 ## DeepSeek 接入起点
 
-0.1.0 提供 `configs/deepseek.json`，同时适用于 `ask`、`chat` 和低层 `run`。复制后按你的服务修改 base_url、model、api_key_env；文件不包含密钥。默认 URL 是官方服务，实际验收使用的是用户提供的兼容网关，不是官方端点验收。模型名称与参数是否可用以你的服务为准。
+Flora 提供 `configs/deepseek.json`，同时适用于 `ask`、`chat` 和低层 `run`。复制后按你的服务修改 base_url、model、api_key_env；文件不包含密钥。默认 URL 是官方服务，实际验收使用的是用户提供的兼容网关，不是官方端点验收。模型名称与参数是否可用以你的服务为准。
 
 ```bash
 flora ask "读取 order.json，计算总价并写入 summary.json" --config configs/deepseek.json --workspace ./my-project
@@ -138,4 +138,4 @@ HTTP 响应必须是非流式、单 choice 的文本。默认不支持供应商�
 | 模型返回无法编译 | 模型是否具备足够指令遵循和程序生成能力；查看受限修复报告 |
 | 输出预算预留不足 | 每次输出上限与会话总剩余额度是否匹配 |
 
-错误信息不回显原始 HTTP 错误正文或密钥。网络失败没有隐含自动重试；格式错误最多一次受预算约束的修复。发布包验证可用本地 HTTP fixture 检查协议与完整执行链，但这种测试不能证明某个真实模型的任务表现，实际验证记录见 VALIDATION.md。
+错误信息不回显原始 HTTP 错误正文或密钥。网络失败没有隐含自动重试；格式错误最多一次受预算约束的修复。发布包验证可用本地 HTTP fixture 检查协议与完整执行链，但这种测试不能证明某个真实模型的任务表现，实际验证记录见代码分支的 reports/VALIDATION.md。

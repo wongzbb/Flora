@@ -35,7 +35,7 @@ ask/chat 不接受下面低层 run 的 `--config`，需要细粒度 RuntimeConfi
 
 ## 低层运行配置
 
-以下内容供自定义运行时、研究实验与迁移已有 0.1 调用使用。日常任务不需要手写 bundle 或 adapter。
+以下内容供自定义运行时与研究实验使用。日常任务不需要手写 bundle 或 adapter。
 
 ## 查看默认配置
 

@@ -72,7 +72,7 @@ assert trace.records[0]["resolution_reason"]
 
 ## 导出与导入
 
-`trace.export()` 返回 `openharness-trace-v1` 对象，包含 journal 和检查点。这个名称是沿用旧版的数据格式标识，不是当前安装包或 import 名；不要对导出数据进行全局名称替换。`MemoryTrace.from_dict(data)` 校验格式与哈希链后恢复内存视图。导出数据可能包含完整任务观察和工具参数，应按业务数据级别保护。
+`trace.export()` 返回 `openharness-trace-v1` 对象，包含 journal 和检查点。该字段是持久化协议标识，必须原样保留。`MemoryTrace.from_dict(data)` 校验格式与哈希链后恢复内存视图。导出数据可能包含完整任务观察和工具参数，应按业务数据级别保护。
 
 ```python
 from flora.trace import MemoryTrace
