@@ -12,6 +12,6 @@ The overview presents the two principles behind Flora: diagnostic actions that i
 - `flora-logo.svg` is the original pixel flower logo with a transparent background.
 - Two pseudocode views illustrate the execution loop and program model. Ellipses omit implementation details; the examples are conceptual rather than executable APIs. Each view links to the corresponding implementation on the `core` branch.
 - Project links point to `coding-agent`, `core`, and `docs`. GitHub repository permissions apply.
-- Responsive layouts, keyboard navigation, code tabs, and a copy button are included.
+- Responsive layouts and keyboard navigation are included. Native radio controls and CSS switch the code views without JavaScript; each view includes its own implementation link. The copy button is enabled when JavaScript runs.
 
 This branch contains the static page source. It does not imply that GitHub Pages has been enabled.
