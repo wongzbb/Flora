@@ -12,6 +12,8 @@ from pathlib import Path
 from flora.integrations.workspace import WorkspaceTools
 from flora.support.errors import ValidationError
 
+from .navigation import CodingFiles
+
 try:
     import fcntl
 except ImportError:  # Keep non-workspace CLI commands importable on Windows.
@@ -139,6 +141,7 @@ class CodingWorkspace:
                 "test_command": test_command,
                 "test_timeout": test_timeout,
                 "allow_commands": allow_commands,
+                "code_navigation": 1,
             }
             write_json(manifest, self.config)
         self.root = self.directory / "worktree"
@@ -155,7 +158,8 @@ class CodingWorkspace:
         expected_common = Path(self._git(source, "rev-parse", "--git-common-dir").strip())
         if (self.root / actual_common).resolve() != (source / expected_common).resolve():
             raise ValidationError("Worktree is attached to a different repository")
-        self.files = WorkspaceTools(
+        files_type = CodingFiles if self.config.get("code_navigation") == 1 else WorkspaceTools
+        self.files = files_type(
             self.root, allow_commands=allow_commands, command_timeout=test_timeout
         )
         self.test_runner = WorkspaceTools(

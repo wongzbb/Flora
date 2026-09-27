@@ -116,5 +116,28 @@ def coding_main(args):
                 else "not verified"
             )
         )
-        print(json.dumps(result.result.get("value"), ensure_ascii=False))
+        value = result.result.get("value")
+        if value is not None:
+            print(json.dumps(value, ensure_ascii=False))
+        reason = result.result.get("reason")
+        if reason:
+            print(f"Reason: {reason}")
+        budget = result.result.get("budget", {})
+        print(
+            f"Usage: {budget.get('model_calls', 0)} model calls, "
+            f"{budget.get('tool_calls', 0)} tool calls, "
+            f"{budget.get('output_tokens', 0)} reported output tokens"
+        )
+        if result.status == "needs_program":
+            command = ["flora", "code", "--session", args.session, "--resume"]
+            for name in ("config", "model", "base_url", "api_key_env", "max_output_tokens"):
+                option = getattr(args, name)
+                if option is not None:
+                    command.extend(["--" + name.replace("_", "-"), str(option)])
+            print("Resume with the same saved budget and settled tool receipts:")
+            print(shlex.join(command))
+        elif result.status == "budget_exhausted":
+            print("The saved budget is exhausted. Inspect the patch; resume does not reset usage.")
+        elif result.status == "interrupted_unknown":
+            print("A tool outcome is unknown. Inspect the saved trace before any manual retry.")
     return 0 if result.status == "completed" else 2

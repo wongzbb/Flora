@@ -6,8 +6,10 @@ Python 3.11+ · 运行时仅标准库 · Apache-2.0
 
 ## 安装
 
+当前分支维护 Coding Agent；独立的内核基线位于 [core 分支](https://github.com/wongzbb/Flora/tree/core)，说明文档位于 [docs 分支](https://github.com/wongzbb/Flora/tree/docs)。
+
 ```bash
-git clone --branch main https://github.com/wongzbb/Flora.git
+git clone --branch coding-agent https://github.com/wongzbb/Flora.git
 cd Flora
 python -m venv .venv
 source .venv/bin/activate
@@ -76,6 +78,8 @@ with Agent(model="YOUR_MODEL_ID", tools=[lookup_order]) as agent:
 
 ## 文档与验证
 
+[项目总览页面与像素 Logo](https://github.com/wongzbb/Flora/tree/overview)连接内核、Coding Agent、文档和研究入口。
+
 [完整文档在 docs 分支](https://github.com/wongzbb/Flora/tree/docs)。下载其中的 [manual.html](https://github.com/wongzbb/Flora/blob/docs/manual.html)，用浏览器离线打开。手册包含入门、工具接入、模型配置、会话恢复、API 和内部机制。
 
-`flora demo calendar` 可离线检查安装。验证范围见 [验证报告](reports/VALIDATION.md) 和 [真实 API 验收](reports/LIVE_VALIDATION.md)。合约提供局部执行证据，不证明任意任务正确；模型表现取决于任务、模型和预算配置。
+`flora demo calendar` 可离线检查安装。公开仓库任务的逐项通过与失败见 [编码评测](reports/REPOSITORY_EVALUATION.md)。验证范围见 [验证报告](reports/VALIDATION.md) 和 [真实 API 验收](reports/LIVE_VALIDATION.md)。合约提供局部执行证据，不证明任意任务正确；模型表现取决于任务、模型和预算配置。

@@ -2,6 +2,8 @@
 
 日期：2026-09-27。入口为 `flora code` 与 `flora.coding.CodingAgent`。
 
+当前公开项目任务评测见 [仓库编码验收](REPOSITORY_EVALUATION.md)。下面保留初始小样例的独立记录。
+
 ## 本地与安装包验收
 
 393 项回归测试通过，其中 15 项为新增 Coding Agent 验收。wheel 安装到独立虚拟环境后，这 15 项再次全部通过；运行时依赖仍只有 Python 标准库，工作区还需要 Git。
