@@ -43,37 +43,111 @@
  <div><div class="eyebrow green">THE DESIGN PHILOSOPHY</div><h2 id="philosophy-title">Action selection and<br>program revision.</h2>
  <div class="idea"><h3><span>01</span> Select actions that reduce uncertainty.</h3><p class="intro">When candidate plans propose different next steps, Flora can select a diagnostic action to help distinguish them. A single action may contribute both to task progress and to information gathering.</p><span class="mechanism">Dual control</span></div>
  <div class="idea"><h3><span>02</span> Derive checks from observed behavior.</h3><p class="intro">Flora records tool outputs and how subsequent program steps use them. These observations provide the basis for local checks on program revisions. Insufficient evidence yields an unknown result.</p><span class="mechanism">Synthesizable contracts</span></div><a class="source-link" href="https://github.com/wongzbb/Flora/blob/docs/docs/22-architecture.md">Architecture and limitations <span class="arrow">↗</span></a></div>
- <div><div class="code-panel"><div class="code-top"><div class="tabs" role="tablist" aria-label="Core code excerpts"><button id="tab-control" class="tab" role="tab" aria-selected="true" aria-controls="panel-control" data-tab="control">Action selection</button><button id="tab-contract" class="tab" role="tab" aria-selected="false" aria-controls="panel-contract" data-tab="contract" tabindex="-1">Evidence limits</button></div><button class="copy" id="copy-code" type="button">Copy</button></div>
- <div id="panel-control" role="tabpanel" aria-labelledby="tab-control"><div class="code-file">core / engine / scheduler.py · excerpt</div><pre><code id="code-control"><span class="kw">if</span> len(normal_requests) == 1 <span class="kw">or</span> <span class="kw">not</span> diagnostic_allowed:
-    <span class="kw">return</span> fallback
-diagnostics = [f <span class="kw">for</span> f <span class="kw">in</span> checked <span class="kw">if</span> f[<span class="str">&quot;kind&quot;</span>] == <span class="str">&quot;diagnostic&quot;</span> and f[<span class="str">&quot;score&quot;</span>] &gt; 0]
-<span class="kw">if</span> <span class="kw">not</span> diagnostics:
-    <span class="kw">return</span> fallback
-winner = min(
-    diagnostics,
-    key=<span class="kw">lambda</span> f: (
-        -f[<span class="str">&quot;score&quot;</span>],
-        0 <span class="kw">if</span> canonical_json(f[<span class="str">&quot;request&quot;</span>]) <span class="kw">in</span> normal_requests <span class="kw">else</span> 1,
-        f[<span class="str">&quot;id&quot;</span>],
-    ),
-)</code></pre></div>
- <div id="panel-contract" role="tabpanel" aria-labelledby="tab-contract" hidden><div class="code-file">core / checks / contracts.py · excerpt</div><pre><code id="code-contract"><span class="kw">if</span> context.mode != <span class="str">&quot;observed&quot;</span>:
-    <span class="kw">return</span> result(Verdict.UNKNOWN, <span class="str">&quot;hypothetical_context_is_not_observed_evidence&quot;</span>)
-<span class="kw">try</span>:
-    program = parse_program(candidate_program)
-    witness[<span class="str">&quot;program_digest&quot;</span>] = digest(program)
-    candidate = _run(program, context, reference=False, fuel=fuel)
-<span class="kw">except</span> ValidationError <span class="kw">as</span> exc:
-    <span class="kw">return</span> result(Verdict.UNKNOWN, <span class="str">&quot;invalid_or_unavailable_program_context&quot;</span>, error=str(exc))
-<span class="kw">if</span> candidate is <span class="kw">None</span>:
-    <span class="kw">return</span> result(Verdict.UNKNOWN, <span class="str">&quot;explicit_consumer_checkpoint_mapping_required&quot;</span>)</code></pre></div>
- <div class="code-foot"><span id="code-caption">When candidate actions differ, select an eligible diagnostic action with a positive score.</span><a id="code-source" href="https://github.com/wongzbb/Flora/blob/core/src/flora/engine/scheduler.py">View source ↗</a></div></div><p class="code-note">Excerpts from the core branch. Action selection uses structured diagnostic scores. Contract verdicts apply to recorded observations and do not establish overall task correctness.</p><span class="sr-only" id="copy-status" role="status" aria-live="polite"></span></div>
+ <div><div class="code-panel"><div class="code-top"><div class="tabs" role="tablist" aria-label="Illustrative core pseudocode"><button id="tab-execution" class="tab" role="tab" aria-selected="true" aria-controls="panel-execution" data-tab="execution">Execution loop</button><button id="tab-program" class="tab" role="tab" aria-selected="false" aria-controls="panel-program" data-tab="program" tabindex="-1">Program model</button></div><button class="copy" id="copy-code" type="button">Copy</button></div>
+ <div id="panel-execution" role="tabpanel" aria-labelledby="tab-execution"><div class="code-file">FLORA CORE / EXECUTION LOOP · PSEUDOCODE</div><pre><code id="code-execution"><span class="kw">while</span> within_budget(state):
+    frontiers = advance_to_boundaries(state, <span class="comment">...</span>)
+
+    <span class="kw">if</span> revision_required(frontiers):
+        guards = synthesize_local_guards(state.checks)
+        revise_from_trace(state, guards, <span class="comment">...</span>)
+        <span class="kw">continue</span>
+
+    <span class="kw">if</span> incumbent_returned(frontiers):
+        <span class="kw">return</span> incumbent_result(frontiers)
+
+    action = select_progress_or_diagnostic(frontiers, <span class="comment">...</span>)
+    receipt = execute_selected_effect(action, state)
+    <span class="kw">if</span> outcome_unknown(receipt):
+        <span class="kw">return</span> suspend_for_evidence(state)
+
+    resume_matching_and_suspend_others(receipt, state)
+    state.checks += check_observed_consumers(state, <span class="comment">...</span>)
+
+<span class="kw">return</span> incomplete(state)</code></pre></div>
+ <div id="panel-program" role="tabpanel" aria-labelledby="tab-program" hidden><div class="code-file">FLORA CORE / PROGRAM MODEL · PSEUDOCODE</div><pre><code id="code-program"><span class="kw">Program</span>:
+    entry: BlockId
+    blocks: dict[BlockId, Block]
+    <span class="comment">...</span>
+
+<span class="kw">Block</span>:
+    params: list[Name]
+    operations: list[PureOperation]
+    terminator: Terminator
+
+<span class="kw">Terminator</span>:
+    Jump(target, args)
+    Branch(condition, yes, no)
+    Call(target, args, resume, captured, <span class="comment">...</span>)
+    Effect(tool, args, resume, captured, <span class="comment">...</span>)
+    Alternative(branches, join, captured, <span class="comment">...</span>)
+    Return(value)
+    <span class="comment">...</span></code></pre></div>
+ <div class="code-foot"><span id="code-caption">A shared execution trace informs action selection, local checks, and subsequent program revisions.</span><a id="code-source" href="https://github.com/wongzbb/Flora/blob/core/src/flora/engine/runtime.py">Implementation ↗</a></div></div><p class="code-note">Illustrative pseudocode; names and signatures are schematic. Validation, persistence, and recovery details are omitted. Contract checks apply to observed cases; insufficient evidence remains UNKNOWN.</p><span class="sr-only" id="copy-status" role="status" aria-live="polite"></span></div>
 </section>
 <section class="start" aria-labelledby="start-title"><div><h2 id="start-title">Use the Coding Agent.</h2><p>Configure a model connection, select a repository, and specify a task and test command.<br>Review the resulting changes alongside the execution and test results.</p></div><a class="button" href="https://github.com/wongzbb/Flora/blob/docs/docs/23-coding-agent.md">Read the agent guide <span class="arrow">↗</span></a></section>
 </main>
 <footer><div class="wrap"><div class="footer-row"><a class="brand" href="#main"><svg aria-hidden="true"><use href="#flora-mark"/></svg>FLORA</a><span>OBSERVATION. EXECUTION. REVISION.</span><div class="footer-links"><a href="https://github.com/wongzbb/Flora/tree/core">CORE ↗</a><a href="https://github.com/wongzbb/Flora/tree/coding-agent">AGENT ↗</a><a href="https://github.com/wongzbb/Flora/tree/docs">DOCS ↗</a></div></div><div class="small-print">Flora · A programmable execution core, a coding agent, and a research project. Repository access is governed by GitHub permissions.</div></div></footer>
 <script>
-(()=>{'use strict';const tabs=[...document.querySelectorAll('[data-tab]')];let current='control';const source=document.getElementById('code-source');const captions={control:'When candidate actions differ, select an eligible diagnostic action with a positive score.',contract:'Return UNKNOWN when observed results or a comparable execution state are unavailable.'};function select(name){current=name;for(const tab of tabs){const active=tab.dataset.tab===name;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;document.getElementById('panel-'+tab.dataset.tab).hidden=!active}document.getElementById('code-caption').textContent=captions[name];source.href='https://github.com/wongzbb/Flora/blob/core/src/flora/'+(name==='control'?'engine/scheduler.py':'checks/contracts.py')}tabs.forEach((tab,i)=>{tab.addEventListener('click',()=>select(tab.dataset.tab));tab.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const n=e.key==='Home'?0:e.key==='End'?tabs.length-1:(i+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;select(tabs[n].dataset.tab);tabs[n].focus()}})});document.getElementById('copy-code').addEventListener('click',async()=>{const button=document.getElementById('copy-code');const text=document.getElementById('code-'+current).textContent;let success=false;try{await navigator.clipboard.writeText(text);success=true}catch{const area=document.createElement('textarea');area.value=text;area.setAttribute('aria-label','Core code to copy');area.style.position='fixed';area.style.left='-10000px';document.body.appendChild(area);area.select();try{success=document.execCommand('copy')}catch{}area.remove();button.focus()}button.textContent=success?'Copied':'Select & copy';document.getElementById('copy-status').textContent=success?'Core code copied':'Automatic copy is unavailable. Select the code and copy it manually.';setTimeout(()=>{button.textContent='Copy'},2000)})})();
+(() => {
+  'use strict';
+  const tabs = [...document.querySelectorAll('[data-tab]')];
+  const source = document.getElementById('code-source');
+  const captions = {"execution": "A shared execution trace informs action selection, local checks, and subsequent program revisions.", "program": "Explicit control flow separates pure computation, calls, alternatives, and external effects."};
+  const sources = {"execution": "https://github.com/wongzbb/Flora/blob/core/src/flora/engine/runtime.py", "program": "https://github.com/wongzbb/Flora/blob/core/src/flora/language/ir.py"};
+  let current = 'execution';
+
+  function select(name) {
+    current = name;
+    for (const tab of tabs) {
+      const active = tab.dataset.tab === name;
+      tab.setAttribute('aria-selected', String(active));
+      tab.tabIndex = active ? 0 : -1;
+      document.getElementById('panel-' + tab.dataset.tab).hidden = !active;
+    }
+    document.getElementById('code-caption').textContent = captions[name];
+    source.href = sources[name];
+  }
+
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => select(tab.dataset.tab));
+    tab.addEventListener('keydown', event => {
+      if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+        event.preventDefault();
+        const next = event.key === 'Home' ? 0
+          : event.key === 'End' ? tabs.length - 1
+          : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+        select(tabs[next].dataset.tab);
+        tabs[next].focus();
+      }
+    });
+  });
+
+  document.getElementById('copy-code').addEventListener('click', async () => {
+    const button = document.getElementById('copy-code');
+    const text = document.getElementById('code-' + current).textContent;
+    let success = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      success = true;
+    } catch {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('aria-label', 'Illustrative pseudocode to copy');
+      area.style.position = 'fixed';
+      area.style.left = '-10000px';
+      document.body.appendChild(area);
+      area.select();
+      try { success = document.execCommand('copy'); } catch {}
+      area.remove();
+      button.focus();
+    }
+    button.textContent = success ? 'Copied' : 'Select & copy';
+    document.getElementById('copy-status').textContent = success
+      ? 'Illustrative pseudocode copied'
+      : 'Automatic copy is unavailable. Select the pseudocode and copy it manually.';
+    setTimeout(() => { button.textContent = 'Copy'; }, 2000);
+  });
+})();
 </script>
 </body>
 </html>

@@ -10,7 +10,7 @@ The overview presents the two principles behind Flora: diagnostic actions that i
 
 - Self-contained HTML with inline styles, scripts, pixel art, and logo. No external fonts, images, or analytics.
 - `flora-logo.svg` is the original pixel flower logo with a transparent background.
-- Core code excerpts are taken from the `core` branch and link to the full implementation.
+- Two pseudocode views illustrate the execution loop and program model. Ellipses omit implementation details; the examples are conceptual rather than executable APIs. Each view links to the corresponding implementation on the `core` branch.
 - Project links point to `coding-agent`, `core`, and `docs`. GitHub repository permissions apply.
 - Responsive layouts, keyboard navigation, code tabs, and a copy button are included.
 
