@@ -14,6 +14,42 @@
       "file": "01-installation.md"
     },
     {
+      "id": "general",
+      "group": "通用 Agent",
+      "title": "Flora 通用 Agent",
+      "file": "24-general-agent.md"
+    },
+    {
+      "id": "documents",
+      "group": "通用 Agent",
+      "title": "文档、表格与报告",
+      "file": "25-documents-research.md"
+    },
+    {
+      "id": "generalconfig",
+      "group": "通用 Agent",
+      "title": "通用 Agent 配置",
+      "file": "26-general-configuration.md"
+    },
+    {
+      "id": "integrations",
+      "group": "通用 Agent",
+      "title": "MCP、浏览器与外部系统",
+      "file": "27-general-integrations.md"
+    },
+    {
+      "id": "generalops",
+      "group": "通用 Agent",
+      "title": "通用 Agent 运维与恢复",
+      "file": "28-general-operations.md"
+    },
+    {
+      "id": "generalapi",
+      "group": "通用 Agent",
+      "title": "GeneralAgent API 与本地 HTTP",
+      "file": "29-general-api.md"
+    },
+    {
       "id": "python",
       "group": "开始使用",
       "title": "Python 快速开始",
