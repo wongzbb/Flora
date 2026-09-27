@@ -14,3 +14,4 @@ build/
 *.sqlite-wal
 *.sqlite-shm
 *.log
+dist/

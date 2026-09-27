@@ -5,11 +5,11 @@ The standard-library runtime is independent of any agent framework.
 
 __version__ = "0.1.0"
 
-from .api import Agent, AgentRunError, SessionBusyError, SessionStateError, invoke
-from .binding import make_registry, tool
-from .budget import BudgetLimits
-from .runtime import RunResult, RuntimeConfig
-from .tools import ToolRegistry, ToolSpec
+from flora.agent.api import Agent, AgentRunError, SessionBusyError, SessionStateError, invoke
+from flora.engine.budget import BudgetLimits
+from flora.engine.runtime import RunResult, RuntimeConfig
+from flora.integrations.binding import make_registry, tool
+from flora.integrations.tools import ToolRegistry, ToolSpec
 
 __all__ = [
     "Agent",
@@ -25,3 +25,8 @@ __all__ = [
     "make_registry",
     "tool",
 ]
+
+from ._compat import install as _install_aliases
+
+_install_aliases(globals())
+del _install_aliases
