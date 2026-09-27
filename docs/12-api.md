@@ -22,6 +22,10 @@ Agent 的可观察属性包括 `budget`、`history`、`last_result`、`current_t
 
 `session.SessionStateError` 表示会话绑定或轮次状态不允许当前操作；`session.SessionBusyError` 表示会话占用。持久会话恢复须使用同一能力和实际外部环境。
 
+## 编码任务 API
+
+从 `flora.coding` 导入 `CodingAgent`、`CodingWorkspace` 和 `CodingResult`。它们复用上述 Agent 内核；任务、独立 worktree、测试证据、补丁、恢复与参数的完整说明见前面的「Flora Coding Agent」章节。
+
 ## Runtime
 
 ```python

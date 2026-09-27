@@ -4,7 +4,7 @@
 
 ## 完成第一个编码任务
 
-准备 Python 3.11+、Git 和 POSIX 环境；Windows 使用 WSL。先按安装章节安装 Flora 并配置模型。目标仓库必须已经有提交，且没有未提交的修改或未忽略的新文件。
+准备 Python 3.11+、Git 和 POSIX 环境；Windows 使用 WSL。先按安装章节从 `coding-agent` 分支安装 Flora 并配置模型。目标仓库必须已经有提交，且没有未提交的修改或未忽略的新文件。
 
 下面假设 `my-project` 是目标仓库，其中的测试可用 `python -B -m unittest discover -s tests` 执行。请换成你的实际测试命令。`flora-job` 放在仓库外面。
 
@@ -48,7 +48,7 @@ git -C ./my-project apply ../flora-job/changes.patch
 flora code "为刚才的修复增加边界用例。" --session ./flora-job
 ```
 
-对于模型请求中断等仍有活动任务的状态，使用恢复：
+对于模型请求中断或输出格式校验失败等仍有活动任务的状态，CLI 会显示具体原因、累计用量与恢复命令。使用恢复：
 
 ```bash
 flora code --session ./flora-job --resume
@@ -96,6 +96,21 @@ flora code "实现任务并运行测试" --repo ./my-project --session ./job-bui
 这会给予模型任意宿主命令执行能力。命令的工作目录在 worktree，不代表进程无法访问外部路径或网络。不要把目录限制当成权限隔离。
 
 worktree 不会复制未跟踪或被忽略的 `.venv`、`node_modules`、`.env`、构建产物；它使用 Git 提交里的代码。可以先在外部环境安装依赖，使用解释器或检查脚本的绝对路径。默认模式也可以先创建会话并在保留的 worktree 中由人工准备环境，再恢复。Flora 不自动启动容器、安装工具链、服务或数据库。
+
+## 在较大仓库中定位代码
+
+Coding Agent 的文件工具还包括两个源码导航接口：
+
+| 工具 | 用途与界限 |
+| --- | --- |
+| `search_code(query, path=".", glob="*", case_sensitive=True, max_matches=30, max_files=200)` | 在完整的有界文件中搜索字面文本，返回文件名、行号和完整文件哈希；每个文件最多 1 MiB，单次扫描预算 8 MiB，返回数据约束为 16 KiB |
+| `read_lines(path, start_line=1, end_line=None)` | 一基、包含两端的行窗口；默认 60 行，最多 200 行或 16 KiB 源码，返回完整文件哈希和后续行号 |
+
+模型先搜索，再读取相关函数和测试附近的行，用哈希保护的 `replace_text` 修改。大文件不需要整体进入模型上下文；完整文件哈希只证明读取时的版本，并不表示模型读过全部内容。窗口内容不能拿去覆盖整个文件。
+
+搜索返回的 `truncated`、跳过计数和扫描统计需要一起阅读：超大文件、非文本、深度或扫描额度限制，都会让“没有匹配”不足以证明全文不存在目标。`glob` 匹配相对 worktree 根目录的路径。已有 `search_files` 保留通用行为，可能只检索文件前面的字节切片；源码导航优先使用 `search_code`。
+
+状态文件固定会话使用的能力集合。重开已有会话沿用原能力集合；新会话启用源码导航工具，恢复不会静默换掉工具身份。
 
 ## 完成检查的含义
 
@@ -175,3 +190,9 @@ Python 重新打开会话时，若原先设置过非默认 `test_timeout` 或 `a
 当前不支持子模块仓库，不允许会话内移动 HEAD；Git 输出和补丁各有 4 MiB 上限，补丁必须能无损表示为 UTF-8。`inspect_changes` 向模型返回至多 65,536 个字符，完整内容保存在导出的补丁里。单次测试保留至多 128 KiB stdout/stderr，输出中标注截断。很大的仓库或差异超限会明确报错。
 
 结束使用时，先确认修改已经保存或应用。可用 `git -C ./my-project worktree list` 查看检出；不要直接删除还需要的会话。清理脏 worktree 需要 Git 的强制删除选项，Flora 不会自动替你执行这类丢弃修改的操作。
+
+## 已验证的范围
+
+公开仓库编码验收基于固定的 more-itertools 提交，包含 6 项植入回归和 2 项新 API 要求。8 项任务首次完整通过 3 项；每个失败任务最多一次显式恢复后，完整通过 4 项。6 项补丁通过外部检查，但其中有任务仍因模型输出或预算问题无法完成，不能按 6 项完整成功解释。
+
+[完整验收报告](https://github.com/wongzbb/Flora/blob/coding-agent/reports/REPOSITORY_EVALUATION.md)包含任务设计、逐项失败原因、用量与限制。这是开发验收集，不是官方 benchmark，也没有证明双重控制或合约带来统计性能增益。

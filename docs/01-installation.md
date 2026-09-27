@@ -6,12 +6,12 @@
 
 Flora（芙洛拉）是本项目的名称，与其他同名软件独立。发行包名为 `flora-lang`，import 和 CLI 名为 `flora`；`pip install flora` 不是本项目的安装命令。
 
-克隆代码仓库的 main 分支，进入含 `pyproject.toml` 的目录。核心运行时没有第三方依赖，源码构建需要 setuptools 和 wheel。为本项目创建独立虚拟环境。
+克隆代码仓库的 coding-agent 分支，进入含 `pyproject.toml` 的目录。核心运行时没有第三方依赖，源码构建需要 setuptools 和 wheel。为本项目创建独立虚拟环境。
 
 Linux / macOS：
 
 ```bash
-git clone --branch main https://github.com/wongzbb/Flora.git
+git clone --branch coding-agent https://github.com/wongzbb/Flora.git
 cd Flora
 python3 -m venv .venv
 source .venv/bin/activate
@@ -22,7 +22,7 @@ flora --version
 Windows PowerShell：
 
 ```powershell
-git clone --branch main https://github.com/wongzbb/Flora.git
+git clone --branch coding-agent https://github.com/wongzbb/Flora.git
 cd Flora
 py -3 -m venv .venv
 .venv\Scripts\Activate.ps1

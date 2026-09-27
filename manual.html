@@ -36,16 +36,16 @@ python scripts/build_docs.py</code></pre></div><div class="chapter-footer">Flora
 <p>这一章的目标是让你直接提交自然语言任务。你不需要先阅读内部语言、合约或研究章节。需要 Python 3.11+，以及一个可访问的模型服务；安装包不包含模型权重或 API 额度。</p>
 <h3 id="installation-h2">1. 从代码仓库安装</h3>
 <p>Flora（芙洛拉）是本项目的名称，与其他同名软件独立。发行包名为 <code>flora-lang</code>，import 和 CLI 名为 <code>flora</code>；<code>pip install flora</code> 不是本项目的安装命令。</p>
-<p>克隆代码仓库的 main 分支，进入含 <code>pyproject.toml</code> 的目录。核心运行时没有第三方依赖，源码构建需要 setuptools 和 wheel。为本项目创建独立虚拟环境。</p>
+<p>克隆代码仓库的 coding-agent 分支，进入含 <code>pyproject.toml</code> 的目录。核心运行时没有第三方依赖，源码构建需要 setuptools 和 wheel。为本项目创建独立虚拟环境。</p>
 <p>Linux / macOS：</p>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>git clone --branch main https://github.com/wongzbb/Flora.git
+<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>git clone --branch coding-agent https://github.com/wongzbb/Flora.git
 cd Flora
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install .
 flora --version</code></pre></div>
 <p>Windows PowerShell：</p>
-<div class="code-wrap"><div class="code-head"><span>powershell</span><button class="copy" type="button">复制代码</button></div><pre><code>git clone --branch main https://github.com/wongzbb/Flora.git
+<div class="code-wrap"><div class="code-head"><span>powershell</span><button class="copy" type="button">复制代码</button></div><pre><code>git clone --branch coding-agent https://github.com/wongzbb/Flora.git
 cd Flora
 py -3 -m venv .venv
 .venv\Scripts\Activate.ps1
@@ -430,7 +430,7 @@ with Agent(
 <p>错误信息不回显原始 HTTP 错误正文或密钥。网络失败没有隐含自动重试；格式错误最多一次受预算约束的修复。发布包验证可用本地 HTTP fixture 检查协议与完整执行链，但这种测试不能证明某个真实模型的任务表现，实际验证记录见代码分支的 reports/VALIDATION.md。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/21-model-setup.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="coding"><div class="chapter-label">07 / 使用指南</div><h2 id="coding-h1">Flora Coding Agent</h2>
 <p>给 Flora 一个代码仓库、一个自然语言任务和一条测试命令。它会在独立的 Git worktree 中读取代码、修改文件、运行测试并生成补丁。你不需要编写内部程序。</p>
 <h3 id="coding-h2">完成第一个编码任务</h3>
-<p>准备 Python 3.11+、Git 和 POSIX 环境；Windows 使用 WSL。先按安装章节安装 Flora 并配置模型。目标仓库必须已经有提交，且没有未提交的修改或未忽略的新文件。</p>
+<p>准备 Python 3.11+、Git 和 POSIX 环境；Windows 使用 WSL。先按安装章节从 <code>coding-agent</code> 分支安装 Flora 并配置模型。目标仓库必须已经有提交，且没有未提交的修改或未忽略的新文件。</p>
 <p>下面假设 <code>my-project</code> 是目标仓库，其中的测试可用 <code>python -B -m unittest discover -s tests</code> 执行。请换成你的实际测试命令。<code>flora-job</code> 放在仓库外面。</p>
 <div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>export OPENAI_API_KEY=&quot;你的模型服务密钥&quot;
 flora setup --model YOUR_MODEL_ID --base-url https://your-provider.example/v1
@@ -452,7 +452,7 @@ git -C ./my-project apply ../flora-job/changes.patch</code></pre></div>
 <h3 id="coding-h4">再提一个任务，或恢复未完成任务</h3>
 <p>一个任务完成后，可以复用同一个会话继续修改。新任务继承 worktree 中已有的改动和会话历史，预算也是累计的；每个新任务都会清除“已测试”的完成资格。</p>
 <div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora code &quot;为刚才的修复增加边界用例。&quot; --session ./flora-job</code></pre></div>
-<p>对于模型请求中断等仍有活动任务的状态，使用恢复：</p>
+<p>对于模型请求中断或输出格式校验失败等仍有活动任务的状态，CLI 会显示具体原因、累计用量与恢复命令。使用恢复：</p>
 <div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora code --session ./flora-job --resume</code></pre></div>
 <p>继续和恢复时使用与创建会话相同的模型、配置和权限。若起初使用了 <code>--config</code>，后续模型调用也应传入同一配置文件。CLI 自动读取保存的测试命令、测试超时和命令权限；不会自动保存或恢复 API 密钥。</p>
 <p>预算耗尽后，恢复不会获得额外预算。已提交但结果未知的工具操作也不会被恢复机制随意重发。先检查状态及原始会话记录，再决定是否需要人工处理或创建新会话。</p>
@@ -479,7 +479,16 @@ flora code &quot;修复任务&quot; --repo ./my-project --session ./job-node \
   --test &quot;python -m pytest -q&quot; --allow-commands</code></pre></div>
 <p>这会给予模型任意宿主命令执行能力。命令的工作目录在 worktree，不代表进程无法访问外部路径或网络。不要把目录限制当成权限隔离。</p>
 <p>worktree 不会复制未跟踪或被忽略的 <code>.venv</code>、<code>node_modules</code>、<code>.env</code>、构建产物；它使用 Git 提交里的代码。可以先在外部环境安装依赖，使用解释器或检查脚本的绝对路径。默认模式也可以先创建会话并在保留的 worktree 中由人工准备环境，再恢复。Flora 不自动启动容器、安装工具链、服务或数据库。</p>
-<h3 id="coding-h7">完成检查的含义</h3>
+<h3 id="coding-h7">在较大仓库中定位代码</h3>
+<p>Coding Agent 的文件工具还包括两个源码导航接口：</p>
+<div class="table-wrap"><table><thead><tr><th>工具</th><th>用途与界限</th></tr></thead><tbody>
+<tr><td><code>search_code(query, path=&quot;.&quot;, glob=&quot;*&quot;, case_sensitive=True, max_matches=30, max_files=200)</code></td><td>在完整的有界文件中搜索字面文本，返回文件名、行号和完整文件哈希；每个文件最多 1 MiB，单次扫描预算 8 MiB，返回数据约束为 16 KiB</td></tr>
+<tr><td><code>read_lines(path, start_line=1, end_line=None)</code></td><td>一基、包含两端的行窗口；默认 60 行，最多 200 行或 16 KiB 源码，返回完整文件哈希和后续行号</td></tr>
+</tbody></table></div>
+<p>模型先搜索，再读取相关函数和测试附近的行，用哈希保护的 <code>replace_text</code> 修改。大文件不需要整体进入模型上下文；完整文件哈希只证明读取时的版本，并不表示模型读过全部内容。窗口内容不能拿去覆盖整个文件。</p>
+<p>搜索返回的 <code>truncated</code>、跳过计数和扫描统计需要一起阅读：超大文件、非文本、深度或扫描额度限制，都会让“没有匹配”不足以证明全文不存在目标。<code>glob</code> 匹配相对 worktree 根目录的路径。已有 <code>search_files</code> 保留通用行为，可能只检索文件前面的字节切片；源码导航优先使用 <code>search_code</code>。</p>
+<p>状态文件固定会话使用的能力集合。重开已有会话沿用原能力集合；新会话启用源码导航工具，恢复不会静默换掉工具身份。</p>
+<h3 id="coding-h8">完成检查的含义</h3>
 <p>完成门槛是以下三项同时成立：</p>
 <ol>
 <li>本任务调用过固定测试命令，退出码为 0 且未超时。</li>
@@ -488,7 +497,7 @@ flora code &quot;修复任务&quot; --repo ./my-project --session ./job-node \
 </ol>
 <p>模型提前返回、测试失败、测试后再编辑，都会导致完成被拒绝；模型可以读取实际状态、修复并再次测试。<code>CodingResult.status == &quot;completed&quot;</code> 表示内核接受完成且最后一次本地核验仍有效。极少数并发外部修改发生在内核完成与导出之间时，包装层会报告 <code>verification_stale</code>。</p>
 <p>指纹只覆盖基准提交与 Git 可见的补丁；不覆盖被忽略的文件、外部依赖、网络服务、宿主环境变量。没有任何测试能因此自动获得“任务正确”的证明。不要让其他编辑器或进程同时修改会话；会话锁只能阻止多个 Flora 实例同时打开同一个会话。</p>
-<h3 id="coding-h8">Python API</h3>
+<h3 id="coding-h9">Python API</h3>
 <div class="code-wrap"><div class="code-head"><span>python network</span><button class="copy" type="button">复制代码</button></div><pre><code>from flora.coding import CodingAgent
 
 with CodingAgent(
@@ -522,7 +531,7 @@ with CodingAgent(
 <tr><td><code>CodingWorkspace(...).run_tests()</code></td><td>人工或宿主重新执行保存的测试命令</td></tr>
 </tbody></table></div>
 <p>Python 重新打开会话时，若原先设置过非默认 <code>test_timeout</code> 或 <code>allow_commands</code>，需要显式传入相同值。<code>repo</code> 和 <code>test_command</code> 可省略，提供时必须与保存值一致。使用 <code>with</code> 关闭底层会话和锁。</p>
-<h3 id="coding-h9">参数参考</h3>
+<h3 id="coding-h10">参数参考</h3>
 <div class="table-wrap"><table><thead><tr><th>CLI 参数</th><th>说明</th></tr></thead><tbody>
 <tr><td><code>--repo PATH</code></td><td>创建时必填，干净且已有提交的 Git 仓库根目录</td></tr>
 <tr><td><code>--session PATH</code></td><td>必填，位于目标仓库外的持久会话目录</td></tr>
@@ -536,11 +545,14 @@ with CodingAgent(
 <tr><td><code>--json</code> / <code>--quiet</code></td><td>输出结构化结果／隐藏进度</td></tr>
 </tbody></table></div>
 <p>不提供预算配置时，Coding Agent 的默认上限为 12 次模型调用、60 次工具调用、60,000 个输出 token 和 1,800 秒运行预算。传入的预算字典交给底层预算系统，未列出的项不会自动补齐 Coding Agent 默认值。测试进程还有独立的超时限制；模型 HTTP 超时由 provider 控制。</p>
-<h3 id="coding-h10">内部机制与会话文件</h3>
+<h3 id="coding-h11">内部机制与会话文件</h3>
 <p><code>coding/</code> 是应用层。它向现有 <code>Agent</code> 注册文件工具和三个编码工具，用已有 <code>completion_guard</code> 接入当前文件版本的测试证据。模型仍生成 Flora 程序；双重控制的候选行动与诊断选择、消费者合约综合、工具回执和恢复由原执行内核负责。应用层没有加入预知的正确补丁、隐藏测试答案或训练器。</p>
 <p>会话目录包含 <code>coding.json</code>、<code>test-result.json</code>、<code>result.json</code>、<code>changes.patch</code>、<code>worktree/</code> 和底层 <code>agent/</code> 状态。任务未完成也尽量导出已取得的改动；如果进程被强制结束，结果文件可能尚未写入，仍可用 <code>--diff</code> 检查现存 worktree。</p>
 <p>当前不支持子模块仓库，不允许会话内移动 HEAD；Git 输出和补丁各有 4 MiB 上限，补丁必须能无损表示为 UTF-8。<code>inspect_changes</code> 向模型返回至多 65,536 个字符，完整内容保存在导出的补丁里。单次测试保留至多 128 KiB stdout/stderr，输出中标注截断。很大的仓库或差异超限会明确报错。</p>
-<p>结束使用时，先确认修改已经保存或应用。可用 <code>git -C ./my-project worktree list</code> 查看检出；不要直接删除还需要的会话。清理脏 worktree 需要 Git 的强制删除选项，Flora 不会自动替你执行这类丢弃修改的操作。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/23-coding-agent.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="troubleshooting"><div class="chapter-label">08 / 使用指南</div><h2 id="troubleshooting-h1">排错与限制</h2>
+<p>结束使用时，先确认修改已经保存或应用。可用 <code>git -C ./my-project worktree list</code> 查看检出；不要直接删除还需要的会话。清理脏 worktree 需要 Git 的强制删除选项，Flora 不会自动替你执行这类丢弃修改的操作。</p>
+<h3 id="coding-h12">已验证的范围</h3>
+<p>公开仓库编码验收基于固定的 more-itertools 提交，包含 6 项植入回归和 2 项新 API 要求。8 项任务首次完整通过 3 项；每个失败任务最多一次显式恢复后，完整通过 4 项。6 项补丁通过外部检查，但其中有任务仍因模型输出或预算问题无法完成，不能按 6 项完整成功解释。</p>
+<p><a href="https://github.com/wongzbb/Flora/blob/coding-agent/reports/REPOSITORY_EVALUATION.md">完整验收报告</a>包含任务设计、逐项失败原因、用量与限制。这是开发验收集，不是官方 benchmark，也没有证明双重控制或合约带来统计性能增益。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/23-coding-agent.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="troubleshooting"><div class="chapter-label">08 / 使用指南</div><h2 id="troubleshooting-h1">排错与限制</h2>
 <p>定位故障时先确定它位于哪一层：安装与导入、静态 IR、纯 VM、工具效果、模型传输、预算、历史锚点或合约关系。不要把所有错误归为“模型不够聪明”。</p>
 <h3 id="troubleshooting-h2">先检查直接使用入口</h3>
 <div class="table-wrap"><table><thead><tr><th>现象</th><th>处理</th></tr></thead><tbody>
@@ -810,7 +822,9 @@ python -m flora contracts contracts.json --program program.json --relation DEFIN
 <p>Agent 的可观察属性包括 <code>budget</code>、<code>history</code>、<code>last_result</code>、<code>current_trace_path</code> 和 <code>session_dir</code>。<code>config</code> 与 <code>budget_limits</code> 接受各自 dataclass 或字段字典。显式 provider 与 model/provider_options 不能同时传入。</p>
 <p><code>workspace.WorkspaceTools(root, *, allow_commands=False, max_file_bytes=1048576, max_output_bytes=65536, command_timeout=30, protected_paths=())</code> 提供 <code>.specs()</code>，用于自定义标准文件工具限额；依赖 POSIX no-follow 文件操作。</p>
 <p><code>session.SessionStateError</code> 表示会话绑定或轮次状态不允许当前操作；<code>session.SessionBusyError</code> 表示会话占用。持久会话恢复须使用同一能力和实际外部环境。</p>
-<h3 id="api-h3">Runtime</h3>
+<h3 id="api-h3">编码任务 API</h3>
+<p>从 <code>flora.coding</code> 导入 <code>CodingAgent</code>、<code>CodingWorkspace</code> 和 <code>CodingResult</code>。它们复用上述 Agent 内核；任务、独立 worktree、测试证据、补丁、恢复与参数的完整说明见前面的「Flora Coding Agent」章节。</p>
+<h3 id="api-h4">Runtime</h3>
 <div class="code-wrap"><div class="code-head"><span>python</span><button class="copy" type="button">复制代码</button></div><pre><code>from flora.runtime import Runtime, RuntimeConfig, RunResult
 from flora.tools import ToolRegistry
 
@@ -832,7 +846,7 @@ assert runtime.trace.epoch == 0</code></pre></div>
 <tr><td><code>needs_program</code></td><td>没有可执行程序，且编译不可用或失败</td></tr>
 <tr><td><code>interrupted_unknown</code></td><td>外部效果未能确认，未发送自动重试</td></tr>
 </tbody></table></div>
-<h3 id="api-h4">IR 与 VM</h3>
+<h3 id="api-h5">IR 与 VM</h3>
 <div class="table-wrap"><table><thead><tr><th>接口</th><th>用途</th></tr></thead><tbody>
 <tr><td><code>ir.parse_program(data, allowed_tools=None)</code></td><td>严格静态检查并复制 JSON IR</td></tr>
 <tr><td><code>ir.OP_ARITIES</code></td><td>纯指令参数范围表</td></tr>
@@ -843,7 +857,7 @@ assert runtime.trace.epoch == 0</code></pre></div>
 <tr><td><code>vm.Boundary.to_dict()</code></td><td>边界及内部候选序列化</td></tr>
 <tr><td><code>vm.snapshot_program(machine)</code></td><td>仅当无需遗漏调用者时导出入口级快照，否则返回 None</td></tr>
 </tbody></table></div>
-<h3 id="api-h5">工具与效果执行器</h3>
+<h3 id="api-h6">工具与效果执行器</h3>
 <div class="table-wrap"><table><thead><tr><th>接口</th><th>用途</th></tr></thead><tbody>
 <tr><td><code>tools.ToolSpec(name, handler, description=&quot;&quot;, input_schema=None, timeout_seconds=None, opaque_parameters=())</code></td><td>注册可信宿主能力</td></tr>
 <tr><td><code>tools.ToolRegistry(tools=None, *, opaque_store=None)</code></td><td>创建工具集合</td></tr>
@@ -856,12 +870,12 @@ assert runtime.trace.epoch == 0</code></pre></div>
 <tr><td><code>execute(request, *, epoch, trace_digest, mode=&quot;observed&quot;, before_dispatch=None)</code></td><td>锚点检查、登记、执行、结算；返回真实记录</td></tr>
 </tbody></table></div>
 <p>业务应用一般调用 Runtime；直接使用 EffectExecutor 时，调用者负责候选生命周期与检查点协调。</p>
-<h3 id="api-h6">环境桥接</h3>
+<h3 id="api-h7">环境桥接</h3>
 <p><code>adapters.AgentEnvBridge(agent_env, root=True)</code> 接入公开 agent-facing 工具协议。<code>registry</code> 是生成的工具注册表，<code>instructions</code> 是公开任务说明，<code>completion_guard</code> 是根会话完成保护或 None。只支持 pull 交付，不负责建立、重置或评分外部世界；完整接入限制见公平实验章节。</p>
-<h3 id="api-h7">不透明对象</h3>
+<h3 id="api-h8">不透明对象</h3>
 <p><code>opaque.OpaqueStore(*, max_handles=1024, ttl_seconds=None)</code> 保存进程本地原对象引用；<code>register(value)</code> 注册身份，<code>encode_result(value)</code> 在普通 JSON 结构内替换非 JSON 对象，<code>resolve(carrier)</code> 认证并返回原对象，<code>revoke(carrier)</code> / <code>clear()</code> 释放引用，<code>stats()</code> 返回资源统计。<code>is_opaque(value)</code> 只识别格式，不能代替认证。</p>
 <p><code>ToolRegistry.encode_result(value)</code> 使用其 store 编码实际返回，<code>materialize_args(request)</code> 验证并只还原获授权的句柄位置。程序和开发者都不能根据一份持久化 token 重建丢失的宿主对象。</p>
-<h3 id="api-h8">编译器与模型</h3>
+<h3 id="api-h9">编译器与模型</h3>
 <div class="table-wrap"><table><thead><tr><th>接口</th><th>用途</th></tr></thead><tbody>
 <tr><td><code>compiler.CompilerContext(...)</code></td><td>原任务、能力、实际历史与预算视图</td></tr>
 <tr><td><code>compiler.validate_bundle(bundle, context=None, ...)</code></td><td>独立检查 bundle 和可选修订</td></tr>
@@ -874,7 +888,7 @@ assert runtime.trace.epoch == 0</code></pre></div>
 <tr><td><code>providers.OpenAICompatibleProvider(...)</code></td><td>无 SDK 的有界 HTTP 传输</td></tr>
 </tbody></table></div>
 <p>完整 provider/compiler 参数表在模型章节。<code>ScriptedCompiler.requests</code> 保留接收过的上下文，用于检查离线编译调用顺序。</p>
-<h3 id="api-h9">消费者合约</h3>
+<h3 id="api-h10">消费者合约</h3>
 <div class="table-wrap"><table><thead><tr><th>接口</th><th>用途</th></tr></thead><tbody>
 <tr><td><code>contracts.ContextCheck(id, ...)</code></td><td>具体观察与消费者上下文</td></tr>
 <tr><td><code>contracts.CheckResult(verdict, relation, witness={})</code></td><td>局部检查结果</td></tr>
@@ -887,9 +901,9 @@ assert runtime.trace.epoch == 0</code></pre></div>
 <tr><td><code>to_dict()</code> / <code>ContractStore.from_dict(data)</code></td><td>保存并重算校验恢复</td></tr>
 </tbody></table></div>
 <p><code>ContextCheck</code> 的可选字段包括：<code>inputs</code>、<code>receipts</code>、<code>memory</code>、<code>reference_program</code>、<code>relation</code>、<code>source_path</code>、<code>output_path</code>、<code>source_mode</code>、<code>mode</code>、<code>reference_machine</code>、<code>candidate_machine</code>。缺省 relation 为 DEFINED_PREFIX，source_mode 为 equal，mode 为 observed。</p>
-<h3 id="api-h10">程序复用</h3>
+<h3 id="api-h11">程序复用</h3>
 <p><code>reuse.ReuseLibrary(max_variants=64)</code> 保存带消费者 scope 的变体。<code>register(source_machine, program, migration, guard, *, mode=&quot;PRESERVE&quot;, variant_id=None)</code> 登记经过结构校验的项；<code>route(machine, *, receipts, memory, fuel=50000)</code> 运行规则、纯迁移和当前关系检查，返回 ReuseDecision。<code>variants</code> 返回只读副本；<code>drop_oldest()</code> 整条淘汰最旧项；<code>to_dict()</code> / <code>from_dict()</code> 保存并严格恢复。CHANGE 不可登记为自动兼容复用。</p>
-<h3 id="api-h11">诊断与调度</h3>
+<h3 id="api-h12">诊断与调度</h3>
 <div class="table-wrap"><table><thead><tr><th>接口</th><th>用途</th></tr></thead><tbody>
 <tr><td><code>diagnostics.validate_diagnostic(diag, *, allowed_tools=None, candidate_ids=None)</code></td><td>严格诊断结构校验</td></tr>
 <tr><td><code>diagnostics.proven_exclusive(first, second)</code></td><td>保守证明谓词不能同时为真</td></tr>
@@ -898,7 +912,7 @@ assert runtime.trace.epoch == 0</code></pre></div>
 <tr><td><code>scheduler.choose(frontiers, incumbent, *, diagnostic_allowed=True)</code></td><td>返回被选 frontier ID，不执行动作</td></tr>
 </tbody></table></div>
 <p>DiagnosticReport 字段包括 id、request、score、anchor_epoch、anchor_digest、groups、witness_results、pairs、reasons；<code>eligible</code> 等于 score &gt; 0，<code>to_dict()</code> 明确标记 hypothetical 与 contract_evidence=false。</p>
-<h3 id="api-h12">Trace、预算与重放</h3>
+<h3 id="api-h13">Trace、预算与重放</h3>
 <div class="table-wrap"><table><thead><tr><th>接口</th><th>用途</th></tr></thead><tbody>
 <tr><td><code>trace.MemoryTrace(max_journal_bytes=7340032, max_checkpoint_bytes=7340032)</code> / <code>trace.SQLiteTrace(path, ...)</code></td><td>内存或本地持久日志</td></tr>
 <tr><td><code>records</code>、<code>epoch</code>、<code>digest</code></td><td>当前真实事件视图与锚点</td></tr>
@@ -914,9 +928,9 @@ assert runtime.trace.epoch == 0</code></pre></div>
 <tr><td><code>Budget.to_dict()</code> / <code>Budget.from_dict(data)</code></td><td>保存、恢复消耗；未知 reservation 不退款</td></tr>
 <tr><td><code>replay.replay(program, inputs, records, *, memory=None, fuel=50000, max_effects=1000, max_value_bytes=1048576)</code></td><td>精确顺序重放纯计算；不调用工具</td></tr>
 </tbody></table></div>
-<h3 id="api-h13">资源边界</h3>
+<h3 id="api-h14">资源边界</h3>
 <p><code>resources.ResourceLimitExceeded</code> 是 BudgetExceeded 子类，保留 resource、limit 与可得的 required 字节数。<code>encoded_size()</code> 计算规范 JSON 字节，<code>retain_newest()</code> 只适用于可替换的可选记录，禁止用它裁剪真实 journal。<code>ContractStore.trim_bytes(max_bytes)</code> 整条移除最旧见证并返回保留统计。</p>
-<h3 id="api-h14">严格 JSON 与异常</h3>
+<h3 id="api-h15">严格 JSON 与异常</h3>
 <p><code>values.canonical_json(value)</code> 产生排序、无多余空格的严格 JSON；<code>digest(value)</code> 为其 SHA256；<code>clone(value)</code> 复制并校验；<code>bounded_clone(value, max_bytes)</code> 增加指定字节界限。</p>
 <p>异常基类为 <code>FloraError</code>。常用子类：<code>ValidationError</code>、<code>MachineStateError</code>、<code>BudgetExceeded</code>、<code>StaleAnchor</code>、<code>InterruptedEffect</code>、<code>CompilerError</code>、<code>TraceIntegrityError</code>；provider 的 <code>ProviderError</code> 是 CompilerError 子类。不要捕获所有异常后无条件重新提交工具。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/12-api.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="tools"><div class="chapter-label">12 / 开发者参考</div><h2 id="tools-h1">接入工具与业务系统</h2>
 <p>工具是模型生成程序与宿主系统之间唯一受控的效果入口。IR 不能自行注册工具、导入模块或调用 Python 对象方法。普通使用时把函数交给 Agent 即可自动注册；本章介绍需要精确 schema、异步超时或不透明对象时的底层 <code>ToolSpec</code>。模型只看到名称、说明与参数 schema。</p>
