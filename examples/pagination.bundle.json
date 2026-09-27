@@ -1,0 +1,542 @@
+{
+  "programs": [
+    {
+      "id": "items_parser",
+      "program": {
+        "blocks": {
+          "after": {
+            "ops": [],
+            "params": [
+              "rows",
+              "n",
+              "i",
+              "acc",
+              "more"
+            ],
+            "term": {
+              "args": {
+                "acc": {
+                  "var": "acc"
+                }
+              },
+              "condition": {
+                "var": "more"
+              },
+              "no": "finish",
+              "op": "branch",
+              "yes": "next"
+            }
+          },
+          "consume": {
+            "ops": [
+              {
+                "args": [
+                  {
+                    "var": "reply"
+                  },
+                  "value"
+                ],
+                "dest": "page",
+                "op": "get"
+              },
+              {
+                "args": [
+                  {
+                    "var": "page"
+                  },
+                  "items"
+                ],
+                "dest": "rows",
+                "op": "get"
+              },
+              {
+                "args": [
+                  {
+                    "var": "page"
+                  },
+                  "has_more"
+                ],
+                "dest": "more",
+                "op": "get"
+              },
+              {
+                "args": [
+                  {
+                    "var": "rows"
+                  }
+                ],
+                "dest": "n",
+                "op": "length"
+              }
+            ],
+            "params": [
+              "acc",
+              "reply"
+            ],
+            "term": {
+              "args": {
+                "acc": {
+                  "var": "acc"
+                },
+                "i": 0,
+                "more": {
+                  "var": "more"
+                },
+                "n": {
+                  "var": "n"
+                },
+                "rows": {
+                  "var": "rows"
+                }
+              },
+              "op": "jump",
+              "target": "loop"
+            }
+          },
+          "finish": {
+            "ops": [],
+            "params": [
+              "acc"
+            ],
+            "term": {
+              "op": "return",
+              "value": {
+                "var": "acc"
+              }
+            }
+          },
+          "item": {
+            "ops": [
+              {
+                "args": [
+                  {
+                    "var": "rows"
+                  },
+                  {
+                    "var": "i"
+                  }
+                ],
+                "dest": "row",
+                "op": "get"
+              },
+              {
+                "args": [
+                  {
+                    "var": "row"
+                  },
+                  "id"
+                ],
+                "dest": "id",
+                "op": "get"
+              },
+              {
+                "args": [
+                  {
+                    "var": "acc"
+                  },
+                  {
+                    "var": "id"
+                  }
+                ],
+                "dest": "updated",
+                "op": "append"
+              },
+              {
+                "args": [
+                  {
+                    "var": "i"
+                  },
+                  1
+                ],
+                "dest": "next_i",
+                "op": "add"
+              }
+            ],
+            "params": [
+              "rows",
+              "n",
+              "i",
+              "acc",
+              "more"
+            ],
+            "term": {
+              "args": {
+                "acc": {
+                  "var": "updated"
+                },
+                "i": {
+                  "var": "next_i"
+                },
+                "more": {
+                  "var": "more"
+                },
+                "n": {
+                  "var": "n"
+                },
+                "rows": {
+                  "var": "rows"
+                }
+              },
+              "op": "jump",
+              "target": "loop"
+            }
+          },
+          "loop": {
+            "ops": [
+              {
+                "args": [
+                  {
+                    "var": "i"
+                  },
+                  {
+                    "var": "n"
+                  }
+                ],
+                "dest": "continue",
+                "op": "lt"
+              }
+            ],
+            "params": [
+              "rows",
+              "n",
+              "i",
+              "acc",
+              "more"
+            ],
+            "term": {
+              "args": {
+                "acc": {
+                  "var": "acc"
+                },
+                "i": {
+                  "var": "i"
+                },
+                "more": {
+                  "var": "more"
+                },
+                "n": {
+                  "var": "n"
+                },
+                "rows": {
+                  "var": "rows"
+                }
+              },
+              "condition": {
+                "var": "continue"
+              },
+              "no": "after",
+              "op": "branch",
+              "yes": "item"
+            }
+          },
+          "main": {
+            "ops": [],
+            "params": [],
+            "term": {
+              "args": {},
+              "bind": "reply",
+              "capture": {
+                "acc": []
+              },
+              "op": "effect",
+              "resume": "consume",
+              "tool": "next_page"
+            }
+          },
+          "next": {
+            "ops": [],
+            "params": [
+              "acc"
+            ],
+            "term": {
+              "args": {},
+              "bind": "reply",
+              "capture": {
+                "acc": {
+                  "var": "acc"
+                }
+              },
+              "op": "effect",
+              "resume": "consume",
+              "tool": "next_page"
+            }
+          }
+        },
+        "entry": "main",
+        "version": 1
+      },
+      "inputs": {}
+    },
+    {
+      "id": "data_parser",
+      "program": {
+        "blocks": {
+          "after": {
+            "ops": [],
+            "params": [
+              "rows",
+              "n",
+              "i",
+              "acc",
+              "more"
+            ],
+            "term": {
+              "args": {
+                "acc": {
+                  "var": "acc"
+                }
+              },
+              "condition": {
+                "var": "more"
+              },
+              "no": "finish",
+              "op": "branch",
+              "yes": "next"
+            }
+          },
+          "consume": {
+            "ops": [
+              {
+                "args": [
+                  {
+                    "var": "reply"
+                  },
+                  "value"
+                ],
+                "dest": "page",
+                "op": "get"
+              },
+              {
+                "args": [
+                  {
+                    "var": "page"
+                  },
+                  "data"
+                ],
+                "dest": "rows",
+                "op": "get"
+              },
+              {
+                "args": [
+                  {
+                    "var": "page"
+                  },
+                  "has_more"
+                ],
+                "dest": "more",
+                "op": "get"
+              },
+              {
+                "args": [
+                  {
+                    "var": "rows"
+                  }
+                ],
+                "dest": "n",
+                "op": "length"
+              }
+            ],
+            "params": [
+              "acc",
+              "reply"
+            ],
+            "term": {
+              "args": {
+                "acc": {
+                  "var": "acc"
+                },
+                "i": 0,
+                "more": {
+                  "var": "more"
+                },
+                "n": {
+                  "var": "n"
+                },
+                "rows": {
+                  "var": "rows"
+                }
+              },
+              "op": "jump",
+              "target": "loop"
+            }
+          },
+          "finish": {
+            "ops": [],
+            "params": [
+              "acc"
+            ],
+            "term": {
+              "op": "return",
+              "value": {
+                "var": "acc"
+              }
+            }
+          },
+          "item": {
+            "ops": [
+              {
+                "args": [
+                  {
+                    "var": "rows"
+                  },
+                  {
+                    "var": "i"
+                  }
+                ],
+                "dest": "row",
+                "op": "get"
+              },
+              {
+                "args": [
+                  {
+                    "var": "row"
+                  },
+                  "id"
+                ],
+                "dest": "id",
+                "op": "get"
+              },
+              {
+                "args": [
+                  {
+                    "var": "acc"
+                  },
+                  {
+                    "var": "id"
+                  }
+                ],
+                "dest": "updated",
+                "op": "append"
+              },
+              {
+                "args": [
+                  {
+                    "var": "i"
+                  },
+                  1
+                ],
+                "dest": "next_i",
+                "op": "add"
+              }
+            ],
+            "params": [
+              "rows",
+              "n",
+              "i",
+              "acc",
+              "more"
+            ],
+            "term": {
+              "args": {
+                "acc": {
+                  "var": "updated"
+                },
+                "i": {
+                  "var": "next_i"
+                },
+                "more": {
+                  "var": "more"
+                },
+                "n": {
+                  "var": "n"
+                },
+                "rows": {
+                  "var": "rows"
+                }
+              },
+              "op": "jump",
+              "target": "loop"
+            }
+          },
+          "loop": {
+            "ops": [
+              {
+                "args": [
+                  {
+                    "var": "i"
+                  },
+                  {
+                    "var": "n"
+                  }
+                ],
+                "dest": "continue",
+                "op": "lt"
+              }
+            ],
+            "params": [
+              "rows",
+              "n",
+              "i",
+              "acc",
+              "more"
+            ],
+            "term": {
+              "args": {
+                "acc": {
+                  "var": "acc"
+                },
+                "i": {
+                  "var": "i"
+                },
+                "more": {
+                  "var": "more"
+                },
+                "n": {
+                  "var": "n"
+                },
+                "rows": {
+                  "var": "rows"
+                }
+              },
+              "condition": {
+                "var": "continue"
+              },
+              "no": "after",
+              "op": "branch",
+              "yes": "item"
+            }
+          },
+          "main": {
+            "ops": [],
+            "params": [],
+            "term": {
+              "args": {},
+              "bind": "reply",
+              "capture": {
+                "acc": []
+              },
+              "op": "effect",
+              "resume": "consume",
+              "tool": "next_page"
+            }
+          },
+          "next": {
+            "ops": [],
+            "params": [
+              "acc"
+            ],
+            "term": {
+              "args": {},
+              "bind": "reply",
+              "capture": {
+                "acc": {
+                  "var": "acc"
+                }
+              },
+              "op": "effect",
+              "resume": "consume",
+              "tool": "next_page"
+            }
+          }
+        },
+        "entry": "main",
+        "version": 1
+      },
+      "inputs": {}
+    }
+  ],
+  "incumbent": "items_parser",
+  "diagnostics": [],
+  "expected_epoch": 0,
+  "expected_digest": "0000000000000000000000000000000000000000000000000000000000000000"
+}

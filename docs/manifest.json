@@ -1,0 +1,149 @@
+{
+  "version": "0.1.0",
+  "chapters": [
+    {
+      "id": "overview",
+      "group": "开始使用",
+      "title": "从一个任务开始",
+      "file": "00-overview.md"
+    },
+    {
+      "id": "installation",
+      "group": "开始使用",
+      "title": "安装与五分钟开始",
+      "file": "01-installation.md"
+    },
+    {
+      "id": "python",
+      "group": "开始使用",
+      "title": "Python 快速开始",
+      "file": "18-python-quickstart.md"
+    },
+    {
+      "id": "workspace",
+      "group": "使用指南",
+      "title": "处理工作目录中的文件",
+      "file": "19-workspace.md"
+    },
+    {
+      "id": "sessions",
+      "group": "使用指南",
+      "title": "会话、结果与恢复",
+      "file": "20-sessions.md"
+    },
+    {
+      "id": "modelsetup",
+      "group": "使用指南",
+      "title": "模型配置与常见接入",
+      "file": "21-model-setup.md"
+    },
+    {
+      "id": "troubleshooting",
+      "group": "使用指南",
+      "title": "排错与限制",
+      "file": "15-troubleshooting.md"
+    },
+    {
+      "id": "operations",
+      "group": "使用指南",
+      "title": "部署、预算与可观测性",
+      "file": "13-operations.md"
+    },
+    {
+      "id": "configuration",
+      "group": "开发者参考",
+      "title": "配置与命令行完整参考",
+      "file": "11-configuration.md"
+    },
+    {
+      "id": "api",
+      "group": "开发者参考",
+      "title": "Python API 索引",
+      "file": "12-api.md"
+    },
+    {
+      "id": "tools",
+      "group": "开发者参考",
+      "title": "工具注册与复杂业务接入",
+      "file": "04-tools.md"
+    },
+    {
+      "id": "models",
+      "group": "开发者参考",
+      "title": "模型编译器与 Provider",
+      "file": "05-models.md"
+    },
+    {
+      "id": "architecture",
+      "group": "研究与内部实现",
+      "title": "执行架构与能力边界",
+      "file": "22-architecture.md"
+    },
+    {
+      "id": "tutorials",
+      "group": "研究与内部实现",
+      "title": "两个离线工作流",
+      "file": "02-tutorials.md"
+    },
+    {
+      "id": "language",
+      "group": "研究与内部实现",
+      "title": "编写第一个 IR 程序",
+      "file": "03-language.md"
+    },
+    {
+      "id": "runtime",
+      "group": "研究与内部实现",
+      "title": "运行时与候选生命周期",
+      "file": "06-runtime.md"
+    },
+    {
+      "id": "contracts",
+      "group": "研究与内部实现",
+      "title": "消费者合约与规则综合",
+      "file": "07-contracts.md"
+    },
+    {
+      "id": "reuse",
+      "group": "研究与内部实现",
+      "title": "程序复用与条件路由",
+      "file": "17-reuse.md"
+    },
+    {
+      "id": "diagnostics",
+      "group": "研究与内部实现",
+      "title": "预测、诊断与双重控制",
+      "file": "08-diagnostics.md"
+    },
+    {
+      "id": "persistence",
+      "group": "研究与内部实现",
+      "title": "事件存储、恢复与重放",
+      "file": "09-persistence.md"
+    },
+    {
+      "id": "reference",
+      "group": "研究与内部实现",
+      "title": "IR 指令与表达式全集",
+      "file": "10-ir-reference.md"
+    },
+    {
+      "id": "benchmarks",
+      "group": "研究与内部实现",
+      "title": "公平实验与消融",
+      "file": "14-benchmarks.md"
+    },
+    {
+      "id": "glossary",
+      "group": "研究与内部实现",
+      "title": "术语、设计取舍与来源",
+      "file": "16-glossary.md"
+    },
+    {
+      "id": "migration",
+      "group": "升级与迁移",
+      "title": "从 OpenHarness 迁移",
+      "file": "23-migration.md"
+    }
+  ]
+}

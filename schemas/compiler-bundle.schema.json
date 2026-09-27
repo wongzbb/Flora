@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flora.local/schemas/compiler-bundle.schema.json",
+  "title": "Flora compiler bundle (IR version 1)",
+  "description": "Structural schema. The Python validator additionally checks anchors, IDs, IR control flow, tool allowlists and forecast references.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["programs", "incumbent", "diagnostics", "expected_epoch", "expected_digest"],
+  "properties": {
+    "programs": {"type": "array", "minItems": 1, "maxItems": 3, "items": {"$ref": "#/$defs/candidate"}},
+    "incumbent": {"$ref": "#/$defs/id"},
+    "diagnostics": {"type": "array", "maxItems": 2, "items": {"$ref": "#/$defs/diagnostic"}},
+    "expected_epoch": {"type": "integer", "minimum": 0},
+    "expected_digest": {"type": "string", "minLength": 1},
+    "revisions": {"type": "array", "maxItems": 3, "items": {"$ref": "#/$defs/revision"}}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_./-]{0,63}$"},
+    "revision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "target_candidate", "program", "migration", "mode"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "target_candidate": {"$ref": "#/$defs/id"},
+        "program": {"$ref": "program.schema.json"},
+        "migration": {"$ref": "program.schema.json"},
+        "mode": {"enum": ["PRESERVE", "EXTEND", "CHANGE"]}
+      }
+    },
+    "candidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "program", "inputs"],
+      "properties": {"id": {"$ref": "#/$defs/id"}, "program": {"$ref": "program.schema.json"}, "inputs": {"type": "object"}}
+    },
+    "diagnostic": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "program", "inputs", "forecasts", "witnesses"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "program": {"$ref": "program.schema.json"},
+        "inputs": {"type": "object"},
+        "forecasts": {
+          "type": "array", "maxItems": 3,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["candidate_id", "predicate"],
+            "properties": {"candidate_id": {"$ref": "#/$defs/id"}, "predicate": {"$ref": "#/$defs/predicate"}}
+          }
+        },
+        "witnesses": {"type": "array", "maxItems": 8}
+      }
+    },
+    "path": {"type": "array", "maxItems": 32, "items": {"oneOf": [{"type": "string"}, {"type": "integer", "minimum": 0}]}},
+    "predicate": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["op", "path", "value"],
+         "properties": {"op": {"enum": ["eq", "ne", "type", "len_ge", "len_le", "lt", "le", "gt", "ge"]}, "path": {"$ref": "#/$defs/path"}, "value": {}}},
+        {"type": "object", "additionalProperties": false, "required": ["op", "path"],
+         "properties": {"op": {"const": "has"}, "path": {"$ref": "#/$defs/path"}, "value": {}}},
+        {"type": "object", "additionalProperties": false, "required": ["op", "args"],
+         "properties": {"op": {"enum": ["all", "any"]}, "args": {"type": "array", "minItems": 1, "maxItems": 128, "items": {"$ref": "#/$defs/predicate"}}}},
+        {"type": "object", "additionalProperties": false, "required": ["op", "arg"],
+         "properties": {"op": {"const": "not"}, "arg": {"$ref": "#/$defs/predicate"}}}
+      ]
+    }
+  }
+}

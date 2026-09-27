@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flora-lang"
+version = "0.1.0"
+description = "An independent effect-bounded language for open agent programs and evidence-scoped contracts"
+requires-python = ">=3.11"
+license = {text = "Apache-2.0"}
+authors = [{name = "Flora contributors"}]
+readme = "README.md"
+dependencies = []
+classifiers = ["Development Status :: 3 - Alpha", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.12", "License :: OSI Approved :: Apache Software License"]
+
+[project.scripts]
+flora = "flora.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+flora = ["py.typed"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP"]
+ignore = ["UP042"]  # Preserve the documented str/Enum Verdict API.
