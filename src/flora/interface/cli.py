@@ -113,6 +113,9 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--version", action="version", version=f"Flora {__version__}")
     subs = p.add_subparsers(dest="command")
     add_direct_commands(subs)
+    from flora.coding.cli import add_coding_command
+
+    add_coding_command(subs)
     demo = subs.add_parser("demo", help="Execute an offline IR tutorial through the full runtime")
     demo.add_argument("name", choices=["calendar", "pagination"])
     demo.add_argument("--output", help="Write complete result/trace/contracts JSON")
@@ -182,6 +185,10 @@ def main(argv=None) -> int:
     args = command_parser.parse_args(arguments)
     opened_trace = None
     try:
+        if args.command == "code":
+            from flora.coding.cli import coding_main
+
+            return coding_main(args)
         if args.command in {"ask", "chat", "setup"}:
             return direct_main(args)
         if args.command == "config":
@@ -365,7 +372,7 @@ def main(argv=None) -> int:
         AttributeError,
         sqlite3.Error,
     ) as exc:
-        if args.command in {"ask", "chat", "setup"} and not getattr(args, "json", False):
+        if args.command in {"ask", "chat", "setup", "code"} and not getattr(args, "json", False):
             print(f"Flora: {exc}", file=sys.stderr)
             return 2
         print(

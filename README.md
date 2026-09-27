@@ -27,6 +27,21 @@ flora chat --workspace ./my-project --session ./my-agent-session
 
 密钥从环境变量读取，不写入配置。使用 DeepSeek 时，按服务实际支持的模型和地址调整 `configs/deepseek.json`，并通过 `--config configs/deepseek.json` 传入。内置文件工具需要 POSIX 环境，Windows 请使用 WSL；执行命令需显式增加 `--allow-commands`。
 
+## Coding Agent
+
+在独立 Git worktree 中完成编码任务、执行你指定的测试并导出补丁。目标仓库需要已有提交且工作区干净；会话目录放在仓库外。
+
+```bash
+flora code "修复空输入时的错误，并运行现有测试。" \
+  --repo ./my-project --session ./flora-job \
+  --test "python -B -m unittest discover -s tests"
+
+flora code --session ./flora-job --status
+flora code --session ./flora-job --diff
+```
+
+修改保存在 `flora-job/worktree`，补丁位于 `flora-job/changes.patch`。只有固定测试命令通过、且测试后代码未变化，才允许完成；原仓库不会自动被修改或提交。测试在宿主环境运行，worktree 不是安全沙箱。更多用法、恢复和 Python API 见[编码指南](https://github.com/wongzbb/Flora/blob/docs/docs/23-coding-agent.md)。
+
 ## Python 使用
 
 ```python
@@ -46,6 +61,7 @@ with Agent(model="YOUR_MODEL_ID", tools=[lookup_order]) as agent:
 
 | 目录 | 职责 |
 | --- | --- |
+| `src/flora/coding/` | 编码任务、独立 worktree、测试证据与补丁 |
 | `src/flora/agent/` | Agent 与任务接口 |
 | `src/flora/engine/` | 执行、调度、效果与预算 |
 | `src/flora/language/` | 程序编译、IR 与虚拟机 |

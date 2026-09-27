@@ -3,6 +3,8 @@
 
 日期：2026-09-27。模型 ID：`deepseek-v4-flash`，用户授权的 OpenAI-compatible 网关。模型 ID 是网关声明，不是对上游模型身份的独立鉴定。密钥未写入代码、配置、报告或发布包。
 
+本记录保留此前通用 Agent 验收；当前 Coding Agent 的独立真实测试见 [Coding Agent 验证](CODING_VALIDATION.md)。
+
 ## 最终验收
 
 六项验收全部通过。Python 四项在同一持久会话内完成，第三项关闭并重新打开 Agent；CLI 两项从 wheel 安装后的独立 Python 进程运行，第二项真正跨进程恢复。任务预期结果由外部断言核对，没有把测试答案、随机凭据或隐藏工具状态交给模型。未使用预写 bundle、mock 模型或硬编码任务答案。
