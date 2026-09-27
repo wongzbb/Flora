@@ -16,11 +16,18 @@ classifiers = ["Development Status :: 3 - Alpha", "Programming Language :: Pytho
 [project.scripts]
 flora = "flora.interface.cli:main"
 
+[project.optional-dependencies]
+general = ["pypdf>=5,<7", "python-docx>=1.1,<2", "openpyxl>=3.1,<4", "reportlab>=4,<5"]
+mcp = ["mcp>=1.30,<2", "jsonschema>=4.23,<5", "httpx[socks]>=0.28,<1"]
+browser = ["playwright>=1.50,<2"]
+all = ["flora-lang[general,mcp,browser]"]
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
 flora = ["py.typed"]
+"flora.general" = ["static/*.html"]
 
 [tool.ruff]
 target-version = "py311"

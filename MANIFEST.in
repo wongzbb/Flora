@@ -1,0 +1,8 @@
+include LICENSE README.md pyproject.toml
+recursive-include src/flora *.py *.typed *.html
+recursive-include configs *.json
+recursive-include schemas *.json
+recursive-include examples *.py *.json *.csv *.md
+recursive-include constraints *.txt
+recursive-include reports *.md *.json
+global-exclude __pycache__ *.py[cod] *.sqlite *.sqlite3 *.log .env

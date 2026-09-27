@@ -1,85 +1,84 @@
 # Flora · 芙洛拉
 
-把自然语言任务、模型和工具交给 Agent，直接运行。Flora 在内部生成可检查的程序，用双重控制选择任务行动与信息获取，并通过可综合合约检查消费者在已知输入上的行为。
+**Act to get things done—and to find things out.**
 
-Python 3.11+ · 运行时仅标准库 · Apache-2.0
+Flora 是可直接使用的通用 Agent：处理网页研究、文档、表格和外部工具，并交付带来源记录的报告。支持终端、本地 Web 界面和 Python API。
 
-## 安装
+内核把模型的方案编译为可检查的程序。行动既推进任务，也可以帮助区分不同方案；真实工具结果用于检查消费者行为、综合局部合约，再决定如何继续。
 
-当前分支维护 Coding Agent；独立的内核基线位于 [core 分支](https://github.com/wongzbb/Flora/tree/core)，说明文档位于 [docs 分支](https://github.com/wongzbb/Flora/tree/docs)。
+Python 3.11+ · Linux / macOS / Windows WSL · Apache-2.0
+
+## 安装并启动
 
 ```bash
-git clone --branch coding-agent https://github.com/wongzbb/Flora.git
+git clone --branch general-agent https://github.com/wongzbb/Flora.git
 cd Flora
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install .
-```
+python -m pip install '.[general,mcp,browser]'
+python -m playwright install chromium
 
-Windows PowerShell 使用 `.venv\Scripts\Activate.ps1`。发行包名为 `flora-lang`，导入名与命令名为 `flora`；请安装本仓库，不要安装同名的其他项目。
-
-## 命令行使用
-
-```bash
 export OPENAI_API_KEY="你的模型服务密钥"
 flora setup --model YOUR_MODEL_ID --base-url https://your-provider.example/v1
-flora ask "查看目录，说明这个项目如何启动。" --workspace ./my-project
-flora chat --workspace ./my-project --session ./my-agent-session
+mkdir -p workspace
+flora serve --workspace ./workspace --session ./sessions/research
 ```
 
-密钥从环境变量读取，不写入配置。使用 DeepSeek 时，按服务实际支持的模型和地址调整 `configs/deepseek.json`，并通过 `--config configs/deepseek.json` 传入。内置文件工具需要 POSIX 环境，Windows 请使用 WSL；执行命令需显式增加 `--allow-commands`。
+打开终端打印的本地链接，即可输入任务、上传附件、查看执行过程并下载报告。浏览器自动化是可选工具，需在配置中明确启用和指定允许访问的域名；启动 Web 界面本身不需要安装 Chromium。发行包名为 `flora-lang`，请从本仓库安装。
 
-## Coding Agent
-
-在独立 Git worktree 中完成编码任务、执行你指定的测试并导出补丁。目标仓库需要已有提交且工作区干净；会话目录放在仓库外。
+## 直接交给它任务
 
 ```bash
-flora code "修复空输入时的错误，并运行现有测试。" \
-  --repo ./my-project --session ./flora-job \
-  --test "python -B -m unittest discover -s tests"
+flora agent "读取 sales.csv，按地区汇总收入，生成带来源引用的分析报告，并导出 Word。" \
+  --workspace ./workspace --session ./sessions/sales
 
-flora code --session ./flora-job --status
-flora code --session ./flora-job --diff
+flora agent --session ./sessions/sales --status
+flora agent --session ./sessions/sales --resume
 ```
 
-修改保存在 `flora-job/worktree`，补丁位于 `flora-job/changes.patch`。只有固定测试命令通过、且测试后代码未变化，才允许完成；原仓库不会自动被修改或提交。测试在宿主环境运行，worktree 不是安全沙箱。更多用法、恢复和 Python API 见[编码指南](https://github.com/wongzbb/Flora/blob/docs/docs/23-coding-agent.md)。
+省略任务文本进入交互终端。已有会话会保存配置、预算、真实执行记录和来源；恢复不会重置预算，也不会自动重发结果未知的操作。模型密钥只从环境变量读取。
 
-## Python 使用
+需要详细模型设置时，编辑 `configs/general.json`；DeepSeek 兼容服务可参考 `configs/general-deepseek.json`，再加 `--config`。模型 ID、地址和参数必须符合你实际使用的服务。
+
+## 已接入的能力
+
+| 能力 | 用法 |
+| --- | --- |
+| 网页研究 | 网页正文、链接和原始内容留存；DuckDuckGo、Brave、Tavily、SearXNG 搜索 |
+| 文档与表格 | PDF、DOCX、XLSX、CSV、UTF-8 文本；精确数值过滤与分组统计 |
+| 报告交付 | 引用检查、Markdown 报告、DOCX/PDF/XLSX 导出、文件哈希校验 |
+| 外部系统 | MCP stdio / Streamable HTTP；显式授权的 HTTP 服务和方法 |
+| 浏览器 | Playwright 页面观察、点击、输入、截图；域名和动作授权 |
+| 工作指南 | 从指定目录加载并固定内容的 Markdown skills |
+| 连续工作 | 持久会话、来源分页、跨轮历史、暂停与恢复、执行预算 |
+| 编码任务 | 保留 `flora code`，可在独立 worktree 中验证并生成补丁 |
+
+扫描件 OCR、音视频理解、模型视觉输入不在内置文档解析器范围内，可接入相应 MCP 服务。Flora 的工具权限与路径检查不是操作系统沙箱；开启命令或 stdio MCP 时，应使用专门的工作环境。
+
+## Python API
 
 ```python
-from flora import Agent
+from flora.general import GeneralAgent
 
-def lookup_order(order_id: str) -> dict:
-    """查询订单当前状态。"""
-    return {"order_id": order_id, "status": "shipped"}
-
-with Agent(model="YOUR_MODEL_ID", tools=[lookup_order]) as agent:
-    print(agent.ask("查询订单 A123 的状态。"))
+with GeneralAgent(
+    workspace="./workspace",
+    session_dir="./sessions/research",
+    profile={"provider": {
+        "model": "YOUR_MODEL_ID",
+        "base_url": "https://your-provider.example/v1",
+        "api_key_env": "OPENAI_API_KEY",
+    }},
+) as agent:
+    result = agent.run("比较两个附件，生成带引用的建议书。")
+    print(result["status"], result.get("value"))
+    print(result["artifacts"])
 ```
 
-工具可以是普通 Python 函数。`agent.run()` 返回包含状态、预算和报告的完整结果；`agent.ask()` 返回完成值，未完成时抛出带结果的异常。
+## 文档、代码与验证
 
-## 项目结构
+- [通用 Agent 入门](https://github.com/wongzbb/Flora/blob/docs/docs/24-general-agent.md)
+- [配置、工具、恢复与 API 完整手册](https://github.com/wongzbb/Flora/tree/docs)；其中 `manual.html` 可下载离线阅读。
+- [本分支验证记录](reports/GENERAL_VALIDATION.md)
+- [内核基线](https://github.com/wongzbb/Flora/tree/core)、[Coding Agent](https://github.com/wongzbb/Flora/tree/coding-agent)、[项目总览](https://github.com/wongzbb/Flora/tree/overview)
 
-| 目录 | 职责 |
-| --- | --- |
-| `src/flora/coding/` | 编码任务、独立 worktree、测试证据与补丁 |
-| `src/flora/agent/` | Agent 与任务接口 |
-| `src/flora/engine/` | 执行、调度、效果与预算 |
-| `src/flora/language/` | 程序编译、IR 与虚拟机 |
-| `src/flora/checks/` | 合约、诊断与经验复用 |
-| `src/flora/integrations/` | 模型、工具与工作目录接入 |
-| `src/flora/state/` | 会话、轨迹与不透明对象 |
-| `src/flora/interface/` | CLI、交互控制台与设置 |
-| `src/flora/support/` | 错误、资源边界与值处理 |
-| `src/flora/examples/` | 内置离线示例 |
-| `configs/`、`schemas/`、`examples/` | 配置、格式定义与示例程序 |
-| `reports/` | 验证与实验记录 |
-
-## 文档与验证
-
-[项目总览页面与像素 Logo](https://github.com/wongzbb/Flora/tree/overview)连接内核、Coding Agent、文档和研究入口。
-
-[完整文档在 docs 分支](https://github.com/wongzbb/Flora/tree/docs)。下载其中的 [manual.html](https://github.com/wongzbb/Flora/blob/docs/manual.html)，用浏览器离线打开。手册包含入门、工具接入、模型配置、会话恢复、API 和内部机制。
-
-`flora demo calendar` 可离线检查安装。公开仓库任务的逐项通过与失败见 [编码评测](reports/REPOSITORY_EVALUATION.md)。验证范围见 [验证报告](reports/VALIDATION.md) 和 [真实 API 验收](reports/LIVE_VALIDATION.md)。合约提供局部执行证据，不证明任意任务正确；模型表现取决于任务、模型和预算配置。
+`src/flora/general/` 管理通用应用与接口；`agent/`、`engine/`、`language/`、`checks/`、`state/` 负责执行内核；`integrations/` 负责模型和工具边界。说明文档集中在 `docs` 分支。第三方组件作为正常依赖安装，其许可证随各自发行包保留；本应用没有移植 Hermes 或 Deep Agents 源码。

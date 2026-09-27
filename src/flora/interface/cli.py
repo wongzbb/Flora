@@ -116,6 +116,8 @@ def parser() -> argparse.ArgumentParser:
     from flora.coding.cli import add_coding_command
 
     add_coding_command(subs)
+    from flora.general.cli import add_general_commands
+    add_general_commands(subs)
     demo = subs.add_parser("demo", help="Execute an offline IR tutorial through the full runtime")
     demo.add_argument("name", choices=["calendar", "pagination"])
     demo.add_argument("--output", help="Write complete result/trace/contracts JSON")
@@ -185,6 +187,9 @@ def main(argv=None) -> int:
     args = command_parser.parse_args(arguments)
     opened_trace = None
     try:
+        if args.command in {"agent", "serve"}:
+            from flora.general.cli import general_main
+            return general_main(args)
         if args.command == "code":
             from flora.coding.cli import coding_main
 

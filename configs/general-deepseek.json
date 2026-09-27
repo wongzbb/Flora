@@ -1,0 +1,13 @@
+{
+  "provider": {
+    "model": "YOUR_DEEPSEEK_MODEL_ID",
+    "base_url": "https://your-provider.example/v1",
+    "api_key_env": "DEEPSEEK_API_KEY",
+    "timeout": 120,
+    "max_tokens_parameter": "max_tokens",
+    "request_options": {"thinking": {"type": "enabled"}, "reasoning_effort": "low", "response_format": {"type": "json_object"}}
+  },
+  "compiler": {"max_output_tokens": 16000, "max_repairs": 1},
+  "budget": {"max_model_calls": 30, "max_tool_calls": 100, "max_input_tokens": 300000, "max_output_tokens": 160000, "max_wall_seconds": 1800},
+  "general": {"search": {"provider": "duckduckgo"}, "require_report": false, "allow_commands": false}
+}
