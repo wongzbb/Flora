@@ -38,6 +38,12 @@
       "file": "21-model-setup.md"
     },
     {
+      "id": "coding",
+      "group": "使用指南",
+      "title": "Flora Coding Agent",
+      "file": "23-coding-agent.md"
+    },
+    {
       "id": "troubleshooting",
       "group": "使用指南",
       "title": "排错与限制",

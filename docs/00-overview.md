@@ -7,6 +7,7 @@ Flora（芙洛拉）让你把自然语言任务交给一个模型驱动的 agent
 | 你想做什么 | 从哪里开始 |
 | --- | --- |
 | 在终端输入任务，读取或修改一个项目 | 「安装与五分钟开始」，然后使用 `flora ask` 或 `flora chat` |
+| 在独立工作区完成编码任务并生成补丁 | 「Flora Coding Agent」，使用 `flora code` |
 | 在 Python 应用里接入业务函数 | 「Python 快速开始」，使用 `Agent` 或 `invoke` |
 | 保存连续对话并在以后继续 | 「会话、结果与恢复」，使用 `session_dir` 或 `--session` |
 | 检查安装是否正常，暂时不连接模型 | 「两个离线工作流」中的 `demo` |
