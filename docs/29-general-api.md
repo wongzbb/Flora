@@ -1,4 +1,4 @@
-# GeneralAgent API 与本地 HTTP
+# GeneralAgent API
 
 ## 构造 GeneralAgent
 
@@ -30,6 +30,7 @@ with GeneralAgent(workspace="workspace", session_dir="sessions/research", profil
 | `workspace` | 新会话必填；必须已存在；已有会话可省略 |
 | `profile` | 五个配置对象；已有会话省略时使用已保存配置 |
 | `provider` | 可选自定义 Provider；实现内核 complete 协议，不与 provider 配置混用 |
+| `session_key` | 可选进程内 API Key；兼容 provider 使用，不保存到 profile 或环境变量 |
 | `on_event` | 接收实际运行事件的回调；普通观察者异常不改变工具结果 |
 
 GeneralAgent 管理来源库、技能目录、MCP/浏览器生命周期与应用交付检查。任务仍调用原来的 `Agent.run()` / `Agent.resume()`，使用同一套编译器、调度器、效果日志、合约与复用库。
@@ -94,31 +95,15 @@ from flora.general.agent import saved_status
 
 普通 Python 用户应优先通过 Agent 执行工具。直接调用 `agent.documents`、`agent.web` 等宿主适配器会绕过内核的效果日志；它们可用于宿主集成或调试，但不要把这种直接调用记录当作模型执行轨迹。
 
-## 本地 HTTP 接口
+## 子 agent 接口
 
-`flora serve` 使用与 Python API 相同的 GeneralAgent。API 是单用户、本地认证协议，根页面外的请求需要：
+在 profile 的 general.subagents 中启用后，主 agent 获得 `spawn_agent`、`agent_status`、`wait_agents`、`read_agent`、`resume_agent` 工具。它们通过正常内核效果边界调用，每个子任务建立独立的内核会话。
 
-```text
-Authorization: Bearer <终端链接中的随机令牌>
-```
+`on_event` 还会收到 `subagent_spawned`、`subagent_status`、`subagent_event`。子事件包含 agent_id 与 name，subagent_event 的 event 字段是该子内核的真实事件。界面不能把 candidate ID 当作独立 agent ID。
 
-| 方法与路径 | 参数 / 结果 |
-| --- | --- |
-| `GET /` | 返回应用页面 |
-| `GET /api/status` | 当前状态、busy、最近结果和错误 |
-| `GET /api/events?after=0` | 活动事件分页 |
-| `GET /api/sources?offset=0` | 来源元数据分页 |
-| `GET /api/source?id=src-000001&offset=0` | 来源内容窗口 |
-| `GET /api/artifacts` | 成果与哈希检查 |
-| `GET /api/download?path=report.md` | 下载已经登记的成果 |
-| `POST /api/task` | JSON `{"task":"任务"}`；返回 202 表示受理 |
-| `POST /api/resume` | JSON `{}`；继续未完成任务 |
-| `POST /api/pause` | JSON `{}`；请求下一边界暂停 |
-| `POST /api/upload?name=notes.pdf` | 原始文件字节；返回新文件相对路径与哈希 |
+使用默认兼容 provider 时，各子 agent 建立独立传输对象。自定义 provider 若启用并行子 agent，宿主提供的 complete 实现必须支持并发调用；该自定义对象会被共享。
 
-上传不是 multipart，需发送准确 Content-Length；最多 8 MiB。一般 JSON 请求最多 256 KiB。不支持 chunked 请求正文。下载的 `Content-Disposition` 使用 UTF-8 文件名。POST 受理不等于业务完成，应轮询 status/events。
-
-API 不提供任意 shell、跨目录下载、凭据读取或扩大配置权限的接口。关闭服务的能力保留在启动该服务的宿主终端。
+宿主可读取 `agent.delegation.agent_status()` 获取子任务列表；不要在模型执行过程中从旁路同时发起修改性宿主调用。完成条件会阻止主 agent 在仍有 queued/running 子任务时提前结束。子任务失败不会被伪装成成功；应检查每项 status 和实际 result。
 
 ## 工具 Schema 与实现位置
 
@@ -134,7 +119,9 @@ API 不提供任意 shell、跨目录下载、凭据读取或扩大配置权限�
 | `general/browser.py` | 浏览器生命周期与临时引用 |
 | `general/skills.py` | 明确安装的工作指南 |
 | `general/schemas.py` | 将参数上限与结构完整公开给编译器 |
-| `general/cli.py`、`general/server.py` | 终端与本地 HTTP 入口 |
-| `general/static/app.html` | 无外部前端构建依赖的 Web 应用 |
+| `terminal/cli.py`、`terminal/ui.py` | 交互命令行、任务执行视图 |
+| `terminal/sessions.py`、`terminal/connection.py` | 目录会话索引与凭据引导 |
+| `general/delegation.py` | 独立只读子 agent 的并行、预算与恢复 |
+| `general/cli.py` | 显式 session 的脚本入口 |
 
 新增业务工具可以直接复用 `flora.Agent` 的普通函数或 ToolSpec 接口，并沿用同一内核；如果扩展 GeneralAgent 工具集，应同时更新会话身份、声明的 Schema、生命周期、超时和未知结果语义。不要只往界面加按钮而绕过效果日志。

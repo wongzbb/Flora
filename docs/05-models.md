@@ -26,7 +26,7 @@ compiler = LLMCompiler(
 
 上面只创建对象，不发送请求。将该编译器交给 Runtime 后，运行时会通过 `set_accounting()` 绑定自己的同一份预算与持久化回调；Standalone 编译调用则使用你显式设置的回调。将环境变量设为自己的密钥，并替换服务地址和模型 ID 后，才可实际编译。示例不声称任何供应商、模型或额度在当前环境中可用。
 
-provider 向 `{base_url}/chat/completions` 发送一个非流式请求。`base_url` 通常应包含 `/v1`，不要再包含 `/chat/completions`。密钥在每次请求时从指定环境变量读取，错误消息不输出原始 HTTP 错误正文或密钥。
+provider 向 `{base_url}/chat/completions` 发送一个非流式请求。`base_url` 通常应包含 `/v1`，不要再包含 `/chat/completions`。脚本密钥在每次请求时从指定环境变量读取；交互终端使用本次启动输入的进程内密钥，错误消息不输出原始 HTTP 错误正文或密钥。
 
 ## 兼容服务的差异
 

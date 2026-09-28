@@ -2,19 +2,19 @@
 :root{--bg:#f6f8fc;--surface:#fff;--ink:#152235;--muted:#53657b;--line:#dce3ee;--accent:#3458db;--soft:#ecf0ff;--code:#142039;--codeInk:#e8efff;--sidebar:280px}
 [data-theme=dark]{--bg:#101623;--surface:#172031;--ink:#e6edf9;--muted:#afbbcf;--line:#303e55;--accent:#a4b6ff;--soft:#222e4e;--code:#0b1220;--codeInk:#e8efff}
 *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:32px}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.8 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans CJK SC","Microsoft YaHei",sans-serif}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}button,input{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sidebar);padding:24px 20px;background:var(--surface);border-right:1px solid var(--line);overflow-y:auto}.brand{font-size:23px;font-weight:800;letter-spacing:-.7px}.version{display:inline-block;margin-left:8px;padding:1px 7px;background:var(--soft);border-radius:6px;font-size:12px;color:var(--accent);vertical-align:middle}.tagline{color:var(--muted);font-size:12px;margin:6px 0 18px}.search{width:100%;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:9px 11px;color:var(--ink);font-size:13px}.search-status{font-size:11px;color:var(--muted);min-height:24px}.nav-group{margin-top:19px;font-size:11px;font-weight:750;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted)}.nav-link{display:block;color:var(--muted);padding:5px 9px;margin:2px -1px;border-radius:6px;font-size:13px;line-height:1.6}.nav-link:hover,.nav-link.active{background:var(--soft);color:var(--accent);text-decoration:none}.sidebar-tools{display:flex;gap:6px;flex-wrap:wrap;margin-top:22px}.sidebar-tools button,.mobile-nav{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:5px 10px;font-size:12px}main{margin-left:var(--sidebar);padding:42px 5vw 64px;max-width:calc(1180px + var(--sidebar))}.hero{padding:34px 38px 36px;border:1px solid var(--line);border-radius:18px;background:var(--surface);margin-bottom:36px}.eyebrow{color:var(--accent);font-size:12px;font-weight:750;letter-spacing:2px}.hero h1{font-size:38px;line-height:1.2;margin:14px 0 18px;letter-spacing:-1.3px}.hero p{max-width:780px;color:var(--muted);margin:12px 0}.pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}.pill{border:1px solid var(--line);border-radius:30px;padding:3px 11px;font-size:12px;color:var(--muted)}.chapter{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:30px 38px;margin:25px 0;scroll-margin-top:28px}.chapter.hidden{display:none}.chapter-label{color:var(--accent);font-size:11px;font-weight:750;letter-spacing:1.4px}.chapter h2{margin:7px 0 26px;font-size:29px;line-height:1.4;letter-spacing:-.5px}.chapter h3{margin:33px 0 12px;font-size:20px;line-height:1.5;padding-top:6px}.chapter h4{margin:25px 0 9px;font-size:17px}.chapter p{margin:13px 0}.chapter ul,.chapter ol{padding-left:25px;margin:13px 0}.chapter li{margin:6px 0}code{font:13px/1.7 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;word-break:break-word}p code,li code,td code,th code,h3 code{background:var(--soft);color:var(--accent);border-radius:4px;padding:2px 5px}.code-wrap{margin:18px 0;border-radius:9px;overflow:hidden;border:1px solid var(--line);background:var(--code)}.code-head{display:flex;justify-content:space-between;align-items:center;padding:5px 13px;font:11px/1.8 ui-monospace,monospace;color:#a5b7d8;border-bottom:1px solid #33435f}.copy{border:0;background:transparent;color:#c4d3ed;padding:3px 7px;font-size:11px}.copy:hover{color:#fff}pre{margin:0;padding:16px 18px;overflow:auto;color:var(--codeInk);line-height:1.7;tab-size:4}pre code{white-space:pre;word-break:normal}.table-wrap{overflow:auto;margin:20px 0;border:1px solid var(--line);border-radius:8px}table{width:100%;border-collapse:collapse;font-size:13px;line-height:1.75}th{text-align:left;background:var(--soft);font-weight:700}th,td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top}tr:last-child td{border-bottom:0}.note{border-left:4px solid var(--accent);background:var(--soft);padding:13px 17px;margin:20px 0;border-radius:0 8px 8px 0;font-size:14px}.chapter-footer{border-top:1px solid var(--line);margin-top:28px;padding-top:14px;font-size:12px;color:var(--muted)}.mobile-nav{display:none}.empty{display:none;padding:40px;text-align:center;color:var(--muted)}footer{font-size:12px;color:var(--muted);margin-top:35px}hr{border:0;border-top:1px solid var(--line);margin:25px 0}@media(max-width:950px){:root{--sidebar:236px}main{padding:26px 24px}.chapter,.hero{padding:24px}.hero h1{font-size:32px}.chapter h2{font-size:25px}}@media(max-width:700px){.sidebar{display:none;z-index:20;width:290px;box-shadow:0 0 30px #0003}.sidebar.open{display:block}main{margin-left:0;padding:62px 14px 30px}.mobile-nav{display:block;position:fixed;top:12px;left:14px;z-index:30;background:var(--surface)}.chapter,.hero{padding:20px 17px}.hero h1{font-size:29px}.chapter h2{font-size:24px}pre{padding:12px}body{font-size:15px}}@media print{.sidebar,.mobile-nav,.copy,.hero .pills,.chapter-footer,footer{display:none!important}main{margin:0;padding:0;max-width:none}.hero,.chapter{border:0;border-radius:0;padding:0;margin:0 0 24px}.hero{break-after:page}.chapter{break-before:page}.chapter.hidden{display:block!important}body{font:10.5pt/1.6 "Noto Sans CJK SC","Microsoft YaHei",sans-serif;color:#111;background:#fff}h2,h3,h4{break-after:avoid}pre{white-space:pre-wrap!important;background:#f2f4f8;color:#17243b;overflow:visible;font-size:8pt}.code-wrap{background:#f2f4f8;border-color:#ccc;break-inside:avoid}.code-head{color:#344;border-color:#ccc}pre code{white-space:pre-wrap;word-break:break-word}table{font-size:8.5pt}.note{break-inside:avoid}.chapter h2{font-size:22pt}.chapter h3{font-size:14pt}a{color:#2445a2}}
-</style></head><body><button id="menu" class="mobile-nav" type="button" aria-label="打开导航">目录 / 搜索</button><aside class="sidebar"><a class="brand" href="#top">Flora</a><span class="version">0.1.0</span><p class="tagline">芙洛拉 · 任务 · 可检查的执行</p><label for="search" class="tagline">搜索手册 · Ctrl / ⌘ K</label><input class="search" id="search" type="search" placeholder="例如：ask、工作目录、恢复"><div id="search-status" class="search-status" aria-live="polite"></div><nav aria-label="手册目录"><div class="nav-group">开始使用</div><a class="nav-link" href="#overview">从一个任务开始</a><a class="nav-link" href="#installation">安装与五分钟开始</a><div class="nav-group">通用 Agent</div><a class="nav-link" href="#general">Flora 通用 Agent</a><a class="nav-link" href="#documents">文档、表格与报告</a><a class="nav-link" href="#generalconfig">通用 Agent 配置</a><a class="nav-link" href="#integrations">MCP、浏览器与外部系统</a><a class="nav-link" href="#generalops">通用 Agent 运维与恢复</a><a class="nav-link" href="#generalapi">GeneralAgent API 与本地 HTTP</a><div class="nav-group">开始使用</div><a class="nav-link" href="#python">Python 快速开始</a><div class="nav-group">使用指南</div><a class="nav-link" href="#workspace">处理工作目录中的文件</a><a class="nav-link" href="#sessions">会话、结果与恢复</a><a class="nav-link" href="#modelsetup">模型配置与常见接入</a><a class="nav-link" href="#coding">Flora Coding Agent</a><a class="nav-link" href="#troubleshooting">排错与限制</a><a class="nav-link" href="#operations">部署、预算与可观测性</a><div class="nav-group">开发者参考</div><a class="nav-link" href="#configuration">配置与命令行完整参考</a><a class="nav-link" href="#api">Python API 索引</a><a class="nav-link" href="#tools">工具注册与复杂业务接入</a><a class="nav-link" href="#models">模型编译器与 Provider</a><div class="nav-group">研究与内部实现</div><a class="nav-link" href="#architecture">执行架构与能力边界</a><a class="nav-link" href="#tutorials">两个离线工作流</a><a class="nav-link" href="#language">编写第一个 IR 程序</a><a class="nav-link" href="#runtime">运行时与候选生命周期</a><a class="nav-link" href="#contracts">消费者合约与规则综合</a><a class="nav-link" href="#reuse">程序复用与条件路由</a><a class="nav-link" href="#diagnostics">预测、诊断与双重控制</a><a class="nav-link" href="#persistence">事件存储、恢复与重放</a><a class="nav-link" href="#reference">IR 指令与表达式全集</a><a class="nav-link" href="#benchmarks">公平实验与消融</a><a class="nav-link" href="#glossary">术语、设计取舍与来源</a></nav><div class="sidebar-tools"><button id="theme" type="button">明暗主题</button><button id="expand" type="button">显示全部</button><button id="print" type="button">打印 / PDF</button></div></aside><main id="top"><header class="hero"><div class="eyebrow">USER &amp; DEVELOPER DOCUMENTATION · 中文</div><h1>给出任务、模型和工具。<br>直接开始执行。</h1><p>用命令行提交任务，或在 Python 中传入普通函数。程序生成、双重控制和可综合合约在内部运行；你不需要先学习内部语言。</p><div class="pills"><span class="pill">Python 3.11+</span><span class="pill">运行时仅标准库</span><span class="pill">CLI / Python 直接使用</span><span class="pill">无外部文档资源</span><span class="pill">测试源码独立保管</span></div><p>先读「安装与五分钟开始」或「Python 快速开始」，接着按需查工作目录、会话与模型配置。内部语言和研究机制完整保留在后半部分；真实模型任务需要你自己的模型服务。</p></header><div id="empty" class="empty">没有匹配章节。尝试更短的中文词或完整 API 名称。</div><section class="chapter" id="overview"><div class="chapter-label">01 / 开始使用</div><h2 id="overview-h1">从一个任务开始</h2>
+</style></head><body><button id="menu" class="mobile-nav" type="button" aria-label="打开导航">目录 / 搜索</button><aside class="sidebar"><a class="brand" href="#top">Flora</a><span class="version">0.1.0</span><p class="tagline">芙洛拉 · 任务 · 可检查的执行</p><label for="search" class="tagline">搜索手册 · Ctrl / ⌘ K</label><input class="search" id="search" type="search" placeholder="例如：ask、工作目录、恢复"><div id="search-status" class="search-status" aria-live="polite"></div><nav aria-label="手册目录"><div class="nav-group">开始使用</div><a class="nav-link" href="#overview">从一个任务开始</a><a class="nav-link" href="#installation">安装与五分钟开始</a><div class="nav-group">通用 Agent</div><a class="nav-link" href="#general">Flora 通用 Agent</a><a class="nav-link" href="#terminal">终端、会话与子 agent</a><a class="nav-link" href="#documents">文档、表格与报告</a><a class="nav-link" href="#generalconfig">通用 Agent 配置</a><a class="nav-link" href="#integrations">MCP、浏览器与外部系统</a><a class="nav-link" href="#generalops">通用 Agent 运维与恢复</a><a class="nav-link" href="#generalapi">GeneralAgent API</a><div class="nav-group">开始使用</div><a class="nav-link" href="#python">Python 快速开始</a><div class="nav-group">使用指南</div><a class="nav-link" href="#workspace">处理工作目录中的文件</a><a class="nav-link" href="#sessions">会话、结果与恢复</a><a class="nav-link" href="#modelsetup">模型配置与常见接入</a><a class="nav-link" href="#coding">Flora Coding Agent</a><a class="nav-link" href="#troubleshooting">排错与限制</a><a class="nav-link" href="#operations">部署、预算与可观测性</a><div class="nav-group">开发者参考</div><a class="nav-link" href="#configuration">配置与命令行完整参考</a><a class="nav-link" href="#api">Python API 索引</a><a class="nav-link" href="#tools">工具注册与复杂业务接入</a><a class="nav-link" href="#models">模型编译器与 Provider</a><div class="nav-group">研究与内部实现</div><a class="nav-link" href="#architecture">执行架构与能力边界</a><a class="nav-link" href="#tutorials">两个离线工作流</a><a class="nav-link" href="#language">编写第一个 IR 程序</a><a class="nav-link" href="#runtime">运行时与候选生命周期</a><a class="nav-link" href="#contracts">消费者合约与规则综合</a><a class="nav-link" href="#reuse">程序复用与条件路由</a><a class="nav-link" href="#diagnostics">预测、诊断与双重控制</a><a class="nav-link" href="#persistence">事件存储、恢复与重放</a><a class="nav-link" href="#reference">IR 指令与表达式全集</a><a class="nav-link" href="#benchmarks">公平实验与消融</a><a class="nav-link" href="#glossary">术语、设计取舍与来源</a></nav><div class="sidebar-tools"><button id="theme" type="button">明暗主题</button><button id="expand" type="button">显示全部</button><button id="print" type="button">打印 / PDF</button></div></aside><main id="top"><header class="hero"><div class="eyebrow">USER &amp; DEVELOPER DOCUMENTATION · 中文</div><h1>给出任务、模型和工具。<br>直接开始执行。</h1><p>用命令行提交任务，或在 Python 中传入普通函数。程序生成、双重控制和可综合合约在内部运行；你不需要先学习内部语言。</p><div class="pills"><span class="pill">Python 3.11+</span><span class="pill">运行时仅标准库</span><span class="pill">CLI / Python 直接使用</span><span class="pill">无外部文档资源</span><span class="pill">测试源码独立保管</span></div><p>先读「安装与五分钟开始」或「Python 快速开始」，接着按需查工作目录、会话与模型配置。内部语言和研究机制完整保留在后半部分；真实模型任务需要你自己的模型服务。</p></header><div id="empty" class="empty">没有匹配章节。尝试更短的中文词或完整 API 名称。</div><section class="chapter" id="overview"><div class="chapter-label">01 / 开始使用</div><h2 id="overview-h1">从一个任务开始</h2>
 <p>Flora（芙洛拉）让你把自然语言任务交给一个模型驱动的 agent。你提供模型，以及任务需要的普通 Python 函数或工作目录；它在内部生成程序、调用工具、读取结果并继续执行。日常使用不需要编写 IR、配置候选程序或实现工具适配器。</p>
 <h3 id="overview-h2">选择一个入口</h3>
 <div class="table-wrap"><table><thead><tr><th>你想做什么</th><th>从哪里开始</th></tr></thead><tbody>
-<tr><td>使用网页、附件、表格、MCP 和报告交付</td><td>「Flora 通用 Agent」，使用 <code>flora agent</code> 或 <code>flora serve</code></td></tr>
-<tr><td>在终端输入任务，读取或修改一个项目</td><td>「安装与五分钟开始」，然后使用 <code>flora ask</code> 或 <code>flora chat</code></td></tr>
+<tr><td>使用网页、附件、表格、MCP 和报告交付</td><td>「Flora 通用 Agent」，运行 <code>flora</code></td></tr>
+<tr><td>在终端输入任务，读取或修改一个项目</td><td>「安装与五分钟开始」，然后运行 <code>flora</code></td></tr>
 <tr><td>在独立工作区完成编码任务并生成补丁</td><td>「Flora Coding Agent」，使用 <code>flora code</code></td></tr>
 <tr><td>在 Python 应用里接入业务函数</td><td>「Python 快速开始」，使用 <code>Agent</code> 或 <code>invoke</code></td></tr>
-<tr><td>保存连续对话并在以后继续</td><td>「会话、结果与恢复」，使用 <code>session_dir</code> 或 <code>--session</code></td></tr>
+<tr><td>保存连续对话并在以后继续</td><td>「终端、会话与子 agent」，使用 <code>flora --resume</code></td></tr>
 <tr><td>检查安装是否正常，暂时不连接模型</td><td>「两个离线工作流」中的 <code>demo</code></td></tr>
 <tr><td>研究双重控制、消费者合约或解释器</td><td>后半部分「研究与内部实现」</td></tr>
 </tbody></table></div>
-<p>基础 <code>Agent</code> API 默认没有可用业务工具；通用入口已组合网页、文件、文档、来源与报告工具。传入 <code>tools=[你的函数]</code> 即可接入业务能力；命令行加 <code>--workspace 项目路径</code> 可启用随包提供的文件工具。执行操作系统命令需要另外开启 <code>--allow-commands</code>。</p>
+<p>基础 <code>Agent</code> API 默认没有可用业务工具；通用入口已组合网页、文件、文档、来源与报告工具。传入 <code>tools=[你的函数]</code> 即可接入业务能力；交互终端默认使用当前工作目录，<code>--workspace 项目路径</code> 可指定另一目录。执行操作系统命令需要另外开启 <code>--allow-commands</code>。</p>
 <h3 id="overview-h3">一次使用包含什么</h3>
 <ol>
 <li>配置可访问的模型服务，以及它要求的凭据。</li>
@@ -34,135 +34,192 @@
 <p>文档源码位于 <code>docs/</code>；重建命令只依赖标准库：</p>
 <div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code># 在 docs 分支的独立检出目录中运行
 python scripts/build_docs.py</code></pre></div><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/00-overview.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="installation"><div class="chapter-label">02 / 开始使用</div><h2 id="installation-h1">安装与五分钟开始</h2>
-<p>这一章的目标是让你直接提交自然语言任务。你不需要先阅读内部语言、合约或研究章节。需要 Python 3.11+，以及一个可访问的模型服务；安装包不包含模型权重或 API 额度。</p>
-<h3 id="installation-h2">1. 从代码仓库安装</h3>
-<p>Flora（芙洛拉）是本项目的名称，与其他同名软件独立。发行包名为 <code>flora-lang</code>，import 和 CLI 名为 <code>flora</code>；<code>pip install flora</code> 不是本项目的安装命令。</p>
-<p>克隆代码仓库的 coding-agent 分支，进入含 <code>pyproject.toml</code> 的目录。核心运行时没有第三方依赖，源码构建需要 setuptools 和 wheel。为本项目创建独立虚拟环境。</p>
-<p>Linux / macOS：</p>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>git clone --branch coding-agent https://github.com/wongzbb/Flora.git
-cd Flora
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install .
-flora --version</code></pre></div>
-<p>Windows PowerShell：</p>
-<div class="code-wrap"><div class="code-head"><span>powershell</span><button class="copy" type="button">复制代码</button></div><pre><code>git clone --branch coding-agent https://github.com/wongzbb/Flora.git
-cd Flora
-py -3 -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install .
-flora --version</code></pre></div>
-<p>如果本机不允许 PowerShell 激活脚本，直接使用 <code>.venv\Scripts\python.exe -m flora ...</code>；无需修改全局策略。所有 <code>flora</code> 命令都可以写成 <code>python -m flora</code>。</p>
-<h3 id="installation-h3">2. 配置模型</h3>
-<p>把占位符换成你的实际模型 ID 和凭据。默认 endpoint 为 <code>https://api.openai.com/v1</code>，默认凭据变量为 <code>OPENAI_API_KEY</code>：</p>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>export OPENAI_API_KEY=&quot;你的模型服务密钥&quot;
-flora setup --model YOUR_MODEL_ID</code></pre></div>
-<p>PowerShell 使用 <code>$env:OPENAI_API_KEY=&quot;你的模型服务密钥&quot;</code>。密钥只放入环境变量或宿主的密钥管理系统；<code>setup</code> 保存模型名称、endpoint 和凭据变量名称，不保存密钥值。</p>
-<p>其他 Chat Completions 兼容服务：</p>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>export MY_MODEL_KEY=&quot;你的兼容服务密钥&quot;
-flora setup --model YOUR_MODEL_ID \
-  --base-url https://your-provider.example/v1 \
-  --api-key-env MY_MODEL_KEY</code></pre></div>
-<p><code>base-url</code> 通常到 <code>/v1</code> 为止，不要再追加 <code>/chat/completions</code>。网络代理、模型权限和服务商额度由你的服务配置决定。</p>
-<h3 id="installation-h4">3. 提交一个任务</h3>
-<p>不需要文件工具的任务：</p>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora ask &quot;写一个检查 Python 项目 README 是否清楚的简短清单。&quot;</code></pre></div>
-<p>查看现有项目，把路径换成实际存在的目录。内置工作目录工具依赖 POSIX 文件操作；以下命令适用于 Linux/macOS，Windows 请在 WSL 中运行，或用 Python 提供自己的文件工具：</p>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora ask &quot;查看目录中的文件，告诉我这个项目如何安装和启动。&quot; \
-  --workspace ./my-project</code></pre></div>
-<p>这是实际模型任务，会产生模型费用或使用本地模型资源。文件工具能够列目录、搜索、读取、写入和编辑目录内的文本文件。没有 <code>--workspace</code> 时，不会自动向模型开放当前目录。</p>
-<h3 id="installation-h5">4. 连续对话</h3>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora chat --workspace ./my-project --session ./my-agent-session</code></pre></div>
-<p>在提示符后直接输入任务。完成后可以继续提出后续要求，例如“现在根据刚才的结论更新 README”。新一轮会获得保留的已完成任务与结果；工具仍从当前真实文件状态读写，不会使用虚构的旧世界。</p>
-<p><code>/help</code> 显示交互命令，<code>/status</code> 查看会话与预算，<code>/resume</code> 继续尚未完成的一轮，<code>/quit</code> 退出。再次用同一组模型、工具与工作目录设置打开同一个 <code>--session</code>，即可读取持久会话。不要同时由多个进程打开一个会话目录。</p>
-<h3 id="installation-h6">5. 需要执行命令时</h3>
-<p>文件修改不需要开启命令工具。只有任务确实需要运行测试、脚本或构建时，显式加上：</p>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora ask &quot;检查项目的测试说明，运行相关测试并解释失败原因。&quot; \
-  --workspace ./my-project --allow-commands</code></pre></div>
-<p>这会允许模型请求宿主命令执行。命令工具不使用 shell 解释命令字符串，但被执行的程序本身具有宿主进程权限；工作目录约束不构成操作系统沙箱。对于不可信项目或依赖，应在你配置好的容器或受限环境中运行。</p>
-<h3 id="installation-h7">结果、进度与脚本集成</h3>
-<p><code>ask</code> 默认显示便于阅读的完成值，进度写往标准错误。<code>--quiet</code> 关闭进度，<code>--json</code> 输出包含状态、值、原因、预算与报告的 JSON 结果，适合脚本读取。输出 JSON 时仍要检查 <code>status</code>，不能只检查 <code>value</code> 是否非空。</p>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora ask &quot;列出这个目录的入口文件。&quot; \
-  --workspace ./my-project --quiet --json</code></pre></div>
-<h3 id="installation-h8">可选：离线检查安装</h3>
-<p>没有模型账户也可以运行以下命令：</p>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora demo calendar
-flora demo pagination</code></pre></div>
-<p>这些示例使用预先编写的程序，经过实际解释器、调度器、工具与事件记录，但不调用模型。它们用于检查执行机制和安装状态，不代表真实模型已完成任务。</p>
-<h3 id="installation-h9">源码运行与项目文件</h3>
-<p>无需安装包时，在 main 分支的仓库根目录运行：</p>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>PYTHONPATH=src python -m flora --help</code></pre></div>
-<p>Windows 可先设置 <code>$env:PYTHONPATH=&quot;src&quot;</code>。修改源码后，可使用 <code>python -m pip install -e .</code> 安装开发版本；这需要环境中已具备构建 backend。需要离线部署时，可在具备构建依赖的环境执行 <code>python -m pip wheel --no-deps . -w dist</code>，再传输生成的 wheel。</p>
-<div class="code-wrap"><div class="code-head"><span>python</span><button class="copy" type="button">复制代码</button></div><pre><code>import flora
-print(flora.__version__)
-print(flora.__file__)</code></pre></div>
-<div class="table-wrap"><table><thead><tr><th>路径</th><th>用途</th></tr></thead><tbody>
-<tr><td><code>src/flora/</code></td><td>Python API、CLI、标准工具和执行内核</td></tr>
-<tr><td><code>examples/</code></td><td>用户示例与可检查的离线程序</td></tr>
-<tr><td><code>configs/</code></td><td>低层运行参数示例</td></tr>
-<tr><td>独立 <code>docs</code> 分支</td><td>手册源码、生成脚本和 HTML 成品</td></tr>
-<tr><td><code>schemas/</code></td><td>供内核开发者使用的程序格式 schema</td></tr>
-<tr><td><code>reports/</code></td><td>验证范围与实验记录</td></tr>
-</tbody></table></div>
-<p>包名为 <code>flora-lang</code>，import 和 CLI 名为 <code>flora</code>。测试源码独立保管，不进入代码仓库。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/01-installation.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="general"><div class="chapter-label">03 / 通用 Agent</div><h2 id="general-h1">Flora 通用 Agent：从任务到交付</h2>
-<p>Flora General Agent 把网页、文件、表格和外部服务接到同一个执行内核。你描述任务，它观察现有信息、执行工具、保存证据并交付结果。日常使用不需要编写内部程序。</p>
-<p>这部分对应 <code>general-agent</code> 分支。独立内核在 <code>core</code>，编码应用在 <code>coding-agent</code>；当前分支同时保留编码入口。完整手册留在 <code>docs</code> 分支。</p>
-<h3 id="general-h2">安装</h3>
-<p>需要 Python 3.11 或更高版本，以及 Linux、macOS 或 Windows WSL。文件工具依赖 POSIX 的描述符相对访问和不跟随符号链接语义，不支持直接在原生 Windows Python 上降低安全要求运行。</p>
+<p>Flora 的日常入口是 <code>flora</code>。安装一次后，在要处理的文件夹里运行，不需要每次指定目录、命名会话或激活项目环境。需要 Python 3.11+、Linux／macOS／Windows WSL，以及可访问的 Chat Completions 兼容模型服务。</p>
+<h3 id="installation-h2">安装到命令行</h3>
+<p>先按 <a href="https://pipx.pypa.io/stable/installation/">pipx 官方说明</a> 安装 pipx，再执行：</p>
 <div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>git clone --branch general-agent https://github.com/wongzbb/Flora.git
 cd Flora
-python -m venv .venv
+pipx install &#x27;.[general,mcp]&#x27;
+pipx ensurepath</code></pre></div>
+<p>PATH 首次更新后打开新终端。发行包名是 <code>flora-lang</code>，命令名与 import 名是 <code>flora</code>；不要用 <code>pip install flora</code> 安装其他同名软件。</p>
+<h3 id="installation-h3">启动与对话</h3>
+<p>进入你要处理的目录：</p>
+<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>cd /path/to/my-project
+flora</code></pre></div>
+<p>按提示输入 Base URL、API Key、Model，值两端不加引号。密钥隐藏输入且不保存。若获取到模型候选，输入序号即可，也可以直接输入完整 ID。</p>
+<p>然后描述任务，例如“查看目录中的文件，告诉我这个项目如何安装和启动”。Enter 发送，Alt+Enter 换行，Ctrl+D 退出。工作目录默认为启动位置；子会话和执行记录自动保存在用户状态目录。</p>
+<h3 id="installation-h4">继续之前的工作</h3>
+<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora --resume
+flora --resume SESSION_ID
+flora -C /path/to/project --resume</code></pre></div>
+<p>记录按工作目录区分。选中会话并重新输入模型连接后，可以继续对话；未完成的任务用 <code>/resume</code> 明确续跑。更多操作见「Flora 通用 Agent」与「终端、会话与子 agent」。</p>
+<h3 id="installation-h5">可选依赖与浏览器工具</h3>
+<div class="table-wrap"><table><thead><tr><th>安装项</th><th>能力</th></tr></thead><tbody>
+<tr><td><code>.</code></td><td>内核、终端、基础文件与网页工具</td></tr>
+<tr><td><code>.[general]</code></td><td>另含 PDF、DOCX、XLSX 读取和导出</td></tr>
+<tr><td><code>.[general,mcp]</code></td><td>另含 MCP 外部工具接入</td></tr>
+<tr><td><code>.[general,mcp,browser]</code></td><td>另含 Playwright 浏览器适配器</td></tr>
+</tbody></table></div>
+<p>浏览器适配器需要为所用 Python 环境安装 Chromium。可以通过 <code>pipx list</code> 查看虚拟环境位置，再运行该环境中的 <code>bin/playwright install chromium</code>。还需在 profile 中配置允许访问的域名及是否授权点击和输入。终端聊天无需浏览器。</p>
+<h3 id="installation-h6">源码开发环境</h3>
+<p>开发者也可使用虚拟环境：</p>
+<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>python -m venv .venv
 source .venv/bin/activate
-python -m pip install &#x27;.[general,mcp,browser]&#x27;</code></pre></div>
-<p>如需复现 Python 3.12 验证环境中的依赖版本，安装时追加 <code>-c constraints/tested-py312.txt</code>。这份约束记录实际使用版本，不替代依赖安全更新策略。</p>
-<p>可按需要安装依赖：<code>.[general]</code> 提供 PDF、Word 和电子表格；<code>.[mcp]</code> 提供 MCP SDK 与完整 JSON Schema 验证；<code>.[browser]</code> 提供 Playwright。执行内核本身仍只依赖标准库。</p>
-<p>使用网页自动化时，另外安装浏览器：</p>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>python -m playwright install chromium</code></pre></div>
-<p>Linux 缺少浏览器系统库时，按 Playwright 官方安装说明配置宿主系统。Flora 不会静默执行 sudo 或安装系统包。使用 Web 聊天界面本身不需要 Playwright；它由 Python 本地 HTTP 服务提供。</p>
-<h3 id="general-h3">配置模型</h3>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>export OPENAI_API_KEY=&quot;你的密钥&quot;
-flora setup --model YOUR_MODEL_ID --base-url https://your-provider.example/v1</code></pre></div>
-<p><code>YOUR_MODEL_ID</code> 和示例地址必须替换为模型服务实际支持的值。密钥值放在环境变量中，配置文件只记录变量名。<code>flora setup</code> 与内核的直接使用入口共用非敏感设置。</p>
-<p>需要设置输出长度、推理模式或预算时，复制并编辑 <code>configs/general.json</code> 或 <code>configs/general-deepseek.json</code>。DeepSeek 示例中的 <code>thinking</code>、<code>reasoning_effort</code>、<code>response_format</code> 并非所有兼容服务都支持；根据服务实际接口调整。对于输出 IR 的任务，推理模式可能明显影响格式可靠性。验证报告给出实际测试配置，不代表任意兼容模型都表现相同。</p>
-<h3 id="general-h4">打开界面</h3>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>mkdir -p workspace
-flora serve --workspace ./workspace --session ./sessions/research</code></pre></div>
-<p>终端会打印 <code>http://127.0.0.1:端口/#token=...</code>。在同一台机器的浏览器中打开完整链接。链接中的随机令牌只用于这个本地服务，前端会将它保存在当前浏览器标签会话中并从地址栏移除。服务重新启动后，使用新打印的链接。</p>
-<ol>
-<li>在输入框描述目标，例如“比较两份方案，列出成本与缺失信息，生成建议书”。</li>
-<li>点击 Attach 上传文件；每个文件最多 8 MiB。上传会创建新的工作目录文件，不覆盖同名原件。</li>
-<li>点击 Run task。Activity 展示实际执行事件。</li>
-<li>Sources 展示真实读取的网页、附件和外部结果；点击可分页查看保存的内容。</li>
-<li>Artifacts 展示已登记的报告与导出文件，可直接下载。</li>
-<li>如果任务停在可继续状态，点击 Resume。Pause 会在下一次外部行动被选中、尚未派发时暂停；正在运行的调用会先返回或超时。</li>
-</ol>
-<p>Sources 窗口显示的是某次读取留下的内容，不会自动刷新外部网页。Artifacts 会重新比较文件哈希；“文件变化或不可用”意味着当前文件与发布记录不一致。</p>
-<h3 id="general-h5">在终端完成同一任务</h3>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>cp examples/general/sales.csv workspace/sales.csv
-flora agent &quot;读取 sales.csv，按地区汇总收入，用来源引用标注数字，生成 analysis.md 并导出 analysis.docx。&quot; \
-  --workspace ./workspace --session ./sessions/sales</code></pre></div>
-<p>指定配置：</p>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora agent &quot;阅读工作目录中的附件并写比较报告。&quot; \
-  --workspace ./workspace --session ./sessions/comparison \
-  --config configs/general.json</code></pre></div>
-<p>省略任务文本进入交互模式：</p>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora agent --workspace ./workspace --session ./sessions/research</code></pre></div>
-<p>交互命令为 <code>/status</code>、<code>/resume</code>、<code>/sources</code>、<code>/artifacts</code>、<code>/exit</code>。<code>/sources</code> 展示来源首页，完整分页可通过 Web UI 或 Python 调用查看。</p>
-<h3 id="general-h6">恢复与状态</h3>
-<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora agent --session ./sessions/research --status
-flora agent --session ./sessions/research --resume</code></pre></div>
-<p><code>--status</code> 只读取最后持久化的快照，不连接模型、MCP 或浏览器。进程正在工作时，快照可能落后于尚未完成的调用。</p>
-<p>重新打开已有会话时会加载保存的配置。修改模型、工具、技能内容、预算或工作目录后，应创建新的会话目录。旧会话的实际执行历史、已消耗额度和未知结果不会被配置变化抹掉。</p>
-<h3 id="general-h7">下一步阅读</h3>
-<ul>
-<li>「文档、表格与报告」：支持格式、引用、精确统计与导出。</li>
-<li>「通用 Agent 配置」：每个配置字段与完整样例。</li>
-<li>「MCP、浏览器与外部系统」：扩展能力与生命周期。</li>
-<li>「通用 Agent 运维与恢复」：状态、预算、未知结果与部署。</li>
-<li>「GeneralAgent API」：Python 与本地 HTTP 接口。</li>
-</ul><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/24-general-agent.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="documents"><div class="chapter-label">04 / 通用 Agent</div><h2 id="documents-h1">文档、表格与报告</h2>
+python -m pip install -e &#x27;.[general,mcp]&#x27;
+flora</code></pre></div>
+<p>这种安装方式需要激活对应虚拟环境，或直接运行其中的 <code>bin/flora</code>。日常不想处理环境切换时使用前面的 pipx 安装。</p>
+<h3 id="installation-h7">离线检查</h3>
+<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora --version
+flora --help
+flora demo calendar
+flora demo pagination</code></pre></div>
+<p>这些操作不请求密钥、不连接真实模型。离线 demo 运行真实解释器和效果日志，不能代替真实模型任务效果评估。</p>
+<h3 id="installation-h8">Python 和脚本入口</h3>
+<p><code>flora ask</code>、<code>flora chat</code> 提供较低层的直接工具入口；<code>flora agent TASK --session DIR ...</code> 用于显式管理会话路径的脚本；<code>flora code</code> 提供独立 worktree 编码流程。它们各自的参数和授权方式见后面的 API 与使用指南。日常终端操作直接运行 <code>flora</code>。</p>
+<h3 id="installation-h9">目录与分支</h3>
+<div class="table-wrap"><table><thead><tr><th>位置</th><th>内容</th></tr></thead><tbody>
+<tr><td><code>general-agent</code> 分支</td><td>可直接使用的终端应用与通用能力</td></tr>
+<tr><td><code>core</code> 分支</td><td>独立执行内核基线</td></tr>
+<tr><td><code>coding-agent</code> 分支</td><td>独立编码应用</td></tr>
+<tr><td><code>overview</code> 分支</td><td>项目总览及视觉设计</td></tr>
+<tr><td><code>docs</code> 分支</td><td>手册源码、生成脚本、单文件 HTML 手册</td></tr>
+</tbody></table></div>
+<p>测试代码不包含在交付 ZIP 中。验证结果见应用分支的 reports 目录。测试结果明确区分确定性传输夹具、真实模型请求和未验证的目标环境能力。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/01-installation.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="general"><div class="chapter-label">03 / 通用 Agent</div><h2 id="general-h1">Flora 通用 Agent：在终端里开始</h2>
+<p>进入你想处理的文件夹，运行 <code>flora</code>。Flora 使用这个文件夹作为工作目录，自动创建会话，然后引导你连接模型。像素形象、花形 Logo、紫色与薄荷绿沿用 Flora overview。</p>
+<h3 id="general-h2">安装一次</h3>
+<p>需要 Python 3.11+，以及 Linux、macOS 或 Windows WSL。Windows 用户在 WSL 中安装和启动；文件工具依赖 POSIX 路径与描述符语义。原生 Windows Python 不是当前支持的运行环境。</p>
+<p>安装 <a href="https://pipx.pypa.io/stable/installation/">pipx</a> 后：</p>
+<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>git clone --branch general-agent https://github.com/wongzbb/Flora.git
+cd Flora
+pipx install &#x27;.[general,mcp]&#x27;
+pipx ensurepath</code></pre></div>
+<p>如果 PATH 刚刚更新，打开一个新终端。之后无需激活虚拟环境，也无需进入 Flora 的源码文件夹。</p>
+<p><code>general</code> 提供 PDF、Word 和电子表格依赖；<code>mcp</code> 提供外部工具接入。终端显示所需的 Rich 和 prompt-toolkit 会随基本安装提供。需要浏览器工具时可安装 <code>.[general,mcp,browser]</code>，再通过 <code>pipx list</code> 查看虚拟环境位置，运行该环境内的 <code>bin/playwright install chromium</code>。这样安装的 Chromium 与实际使用的 Playwright 版本一致。终端本身不需要 Chromium。</p>
+<h3 id="general-h3">启动</h3>
+<p>在自己的项目或文件夹里执行：</p>
+<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora</code></pre></div>
+<p>屏幕依次提示以下三项。直接输入值，不加单引号或双引号：</p>
+<div class="table-wrap"><table><thead><tr><th>提示</th><th>输入</th></tr></thead><tbody>
+<tr><td>Base URL</td><td>兼容 Chat Completions 的 API 地址，例如 <code>https://your-provider.example/v1</code></td></tr>
+<tr><td>API Key</td><td>你的密钥；输入时隐藏，不写入会话文件或环境变量</td></tr>
+<tr><td>Model</td><td>已列出的候选编号，或完整模型 ID</td></tr>
+</tbody></table></div>
+<p>若 Base URL 只有域名和端口，终端会补上 <code>/v1</code>；已有自定义路径则保留。不要填写 <code>/chat/completions</code> 请求地址。Flora 使用你输入的地址获取 <code>/models</code>，支持标准 <code>data[].id</code> 列表及 <code>has_more/last_id</code> 分页。获取失败不阻止启动，可以手填模型。候选列表只证明服务列出了模型，不保证账户有使用权限或模型能正确生成程序。</p>
+<p>每次启动都会提示三项信息，恢复历史时也一样。不从上一次启动自动读取密钥。远程 HTTP 会发送未加密凭据，界面会提示该连接属性。</p>
+<h3 id="general-h4">输入任务</h3>
+<p>例如：</p>
+<div class="code-wrap"><div class="code-head"><span>text</span><button class="copy" type="button">复制代码</button></div><pre><code>读取 sales.csv，按地区汇总收入，生成带来源引用的 analysis.md，并导出 analysis.docx。</code></pre></div>
+<p>按 Enter 发送。Alt+Enter 换行；支持多行粘贴、历史输入与 Tab 命令补全。运行时显示实际模型调用、工具执行，以及已创建子 agent 的状态。</p>
+<p>文件已在工作目录时，可以直接提及文件名，也可以输入：</p>
+<div class="code-wrap"><div class="code-head"><span>text</span><button class="copy" type="button">复制代码</button></div><pre><code>/attach project brief.docx</code></pre></div>
+<p>路径不用额外引号，可以包含空格。它会作为下一条任务的文件路径提示，不会立即上传全部内容；agent 根据任务调用读取工具。输出文件直接生成在工作目录，<code>/artifacts</code> 可以查看其路径与哈希状态。</p>
+<h3 id="general-h5">指定目录与恢复</h3>
+<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora -C /path/to/project
+flora --workspace /path/to/project
+flora --resume
+flora --resume SESSION_ID
+flora -C /path/to/project --resume SESSION_ID</code></pre></div>
+<p><code>--resume</code> 列出选定工作目录的历史记录，包含标题、ID、轮数和状态。输入序号或 ID 打开。<code>--resume ID</code> 直接打开，支持不歧义且至少四位的 ID 前缀。</p>
+<p>打开后展示最近两轮已完成对话；可以继续输入。若存在未完成任务，界面会提示，输入 <code>/resume</code> 明确续跑。已经结算的工具效果不会重新派发，预算不会重置。恢复需要保持原模型、API 地址、工具和技能配置；API Key 可以更新。更换模型或能力时，用不带 <code>--resume</code> 的 <code>flora</code> 创建新会话。</p>
+<h3 id="general-h6">常用命令</h3>
+<div class="table-wrap"><table><thead><tr><th>命令</th><th>功能</th></tr></thead><tbody>
+<tr><td><code>/help</code></td><td>查看操作说明</td></tr>
+<tr><td><code>/status</code></td><td>当前任务、状态、会话位置及预算</td></tr>
+<tr><td><code>/agents</code></td><td>独立子 agent 的任务和状态</td></tr>
+<tr><td><code>/agent ID</code></td><td>阅读子 agent 的结果，必要时按提示分页</td></tr>
+<tr><td><code>/history</code></td><td>查看保留的历史对话</td></tr>
+<tr><td><code>/sources</code></td><td>查看保存的来源</td></tr>
+<tr><td><code>/artifacts</code></td><td>查看生成的文件</td></tr>
+<tr><td><code>/new</code></td><td>当前目录创建新会话，沿用本次进程已输入的连接</td></tr>
+<tr><td><code>/exit</code></td><td>保存并退出</td></tr>
+</tbody></table></div>
+<p>提示符处 Ctrl+D 也会退出；Ctrl+C 清空正在输入的内容。任务运行时 Ctrl+C 请求暂停，已派发的调用会先返回或超时。</p>
+<h3 id="general-h7">更多配置</h3>
+<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora --config /absolute/path/profile.json
+flora --allow-commands
+flora --no-subagents
+flora --plain</code></pre></div>
+<p>JSON profile 用于 MCP、浏览器、搜索、预算和模型高级参数。终端仍会提示 Base URL、API Key、Model。<code>--allow-commands</code> 为主 agent 启用本地命令执行；子 agent 不继承这项权限。<code>--plain</code> 适用于低能力终端或日志记录。</p>
+<p>日常使用详见「终端、会话与子 agent」；工具细节见「文档、表格与报告」及「MCP、浏览器与外部系统」；程序化调用见「GeneralAgent API」。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/24-general-agent.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="terminal"><div class="chapter-label">04 / 通用 Agent</div><h2 id="terminal-h1">终端、会话与子 agent</h2>
+<h3 id="terminal-h2">命令行参考</h3>
+<div class="table-wrap"><table><thead><tr><th>命令或参数</th><th>行为</th></tr></thead><tbody>
+<tr><td><code>flora</code></td><td>引导连接模型，在当前目录新建自动命名的会话</td></tr>
+<tr><td><code>flora agent</code></td><td>同一交互入口</td></tr>
+<tr><td><code>-C DIR</code> / <code>--workspace DIR</code></td><td>指定已存在的工作目录</td></tr>
+<tr><td><code>--resume</code></td><td>交互选择该目录的会话</td></tr>
+<tr><td><code>--resume ID</code></td><td>打开完整 ID 或唯一前缀所指定的会话</td></tr>
+<tr><td><code>--config FILE</code></td><td>为新会话加载高级 JSON profile</td></tr>
+<tr><td><code>--allow-commands</code></td><td>为主 agent 授予命令执行能力</td></tr>
+<tr><td><code>--no-subagents</code></td><td>新会话不提供委派工具</td></tr>
+<tr><td><code>--plain</code></td><td>不使用彩色像素形象、动画和增强输入</td></tr>
+<tr><td><code>--help</code> / <code>--version</code></td><td>查看帮助或版本，不请求凭据</td></tr>
+</tbody></table></div>
+<p>首次连接不要求创建配置文件、命名 session 或填写工作目录。<code>--resume</code> 是会话选择操作，<code>/resume</code> 是已打开会话中未完成任务的继续操作。两者不能混为“自动重试”。</p>
+<p>工作目录按规范化后的真实路径识别，符号链接别名映射到同一目录。不同目录的会话不会混在同一个列表里。目录移动或重命名后会被视为另一处工作环境；不要手动改写会话的配置指纹。</p>
+<h3 id="terminal-h3">输入、模型和凭据</h3>
+<p>Base URL 与 Model 使用普通文本输入；API Key 使用隐藏输入。不要在值两端加引号。启动引导不会保存 API Key，不会导出到环境变量，也不会把它传给子进程命令。模型传输对象在内存中持有本次密钥，关闭应用时解除引用；这不是对 Python 内存进行密码学擦除的承诺。</p>
+<p>非敏感的模型和连接设置保存在会话 profile 中。恢复时仍重新询问三个字段，并要求地址与模型匹配原会话；密钥可以轮换。工具、技能、编译器参数和累计预算保持原记录。</p>
+<p>模型发现调用 <code>{base_url}/models</code>。收到的有效模型 ID 全部展示，不按厂商筛选或只取前几项。标准分页自动获取；遇到格式异常、网络错误、超过 4 MiB 单页上限、100 页上限或约 30 秒发现窗口，会明确提示列表可能不完整。HTTP 认证失败、没有 models 接口或空列表时仍允许手填。模型发现拒绝重定向，避免把 Authorization 转交其他地址。</p>
+<p>普通终端推荐至少 80 列。窄屏会简化欢迎区域；<code>NO_COLOR</code> 或 <code>--plain</code> 启用简洁显示。<code>TERM=dumb</code> 不使用交互动画。程序输出与文件名中的终端控制码在显示前过滤。</p>
+<h3 id="terminal-h4">键盘和斜杠命令</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>行为</th></tr></thead><tbody>
+<tr><td>Enter</td><td>发送当前输入</td></tr>
+<tr><td>Alt+Enter</td><td>插入换行</td></tr>
+<tr><td>Tab</td><td>补全斜杠命令</td></tr>
+<tr><td>上／下方向键</td><td>回看本次输入及该会话保留的任务文本</td></tr>
+<tr><td>Ctrl+C（输入时）</td><td>清空输入，继续等待</td></tr>
+<tr><td>Ctrl+C（运行时）</td><td>请求在下一执行边界暂停</td></tr>
+<tr><td>Ctrl+D（空输入时）</td><td>保存退出</td></tr>
+</tbody></table></div>
+<p>密钥提示有独立的临时输入对象，不进入任务输入历史。任务输入历史只驻留当前进程；重新启动后从保留的对话记录恢复。</p>
+<div class="table-wrap"><table><thead><tr><th>命令</th><th>参数与说明</th></tr></thead><tbody>
+<tr><td><code>/help</code></td><td>快捷键和命令</td></tr>
+<tr><td><code>/status</code></td><td>主任务、会话路径、主 agent 预算及子 agent 独立账本</td></tr>
+<tr><td><code>/agents</code></td><td>子 agent 名字、ID、任务、状态</td></tr>
+<tr><td><code>/agent ID [OFFSET]</code></td><td>子任务结果的字符窗口；默认从 0 开始，每次最多 6000 字符，按 next_offset 继续</td></tr>
+<tr><td><code>/resume-agent ID</code></td><td>显式恢复指定子任务，完成过的子任务直接返回结果</td></tr>
+<tr><td><code>/resume</code></td><td>继续当前主任务的检查点</td></tr>
+<tr><td><code>/history</code></td><td>保留的已完成轮次；遗漏旧轮次的数量会提示</td></tr>
+<tr><td><code>/sources [OFFSET]</code></td><td>来源索引分页；后续 offset 取返回记录</td></tr>
+<tr><td><code>/artifacts</code></td><td>登记成果与当前文件哈希是否匹配</td></tr>
+<tr><td><code>/attach PATH</code></td><td>为下一条任务附加工作目录内的常规文件路径，最多 8 MiB</td></tr>
+<tr><td><code>/new</code></td><td>创建独立会话，保留当前进程的模型连接</td></tr>
+<tr><td><code>/exit</code> 或 <code>/quit</code></td><td>退出</td></tr>
+</tbody></table></div>
+<p>路径可包含空格，<code>/attach</code> 后面的整段文字按路径处理。附件必须在当前工作目录内；不会将附件内容偷偷注入系统指令。读取后的内容仍按不可信任务材料处理。</p>
+<h3 id="terminal-h5">会话位置和历史</h3>
+<p>默认存储位置为 <code>$XDG_STATE_HOME/flora/projects/&lt;目录哈希&gt;/&lt;会话ID&gt;</code>；未设置 XDG_STATE_HOME 时为 <code>~/.local/state/flora/projects/...</code>。可以用 <code>FLORA_STATE_HOME</code> 指定另一个持久目录。在 WSL 中使用的是 Linux 用户的目录。</p>
+<p>每个会话 ID 由本地日期、时间与随机后缀生成，用户无需手动命名。第一条任务自动成为列表标题。应用会话文件与工作目录分离。标题、对话、文档原文和来源可能涉及业务数据，请按实际内容保护会话目录。</p>
+<p><code>terminal.json</code> 保存 ID、工作目录、时间和标题；<code>general.json</code> 保存非敏感配置；<code>kernel/</code> 保存运行状态、历史、预算和效果日志；<code>subagents/</code> 保存独立子 agent 的状态与轨迹。损坏的会话会在列表中标为 damaged，不会悄悄创建一个同名新任务。</p>
+<p>内核对话上下文最多保留 32 轮、64 KiB 精确记录。超过限制会记录 omitted_turns，不声称模型记得全部旧内容。恢复会话不会给模型提供并不存在的历史或当前世界状态。</p>
+<h3 id="terminal-h6">独立子 agent</h3>
+<p>主 agent 在任务适合拆分时，可以调用 <code>spawn_agent</code>。每个子 agent 有独立的模型上下文、Flora 编译器／运行时、候选程序、消费者合约、效果日志和预算。它们与同一个内核中的“候选程序”是不同概念；终端只把真实子任务显示在 Subagent 区域。</p>
+<p>主 agent 可先发起多个子任务，再通过 <code>wait_agents</code> 获取完成状态，通过 <code>read_agent</code> 分页读取真实结果。任务描述必须携带子 agent 所需上下文；子 agent 不会自动得到主 agent 的整个对话。所有子 agent 共用经过锁保护的来源账本，因此子任务返回的 src ID 可被主 agent 读取。</p>
+<p>默认子 agent 只读：文件列表、文本读取与搜索、文档读取、表格查询、网页获取与搜索、已保存来源读取。它们不能修改工作目录、运行命令、递归创建子 agent、执行浏览器操作或调用 MCP／HTTP 服务修改工具。主 agent 集中处理写入与交付，避免并行编辑冲突。</p>
+<p>子 agent 的结论不是自动验证过的事实。主 agent 需要检查来源与局限；各自的源数据仍要用实际回执支撑。普通任务可以完全由主 agent 执行，界面不会为了展示多 agent 而创建空角色。</p>
+<h3 id="terminal-h7">子 agent 配置与资源上限</h3>
+<div class="code-wrap"><div class="code-head"><span>json</span><button class="copy" type="button">复制代码</button></div><pre><code>{
+  &quot;general&quot;: {
+    &quot;subagents&quot;: {
+      &quot;enabled&quot;: true,
+      &quot;max_parallel&quot;: 3,
+      &quot;max_children&quot;: 8
+    }
+  }
+}</code></pre></div>
+<p><code>flora</code> 交互入口默认启用。Python API 与显式 session 脚本只有配置 enabled 才启用。max_parallel 允许 1–4；max_children 允许 1–32，是整个会话累计可创建的子任务数量，已完成任务仍占名额。超过配额需复用已有 ID 或新开对话，不能通过失败重启退款。</p>
+<p>每个子 agent 的固定预算上限为 8 次模型调用、40 次工具调用、240,000 输入 token、96,000 输出 token、600 秒墙钟预算。每次模型输出上限取父配置与 12,000 中的较小值。未知用量沿用内核的保守预留计费规则。</p>
+<p>子任务预算与主任务分别记录，主任务 budget 数字不包含子任务消费。默认配置下子任务层最多为 8 份上述预算，外加父任务预算。输入 token 只能在服务返回计量后检查；这些限额不代表精确的货币账单硬上限。</p>
+<p>退出会请求子 agent 在边界暂停并等待已经开始的调用返回。恢复父会话时，上次留下的 queued/running 子任务标为 interrupted，不自动发起模型请求。<code>/resume-agent ID</code> 才继续，保持原预算和日志；若内核已提交完成但状态更新前进程结束，恢复从完成记录读取结果，不重跑该任务。</p>
+<h3 id="terminal-h8">脚本与 Python 集成</h3>
+<p>自动化脚本可使用显式 session 接口；其凭据来自配置指定的环境变量，不经过交互提示：</p>
+<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora agent &quot;读取附件并生成摘要&quot; --workspace ./workspace --session ./sessions/task --config profile.json --json
+flora agent --session ./sessions/task --status
+flora agent --session ./sessions/task --resume --json</code></pre></div>
+<p>这种由调用者管理路径的 session 不自动出现在目录索引的 <code>--resume</code> 列表中；用原来的 <code>--session</code> 路径打开。自动索引会话的完整路径可在 <code>/status</code> 中查看，也可以使用该路径进行离线状态检查。</p>
+<p>高级宿主可通过 <code>GeneralAgent(..., session_key=key)</code> 提供进程内凭据，或者继续使用 <code>api_key_env</code>。该参数不会写进 profile 或会话指纹。具体接口见 GeneralAgent API 章节。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/30-terminal.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="documents"><div class="chapter-label">05 / 通用 Agent</div><h2 id="documents-h1">文档、表格与报告</h2>
 <h3 id="documents-h2">准备工作目录</h3>
-<p>把任务需要的文件放入 <code>--workspace</code> 指定的目录，或通过 Web UI 上传。Flora 使用相对路径访问文件。<code>..</code>、绝对路径、符号链接、<code>.git</code>、<code>.flora</code> 和当前会话状态目录不可通过文件工具访问。</p>
+<p>把任务需要的文件放入当前工作目录，或用 <code>--workspace</code> 指定目录；交互时用 <code>/attach 路径</code> 附到下一条任务。Flora 使用相对路径访问文件。<code>..</code>、绝对路径、符号链接、<code>.git</code>、<code>.flora</code> 和当前会话状态目录不可通过文件工具访问。</p>
 <p>工作目录应只包含允许 Agent 读取或修改的任务材料。开启命令执行后，命令具有宿主用户权限，文件工具的路径检查不会约束任意命令。</p>
 <h3 id="documents-h3">支持的输入</h3>
 <div class="table-wrap"><table><thead><tr><th>输入</th><th>提取内容</th><th>说明</th></tr></thead><tbody>
@@ -225,7 +282,7 @@ flora agent --session ./sessions/research --resume</code></pre></div>
 <tr><td><code>.csv</code></td><td><code>.xlsx</code></td><td>单元格按文本写入，防止 CSV 字符串被解释为公式</td></tr>
 </tbody></table></div>
 <p>它不是完整 Markdown 排版引擎，不执行内嵌 HTML、脚本或宏，也不会复制任意图片。输出路径必须不存在。复杂数学排版、幻灯片或品牌模板可以通过自定义工具或 MCP 接入专门渲染器。</p>
-<p>导出会登记文件哈希，并在源文件仍匹配报告记录时继承其来源列表。<code>artifact_status</code> 检查当前文件是否仍与登记的版本相同。普通 write_file/replace_text 工具产生的文本文件也会登记为 file 类型，便于从界面下载；它们没有经过报告引用检查，不能单独满足 require_report。截图登记为 screenshot 类型，也不能单独满足这一门槛。Web UI 的下载入口只提供已经登记的成果文件。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/25-documents-research.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="generalconfig"><div class="chapter-label">05 / 通用 Agent</div><h2 id="generalconfig-h1">通用 Agent 配置参考</h2>
+<p>导出会登记文件哈希，并在源文件仍匹配报告记录时继承其来源列表。<code>artifact_status</code> 检查当前文件是否仍与登记的版本相同。普通 write_file/replace_text 工具产生的文本文件也会登记为 file 类型，便于在 <code>/artifacts</code> 查看；它们没有经过报告引用检查，不能单独满足 require_report。截图登记为 screenshot 类型，也不能单独满足这一门槛。生成文件保存在工作目录，终端会显示其相对路径。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/25-documents-research.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="generalconfig"><div class="chapter-label">06 / 通用 Agent</div><h2 id="generalconfig-h1">通用 Agent 配置参考</h2>
 <p>配置是严格 JSON，不允许重复键。顶层只接受 <code>provider</code>、<code>compiler</code>、<code>runtime</code>、<code>budget</code>、<code>general</code> 五个对象。未知字段不会被静默忽略。</p>
 <h3 id="generalconfig-h2">最小配置</h3>
 <div class="code-wrap"><div class="code-head"><span>json</span><button class="copy" type="button">复制代码</button></div><pre><code>{
@@ -236,19 +293,19 @@ flora agent --session ./sessions/research --resume</code></pre></div>
   }
 }</code></pre></div>
 <div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora agent &quot;任务文本&quot; --workspace ./workspace --session ./sessions/task --config profile.json</code></pre></div>
-<p>新会话的模型选择顺序为命令行参数、配置中的明确值、<code>FLORA_*</code> 环境变量、已保存的 <code>flora setup</code> 设置，再到默认服务地址。模型 ID 没有可用值时会报错。已有会话直接使用其保存的完整配置；不通过修改环境中的模型名称暗中切换。</p>
+<p>显式 <code>flora agent ... --session DIR</code> 脚本入口的模型选择顺序为命令行参数、配置中的明确值、<code>FLORA_*</code> 环境变量、已保存的 <code>flora setup</code> 设置，再到默认服务地址。模型 ID 没有可用值时会报错。已有会话直接使用其保存的完整配置；不通过修改环境中的模型名称暗中切换。</p>
 <h3 id="generalconfig-h3">provider</h3>
 <p>沿用内核的 Chat Completions 兼容 Provider，详见「模型编译器与 Provider」。常用字段如下：</p>
 <div class="table-wrap"><table><thead><tr><th>字段</th><th>含义</th></tr></thead><tbody>
 <tr><td><code>model</code></td><td>服务真实支持的模型 ID</td></tr>
 <tr><td><code>base_url</code></td><td>通常以 <code>/v1</code> 结尾的接口前缀</td></tr>
-<tr><td><code>api_key_env</code></td><td>密钥环境变量名；明确为 null 表示无认证服务</td></tr>
+<tr><td><code>api_key_env</code></td><td>密钥环境变量名；未提供进程内 session_key 时，null 表示无认证服务</td></tr>
 <tr><td><code>timeout</code></td><td>单次模型 HTTP 请求超时，单位秒</td></tr>
 <tr><td><code>max_tokens_parameter</code></td><td>服务支持的输出上限字段，通常为 <code>max_tokens</code></td></tr>
 <tr><td><code>request_options</code></td><td>服务特定的 JSON 模式、推理设置等附加参数</td></tr>
 <tr><td><code>allow_insecure_http</code></td><td>是否明确允许非 HTTPS 服务</td></tr>
 </tbody></table></div>
-<p>示例中永远不要填密钥值。服务只支持 HTTP 时，需要明确配置 <code>allow_insecure_http: true</code>。这不会自动开放网页工具的私有网络访问；模型端点与通用网页工具具有不同授权边界。</p>
+<p>示例中永远不要填密钥值。脚本服务只支持 HTTP 时，需要明确配置 <code>allow_insecure_http: true</code>；交互输入 HTTP 地址时会显示传输提示并设置该项。这不会自动开放网页工具的私有网络访问；模型端点与通用网页工具具有不同授权边界。</p>
 <h3 id="generalconfig-h4">compiler 与 runtime</h3>
 <p>通用入口默认每次编译最多输出 12,000 tokens，最多进行一次格式修复；其它编译器和运行时字段沿用内核默认值。一次修复也是实际模型调用，占用同一份预算。</p>
 <p>需要更多推理输出的服务可显式增加 <code>compiler.max_output_tokens</code>，同时保证 <code>budget.max_output_tokens</code> 足以容纳下一次完整预留。不要通过关闭语法校验来接受截断程序或不完整 JSON。</p>
@@ -263,7 +320,7 @@ flora agent --session ./sessions/research --resume</code></pre></div>
 <tr><td><code>max_wall_seconds</code></td><td>3600</td></tr>
 </tbody></table></div>
 <p>额度覆盖同一个持久会话的所有轮次，包括初次编译、格式修复与重编译。恢复不会退款。输出 tokens 在调用前预留；服务无法报告使用量时会保守计费。输入 tokens 的精确统计依赖服务返回的使用量，不声称在任意服务上具有完全准确的调用前额度判断。</p>
-<p>墙钟预算包含会话进程保持打开的时间，包括交互等待；进程关闭后的离线时间不计入。长时间使用 Web 界面时，请在新会话创建前设置合适的墙钟上限。预算是执行约束，不是后台自动续费或重置机制。</p>
+<p>墙钟预算包含会话进程保持打开的时间，包括交互等待；进程关闭后的离线时间不计入。长时间使用交互终端时，请在新会话创建前设置合适的墙钟上限。预算是执行约束，不是后台自动续费或重置机制。</p>
 <h3 id="generalconfig-h6">general</h3>
 <div class="table-wrap"><table><thead><tr><th>字段</th><th>默认值</th><th>含义</th></tr></thead><tbody>
 <tr><td><code>network</code></td><td>公网访问、25 秒、4 MiB、5 次重定向</td><td>网页与 HTTP 服务的网络边界</td></tr>
@@ -275,6 +332,7 @@ flora agent --session ./sessions/research --resume</code></pre></div>
 <tr><td><code>allow_commands</code></td><td>false</td><td>是否暴露宿主命令执行</td></tr>
 <tr><td><code>require_report</code></td><td>false</td><td>完成前是否要求本任务存在当前有效的登记成果</td></tr>
 <tr><td><code>instructions</code></td><td>空字符串</td><td>最多 32000 字符的应用工作说明</td></tr>
+<tr><td><code>subagents</code></td><td>API 默认关闭，终端默认开启</td><td>独立只读子 agent 的并行与会话配额，详见终端章节</td></tr>
 <tr><td><code>storage_bytes</code></td><td>268435456</td><td>来源库配额，16 MiB 至 1 GiB</td></tr>
 </tbody></table></div>
 <p><code>require_report</code> 是文件交付检查，不是任务正确性 oracle。它只要求本轮至少一个通过报告/导出工具登记的成果，且当前文件仍匹配登记哈希。复杂任务可通过 Python 自定义应用层增加自己的验收规则，但不能假装能验证未知外部事实。</p>
@@ -299,16 +357,17 @@ flora agent --session ./sessions/research --resume</code></pre></div>
 <div class="code-wrap"><div class="code-head"><span>json</span><button class="copy" type="button">复制代码</button></div><pre><code>{&quot;general&quot;: {&quot;search&quot;: {&quot;provider&quot;: &quot;searxng&quot;, &quot;base_url&quot;: &quot;https://search.example.org&quot;}}}</code></pre></div>
 <p>搜索还支持 <code>duckduckgo</code> 和 <code>disabled</code>。SearXNG 实例需要开启 JSON 输出。Brave/Tavily 的 <code>base_url</code> 如有设置，应为该搜索操作的完整 endpoint；SearXNG 的 <code>base_url</code> 是实例前缀。没有相应账号或密钥时，不会伪造搜索结果。</p>
 <h3 id="generalconfig-h9">常用命令</h3>
-<div class="table-wrap"><table><thead><tr><th>命令</th><th>用途</th></tr></thead><tbody>
-<tr><td><code>flora agent TASK --workspace DIR --session DIR</code></td><td>新任务</td></tr>
-<tr><td><code>flora agent --session DIR</code></td><td>打开交互终端</td></tr>
-<tr><td><code>flora agent --session DIR --resume</code></td><td>继续尚未完成的任务</td></tr>
-<tr><td><code>flora agent --session DIR --status</code></td><td>离线读取已持久化状态</td></tr>
-<tr><td><code>flora agent TASK ... --json</code></td><td>输出结构化结果</td></tr>
-<tr><td><code>flora serve --workspace DIR --session DIR --port 8765</code></td><td>启动本地 Web 服务</td></tr>
-<tr><td><code>flora serve --session DIR --port 0</code></td><td>使用系统分配的可用本地端口</td></tr>
-</tbody></table></div>
-<p>共同参数为 <code>--config</code>、<code>--model</code>、<code>--base-url</code>、<code>--api-key-env</code>、<code>--quiet</code>。<code>--resume</code>、<code>--status</code> 与新任务文本互斥。已有会话的配置变更会被拒绝；配置新任务时使用新的会话目录。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/26-general-configuration.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="integrations"><div class="chapter-label">06 / 通用 Agent</div><h2 id="integrations-h1">MCP、浏览器与外部系统</h2>
+<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora
+flora -C /path/to/workspace
+flora --resume
+flora --resume SESSION_ID
+flora --config /absolute/path/profile.json</code></pre></div>
+<p>交互启动每次都提示 Base URL、API Key 和 Model。新会话的提示输入覆盖 profile 中的 model 和 base_url；其余高级 provider 参数保留。会话恢复使用原配置，并验证输入地址和模型匹配。密钥只在内存中传给模型传输对象。</p>
+<p>脚本自动化可继续使用显式 session 参数：</p>
+<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora agent TASK --workspace DIR --session DIR --config profile.json --json
+flora agent --session DIR --resume --json
+flora agent --session DIR --status</code></pre></div>
+<p>脚本入口从 profile 指定的环境变量读取密钥。<code>--status</code> 不连接模型。日常自动会话和脚本管理会话的区别见「终端、会话与子 agent」。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/26-general-configuration.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="integrations"><div class="chapter-label">07 / 通用 Agent</div><h2 id="integrations-h1">MCP、浏览器与外部系统</h2>
 <h3 id="integrations-h2">MCP：接入业务工具</h3>
 <p>Flora 使用官方 MCP Python SDK 的 1.x 接口，依赖约束为 <code>mcp&gt;=1.30,&lt;2</code>。服务程序由你安装和配置，Flora 不自动下载或执行陌生服务。每个服务都需要明确的工具白名单。</p>
 <p>stdio 示例：</p>
@@ -400,10 +459,12 @@ flora agent --session ./sessions/research --resume</code></pre></div>
 <p>指定目录下的 Markdown 文件会组成固定目录。最多 100 个文件，每个最多 64 KiB；读取拒绝符号链接。<code>list_skills</code> 列出名称、摘要和哈希，<code>read_skill</code> 读取正文。</p>
 <p>内容在会话创建/重新打开时固定。修改指南后旧会话会拒绝静默继续，需要新建会话。指南是任务说明，不赋予新的网络、命令或业务权限，也不会执行其中的安装命令。仓库自带 <code>examples/skills/research.md</code> 作为可用指南示例。</p>
 <h3 id="integrations-h7">第三方组件</h3>
-<p>应用代码基于 Flora 的现有内核独立实现，没有移植 Hermes 或 Deep Agents 的源码。MCP SDK、Playwright、文档解析器作为正常依赖安装，保留各自发行包中的许可证。独立实现应用功能不意味着可以删除实际使用的第三方组件许可。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/27-general-integrations.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="generalops"><div class="chapter-label">07 / 通用 Agent</div><h2 id="generalops-h1">通用 Agent 运维与恢复</h2>
+<p>应用代码基于 Flora 的现有内核独立实现，没有移植 Hermes 或 Deep Agents 的源码。MCP SDK、Playwright、文档解析器作为正常依赖安装，保留各自发行包中的许可证。独立实现应用功能不意味着可以删除实际使用的第三方组件许可。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/27-general-integrations.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="generalops"><div class="chapter-label">08 / 通用 Agent</div><h2 id="generalops-h1">通用 Agent 运维与恢复</h2>
 <h3 id="generalops-h2">会话目录</h3>
-<p>每个会话由一个进程独占。CLI 和 Web 服务不能同时打开同一会话执行任务。状态读取命令是例外，它只读取已持久化快照。</p>
+<p>每个会话由一个进程独占。两个 CLI 或 Python 进程不能同时打开同一会话执行任务。状态读取命令是例外，它只读取已持久化快照。</p>
 <div class="table-wrap"><table><thead><tr><th>内容</th><th>用途</th></tr></thead><tbody>
+<tr><td><code>terminal.json</code></td><td>自动会话 ID、目录归属、标题和时间</td></tr>
+<tr><td><code>subagents/</code></td><td>子任务登记表、独立内核日志和结果</td></tr>
 <tr><td><code>general.json</code></td><td>工作目录、非敏感配置、skill 内容指纹</td></tr>
 <tr><td><code>task.json</code></td><td>当前应用任务标识与原始任务文本</td></tr>
 <tr><td><code>result.json</code></td><td>最近一次运行结果与成果记录</td></tr>
@@ -412,7 +473,7 @@ flora agent --session ./sessions/research --resume</code></pre></div>
 <tr><td><code>kernel/turn-*.sqlite</code></td><td>每一轮的效果日志和检查点</td></tr>
 </tbody></table></div>
 <p>不要把会话目录提交到源码仓库。来源与任务记录可能包含业务文档内容，即使配置没有密钥也不代表整个会话不敏感。示例建议把 <code>workspace</code> 与 <code>sessions</code> 分开。</p>
-<p>界面事件最多保留最近 2000 条，界面最多显示最近 150 条。事件接口会报告前面的记录是否已被裁减。该活动列表是进度视图，不替代内核效果日志。跨轮对话使用内核的有界精确历史，默认最多 32 轮、64 KiB，并明确记录省略数量，不把丢弃内容伪装成“长期完整记忆”。</p>
+<p>应用事件最多保留最近 2000 条；终端执行区域展示当前阶段和独立子 agent 状态。事件接口会报告前面的记录是否已被裁减。该活动列表是进度视图，不替代内核效果日志。跨轮对话使用内核的有界精确历史，默认最多 32 轮、64 KiB，并明确记录省略数量，不把丢弃内容伪装成“长期完整记忆”。</p>
 <p>备份时停止当前进程，再复制会话目录和工作目录。不要只复制单个 SQLite 主文件而遗漏仍存在的 WAL；不要在模型执行期间把不一致的文件快照当成可靠备份。</p>
 <h3 id="generalops-h3">状态解释</h3>
 <div class="table-wrap"><table><thead><tr><th>状态</th><th>含义与处理</th></tr></thead><tbody>
@@ -423,7 +484,7 @@ flora agent --session ./sessions/research --resume</code></pre></div>
 <tr><td><code>interrupted_unknown</code></td><td>已派发操作的最终结果不能确定；先核对真实外部状态</td></tr>
 <tr><td><code>incomplete</code></td><td>运行步骤等边界使任务尚未完成；查看 reason 和轨迹</td></tr>
 </tbody></table></div>
-<p>CLI 单次任务完成返回 0，未完成返回 2；配置/输入错误沿用顶层 CLI 的错误码。Web 界面会保留最后结果、错误提示和继续入口，不把 HTTP 请求已受理当作任务已完成。</p>
+<p>CLI 单次任务完成返回 0，未完成返回 2；配置/输入错误沿用顶层 CLI 的错误码。交互终端显示实际任务状态和错误提示，不把工具已派发当作任务已完成。</p>
 <h3 id="generalops-h4">未知结果不能当作失败重试</h3>
 <p>例如，服务器已经创建订单，但返回连接中断。此时“没有收到结果”不等于“没有创建”。Flora 会把这种动作记为未知并阻止后续效果，不自动再创建一次。</p>
 <p>处理流程：</p>
@@ -435,16 +496,15 @@ flora agent --session ./sessions/research --resume</code></pre></div>
 </ol>
 <p><code>outcome.json</code> 必须符合对应工具的实际结果 envelope，完整格式见「事件存储、恢复与重放」与 CLI <code>resolve --help</code>。不要根据猜测生成成功结果，不要编辑数据库来删掉待定事件。一般模型网络错误属于编译失败和计费不确定，不会凭空制造一个成功工具回执。</p>
 <h3 id="generalops-h5">暂停、退出与进程异常</h3>
-<p>Web Pause 在下一次 <code>action_selected</code> 事件处生效，发生在效果日志开始和工具派发之前。它不会强杀正在进行的支付、写入或浏览器点击，也不会把客户端中断当作取消了服务器操作。若程序先完成，任务可能直接完成而不是暂停。</p>
-<p>关闭 Web 服务时会请求暂停并等待当前工作线程结束。模型和网络适配器有自己的超时；极端情况下，应通过宿主进程管理器处理进程并在重开后检查日志。强制结束进程可能留下未知结果，必须按上述流程恢复。</p>
+<p>运行时按 Ctrl+C，在下一次 <code>action_selected</code> 事件处生效，发生在效果日志开始和工具派发之前。它不会强杀正在进行的支付、写入或浏览器点击，也不会把客户端中断当作取消了服务器操作。若程序先完成，任务可能直接完成而不是暂停。</p>
+<p>退出交互终端时会请求暂停独立子 agent，并等待已开始的调用返回。模型和网络适配器有自己的超时；极端情况下，应通过宿主进程管理器处理进程并在重开后检查日志。强制结束进程可能留下未知结果，必须按上述流程恢复。</p>
 <p>恢复保留真实效果和累计预算；相同的已结算效果由检查点消费，不重新执行。MCP 与浏览器等外部状态不在本地检查点中，重新打开客户端不会恢复旧世界。</p>
-<h3 id="generalops-h6">本地 Web 服务边界</h3>
-<p>服务只绑定 <code>127.0.0.1</code>，每次启动生成随机令牌。API 请求需要 Authorization，另检查 Host 和 Origin；响应不启用跨站 CORS。正文与上传有大小上限，下载只能访问登记成果，动态页面文本用 textContent 插入。</p>
-<p>它是单用户本地应用，不是带组织权限、多租户隔离、公网登录、HTTPS 终止和审计平台的托管服务。不要直接做公网端口转发。需要共享部署时，应由你控制的身份网关、容器和网络边界承接这些职责，并进行独立部署评审。</p>
+<h3 id="generalops-h6">终端与工作环境</h3>
+<p>Flora 是本地单用户终端应用，不提供托管登录或多租户隔离。任务输入、工具输出与文件名在终端显示前过滤控制字符；这不等于对工具内容的事实正确性做了验证。独立子 agent 的权限、预算和恢复方式见「终端、会话与子 agent」。</p>
 <p>工具可访问的文档、网页、MCP 返回内容都可能包含提示注入。Flora 的工作说明要求把它们视为数据，确定性的权限边界限制可调用工具与路径；这不意味着能彻底解决模型层面的提示注入。重要外部写操作应使用最小的业务权限和服务自身的幂等机制。</p>
 <h3 id="generalops-h7">常见问题</h3>
 <h4 id="generalops-h8">缺少模型或密钥</h4>
-<p>配置模型 ID，并设置 <code>api_key_env</code> 指向的环境变量。已有会话重开不需要再次指定模型配置，但环境中的密钥仍需可用。<code>--status</code> 不需要模型或工具在线。</p>
+<p>交互入口每次输入 Base URL、API Key 和 Model；恢复时保持原地址与模型。脚本入口设置 <code>api_key_env</code> 指向的环境变量。<code>--status</code> 不需要模型或工具在线。</p>
 <h4 id="generalops-h9">输出不是严格 JSON / 内部程序不合法</h4>
 <p>这属于模型编译阶段，不会执行那段无效程序。最多一次格式修复已在预算中计费。检查模型是否支持结构化输出、输出是否被截断、推理 tokens 是否占满输出上限。如果模型给出与真实轨迹不同的证据指纹，内核会拒绝该程序，通用入口返回 needs_program；它不会替模型改写指纹或退款，显式 resume 才会按当前真实上下文重新编译。不要无限增加自动重试，也不要删除语法检查来“通过”。</p>
 <h4 id="generalops-h10">搜索被限流或挑战</h4>
@@ -460,7 +520,7 @@ flora agent --session ./sessions/research --resume</code></pre></div>
 <h4 id="generalops-h15">浏览器启动失败</h4>
 <p>确认 Playwright Python 包和对应 Chromium 版本已安装、系统库齐全、宿主允许浏览器子进程运行。先在目标环境运行一个简单 Playwright 页面测试，再启动 Flora 浏览器工具。当前环境的适配器测试不能替代目标机器上的浏览器运行检查。</p>
 <h3 id="generalops-h16">验证边界</h3>
-<p>确定性回归、协议夹具、真实模型任务和真实公网/浏览器交互是不同类别。查看 <code>general-agent</code> 分支的 <code>reports/GENERAL_VALIDATION.md</code> 获取执行环境、逐类结果与未验证项。通过几项任务不等于在所有模型、所有网站上具有统一成功率，也不等于完成了生产安全审计或并发压力测试。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/28-general-operations.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="generalapi"><div class="chapter-label">08 / 通用 Agent</div><h2 id="generalapi-h1">GeneralAgent API 与本地 HTTP</h2>
+<p>确定性回归、协议夹具、真实模型任务和真实公网/浏览器交互是不同类别。查看 <code>general-agent</code> 分支的 <code>reports/TERMINAL_VALIDATION.md</code> 和 <code>reports/GENERAL_VALIDATION.md</code> 获取执行环境、逐类结果与未验证项。通过几项任务不等于在所有模型、所有网站上具有统一成功率，也不等于完成了生产安全审计或并发压力测试。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/28-general-operations.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="generalapi"><div class="chapter-label">09 / 通用 Agent</div><h2 id="generalapi-h1">GeneralAgent API</h2>
 <h3 id="generalapi-h2">构造 GeneralAgent</h3>
 <div class="code-wrap"><div class="code-head"><span>python network</span><button class="copy" type="button">复制代码</button></div><pre><code>from pathlib import Path
 from flora.general import GeneralAgent
@@ -486,6 +546,7 @@ with GeneralAgent(workspace=&quot;workspace&quot;, session_dir=&quot;sessions/re
 <tr><td><code>workspace</code></td><td>新会话必填；必须已存在；已有会话可省略</td></tr>
 <tr><td><code>profile</code></td><td>五个配置对象；已有会话省略时使用已保存配置</td></tr>
 <tr><td><code>provider</code></td><td>可选自定义 Provider；实现内核 complete 协议，不与 provider 配置混用</td></tr>
+<tr><td><code>session_key</code></td><td>可选进程内 API Key；兼容 provider 使用，不保存到 profile 或环境变量</td></tr>
 <tr><td><code>on_event</code></td><td>接收实际运行事件的回调；普通观察者异常不改变工具结果</td></tr>
 </tbody></table></div>
 <p>GeneralAgent 管理来源库、技能目录、MCP/浏览器生命周期与应用交付检查。任务仍调用原来的 <code>Agent.run()</code> / <code>Agent.resume()</code>，使用同一套编译器、调度器、效果日志、合约与复用库。</p>
@@ -528,24 +589,11 @@ with GeneralAgent(session_dir=&quot;sessions/research&quot;) as agent:
 <p><code>agent.store.read_source(&quot;src-000001&quot;, offset=0, limit=6000)</code> 返回内容窗口。</p>
 <p><code>agent.store.events(after=0)</code> 返回最多 200 条事件，带下一游标和历史裁减标志。事件 ID 单调递增，但它不是内核 trace 的 event_id，不能拿 UI 事件编号去解析效果日志。</p>
 <p>普通 Python 用户应优先通过 Agent 执行工具。直接调用 <code>agent.documents</code>、<code>agent.web</code> 等宿主适配器会绕过内核的效果日志；它们可用于宿主集成或调试，但不要把这种直接调用记录当作模型执行轨迹。</p>
-<h3 id="generalapi-h5">本地 HTTP 接口</h3>
-<p><code>flora serve</code> 使用与 Python API 相同的 GeneralAgent。API 是单用户、本地认证协议，根页面外的请求需要：</p>
-<div class="code-wrap"><div class="code-head"><span>text</span><button class="copy" type="button">复制代码</button></div><pre><code>Authorization: Bearer &lt;终端链接中的随机令牌&gt;</code></pre></div>
-<div class="table-wrap"><table><thead><tr><th>方法与路径</th><th>参数 / 结果</th></tr></thead><tbody>
-<tr><td><code>GET /</code></td><td>返回应用页面</td></tr>
-<tr><td><code>GET /api/status</code></td><td>当前状态、busy、最近结果和错误</td></tr>
-<tr><td><code>GET /api/events?after=0</code></td><td>活动事件分页</td></tr>
-<tr><td><code>GET /api/sources?offset=0</code></td><td>来源元数据分页</td></tr>
-<tr><td><code>GET /api/source?id=src-000001&amp;offset=0</code></td><td>来源内容窗口</td></tr>
-<tr><td><code>GET /api/artifacts</code></td><td>成果与哈希检查</td></tr>
-<tr><td><code>GET /api/download?path=report.md</code></td><td>下载已经登记的成果</td></tr>
-<tr><td><code>POST /api/task</code></td><td>JSON <code>{&quot;task&quot;:&quot;任务&quot;}</code>；返回 202 表示受理</td></tr>
-<tr><td><code>POST /api/resume</code></td><td>JSON <code>{}</code>；继续未完成任务</td></tr>
-<tr><td><code>POST /api/pause</code></td><td>JSON <code>{}</code>；请求下一边界暂停</td></tr>
-<tr><td><code>POST /api/upload?name=notes.pdf</code></td><td>原始文件字节；返回新文件相对路径与哈希</td></tr>
-</tbody></table></div>
-<p>上传不是 multipart，需发送准确 Content-Length；最多 8 MiB。一般 JSON 请求最多 256 KiB。不支持 chunked 请求正文。下载的 <code>Content-Disposition</code> 使用 UTF-8 文件名。POST 受理不等于业务完成，应轮询 status/events。</p>
-<p>API 不提供任意 shell、跨目录下载、凭据读取或扩大配置权限的接口。关闭服务的能力保留在启动该服务的宿主终端。</p>
+<h3 id="generalapi-h5">子 agent 接口</h3>
+<p>在 profile 的 general.subagents 中启用后，主 agent 获得 <code>spawn_agent</code>、<code>agent_status</code>、<code>wait_agents</code>、<code>read_agent</code>、<code>resume_agent</code> 工具。它们通过正常内核效果边界调用，每个子任务建立独立的内核会话。</p>
+<p><code>on_event</code> 还会收到 <code>subagent_spawned</code>、<code>subagent_status</code>、<code>subagent_event</code>。子事件包含 agent_id 与 name，subagent_event 的 event 字段是该子内核的真实事件。界面不能把 candidate ID 当作独立 agent ID。</p>
+<p>使用默认兼容 provider 时，各子 agent 建立独立传输对象。自定义 provider 若启用并行子 agent，宿主提供的 complete 实现必须支持并发调用；该自定义对象会被共享。</p>
+<p>宿主可读取 <code>agent.delegation.agent_status()</code> 获取子任务列表；不要在模型执行过程中从旁路同时发起修改性宿主调用。完成条件会阻止主 agent 在仍有 queued/running 子任务时提前结束。子任务失败不会被伪装成成功；应检查每项 status 和实际 result。</p>
 <h3 id="generalapi-h6">工具 Schema 与实现位置</h3>
 <div class="table-wrap"><table><thead><tr><th>文件</th><th>职责</th></tr></thead><tbody>
 <tr><td><code>general/agent.py</code></td><td>会话、工具组合、交付门槛、内核调用</td></tr>
@@ -558,10 +606,12 @@ with GeneralAgent(session_dir=&quot;sessions/research&quot;) as agent:
 <tr><td><code>general/browser.py</code></td><td>浏览器生命周期与临时引用</td></tr>
 <tr><td><code>general/skills.py</code></td><td>明确安装的工作指南</td></tr>
 <tr><td><code>general/schemas.py</code></td><td>将参数上限与结构完整公开给编译器</td></tr>
-<tr><td><code>general/cli.py</code>、<code>general/server.py</code></td><td>终端与本地 HTTP 入口</td></tr>
-<tr><td><code>general/static/app.html</code></td><td>无外部前端构建依赖的 Web 应用</td></tr>
+<tr><td><code>terminal/cli.py</code>、<code>terminal/ui.py</code></td><td>交互命令行、任务执行视图</td></tr>
+<tr><td><code>terminal/sessions.py</code>、<code>terminal/connection.py</code></td><td>目录会话索引与凭据引导</td></tr>
+<tr><td><code>general/delegation.py</code></td><td>独立只读子 agent 的并行、预算与恢复</td></tr>
+<tr><td><code>general/cli.py</code></td><td>显式 session 的脚本入口</td></tr>
 </tbody></table></div>
-<p>新增业务工具可以直接复用 <code>flora.Agent</code> 的普通函数或 ToolSpec 接口，并沿用同一内核；如果扩展 GeneralAgent 工具集，应同时更新会话身份、声明的 Schema、生命周期、超时和未知结果语义。不要只往界面加按钮而绕过效果日志。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/29-general-api.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="python"><div class="chapter-label">09 / 开始使用</div><h2 id="python-h1">Python 快速开始</h2>
+<p>新增业务工具可以直接复用 <code>flora.Agent</code> 的普通函数或 ToolSpec 接口，并沿用同一内核；如果扩展 GeneralAgent 工具集，应同时更新会话身份、声明的 Schema、生命周期、超时和未知结果语义。不要只往界面加按钮而绕过效果日志。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/29-general-api.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="python"><div class="chapter-label">10 / 开始使用</div><h2 id="python-h1">Python 快速开始</h2>
 <p>业务应用通常只需要 <code>Agent</code>、<code>invoke</code> 和普通 Python 函数。本章所有 <code>python network</code> 示例都会调用你配置的模型。先设置 <code>FLORA_MODEL</code> 与模型凭据；也可以在 <code>Agent(model=&quot;实际模型ID&quot;)</code> 中显式传入模型。</p>
 <h3 id="python-h2">最少代码：一次调用</h3>
 <div class="code-wrap"><div class="code-head"><span>python network</span><button class="copy" type="button">复制代码</button></div><pre><code>from flora import invoke
@@ -670,7 +720,7 @@ assert registry.call({&quot;tool&quot;: &quot;find_inventory&quot;, &quot;args&q
 <p>支持推断 <code>str</code>、<code>int</code>、<code>float</code>、<code>bool</code>、<code>list[T]</code>、<code>dict[str, T]</code>、<code>Optional[T]</code>、基础类型 union 和 <code>Literal</code>。缺少类型或暂不支持的类型注解不会触发任意代码求值，对应参数接受 JSON；需要更强约束时用 <code>@tool(input_schema=...)</code> 显式给出支持的 schema。</p>
 <p>是否必填取决于 Python 默认值。<code>x: str | None</code> 允许 null，但没有 <code>= None</code> 时仍是必填。默认值由真实函数应用，不会复制进公开工具 schema，以免意外暴露宿主默认凭据或其他敏感值。</p>
 <p>必填的位置专用参数与 <code>*args</code> 不适合 JSON 关键字调用，自动注册会拒绝。可选位置专用参数只能使用它自己的默认值。<code>**kwargs</code> 需要显式对象 schema。工具重名、无效名称以及 schema 与签名不匹配会在接入时被拒绝。</p>
-<p>同步和 <code>async def</code> 工具均可通过注册表使用。Agent 本身仍是同步接口；异步应用应将整次调用放入工作线程。同步工具须自行设置其网络或数据库超时；装饰器的 <code>timeout_seconds</code> 仅适用于 async 工具，不能抢占卡死的同步函数。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/18-python-quickstart.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="workspace"><div class="chapter-label">10 / 使用指南</div><h2 id="workspace-h1">处理工作目录中的文件</h2>
+<p>同步和 <code>async def</code> 工具均可通过注册表使用。Agent 本身仍是同步接口；异步应用应将整次调用放入工作线程。同步工具须自行设置其网络或数据库超时；装饰器的 <code>timeout_seconds</code> 仅适用于 async 工具，不能抢占卡死的同步函数。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/18-python-quickstart.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="workspace"><div class="chapter-label">11 / 使用指南</div><h2 id="workspace-h1">处理工作目录中的文件</h2>
 <p><code>workspace</code> 提供已经写好的文件工具，适合阅读项目、整理文档、修改代码等本地任务。只在你主动指定工作目录时注册；普通业务函数任务与 benchmark 接入不会默认增加文件或终端权限。</p>
 <h3 id="workspace-h2">从一个现有目录开始</h3>
 <div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora ask &quot;读取 README.md，检查错别字与启动说明，修改后给出摘要。&quot; \
@@ -731,7 +781,7 @@ with tempfile.TemporaryDirectory() as directory:
     assert observed[&quot;sha256&quot;] is not None</code></pre></div>
 <p>应用中再使用 <code>Agent(tools=tools, ...)</code> 即可。不要同时传入同名文件工具和 <code>workspace=</code>，否则会出现重复能力名称。手工构造工具包时，持久会话目录若位于工作目录内部，应通过 <code>protected_paths</code> 明确保护；高层 <code>workspace=</code> 路径会自动处理这一步。</p>
 <h3 id="workspace-h8">用于公平研究时</h3>
-<p>与 JAZ 在同一个环境比较时，只传入该环境原本公开的工具或 AgentEnvBridge，并保持任务、模型、预算与反馈协议一致。不要因新增的便捷 API 而额外打开 workspace 或命令能力。文件工具包用于用户主动选择的本地项目场景，不是增强 benchmark 权限的默认步骤。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/19-workspace.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="sessions"><div class="chapter-label">11 / 使用指南</div><h2 id="sessions-h1">会话、结果与恢复</h2>
+<p>与 JAZ 在同一个环境比较时，只传入该环境原本公开的工具或 AgentEnvBridge，并保持任务、模型、预算与反馈协议一致。不要因新增的便捷 API 而额外打开 workspace 或命令能力。文件工具包用于用户主动选择的本地项目场景，不是增强 benchmark 权限的默认步骤。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/19-workspace.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="sessions"><div class="chapter-label">12 / 使用指南</div><h2 id="sessions-h1">会话、结果与恢复</h2>
 <p>一次任务可以包含多次模型思考和多次工具调用。一个会话可以包含多轮任务。区分两者很重要：后续任务不是对未知工具结果的自动重试，重新打开会话也不是把外部环境回滚到旧状态。</p>
 <h3 id="sessions-h2">内存会话</h3>
 <p>不设置 <code>session_dir</code> 时，一个 Agent 在当前进程内保留会话历史与共享预算。退出进程或关闭实例后，不会得到自动恢复文件。<code>invoke</code> 使用一次性临时会话，适合单次任务；需要多轮上下文时保持同一个 Agent 对象。</p>
@@ -796,7 +846,7 @@ with Agent(budget_limits=limits) as agent:
 <p>两个任务共享上面的总额度。模型格式修复、根据工具结果重新思考、诊断动作均会消耗实际资源。恢复时预算不清零；持久预算的时间记录包含此前已保存的运行耗时，但不会把程序关闭期间的现实等待时间全部计作新的工作耗时。</p>
 <p>模型请求前预留最大输出 token；未知 usage 保守消耗预留值。输入 token 依服务返回的 usage 记账，没有供应商 tokenizer 时不能承诺每次请求前精确裁掉所有可能超出的输入 token。字节限额与模型上下文 token 限额是两种约束。</p>
 <h3 id="sessions-h9">资源关闭</h3>
-<p>推荐 <code>with Agent(...) as agent:</code>，也可在结束后显式调用 <code>close()</code>。关闭会话会释放框架持有的连接与锁，不会自动关闭你在自定义函数中创建的每一个业务客户端；这些资源仍由工具宿主管理。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/20-sessions.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="modelsetup"><div class="chapter-label">12 / 使用指南</div><h2 id="modelsetup-h1">模型配置与常见接入</h2>
+<p>推荐 <code>with Agent(...) as agent:</code>，也可在结束后显式调用 <code>close()</code>。关闭会话会释放框架持有的连接与锁，不会自动关闭你在自定义函数中创建的每一个业务客户端；这些资源仍由工具宿主管理。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/20-sessions.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="modelsetup"><div class="chapter-label">13 / 使用指南</div><h2 id="modelsetup-h1">模型配置与常见接入</h2>
 <p>Flora 自身不提供模型。你需要可访问的 Chat Completions 兼容服务，或用 Python 自定义 provider 接入已有后端。模型负责理解任务、生成内部程序，并在获得真实工具结果后按需再次思考；执行、预算和持久化由运行时管理。</p>
 <h3 id="modelsetup-h2">CLI 配置的优先级</h3>
 <p>从高到低为：命令行显式参数、<code>--config</code> 中显式配置的字段、<code>FLORA_*</code> 环境变量、<code>setup</code> 保存的设置、默认 endpoint 与凭据变量名称。模型 ID 必须由前面某种方式提供。</p>
@@ -885,7 +935,7 @@ with Agent(
 <tr><td>模型返回无法编译</td><td>模型是否具备足够指令遵循和程序生成能力；查看受限修复报告</td></tr>
 <tr><td>输出预算预留不足</td><td>每次输出上限与会话总剩余额度是否匹配</td></tr>
 </tbody></table></div>
-<p>错误信息不回显原始 HTTP 错误正文或密钥。网络失败没有隐含自动重试；格式错误最多一次受预算约束的修复。发布包验证可用本地 HTTP fixture 检查协议与完整执行链，但这种测试不能证明某个真实模型的任务表现，实际验证记录见代码分支的 reports/VALIDATION.md。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/21-model-setup.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="coding"><div class="chapter-label">13 / 使用指南</div><h2 id="coding-h1">Flora Coding Agent</h2>
+<p>错误信息不回显原始 HTTP 错误正文或密钥。网络失败没有隐含自动重试；格式错误最多一次受预算约束的修复。发布包验证可用本地 HTTP fixture 检查协议与完整执行链，但这种测试不能证明某个真实模型的任务表现，实际验证记录见代码分支的 reports/VALIDATION.md。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/21-model-setup.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="coding"><div class="chapter-label">14 / 使用指南</div><h2 id="coding-h1">Flora Coding Agent</h2>
 <p>给 Flora 一个代码仓库、一个自然语言任务和一条测试命令。它会在独立的 Git worktree 中读取代码、修改文件、运行测试并生成补丁。你不需要编写内部程序。</p>
 <h3 id="coding-h2">完成第一个编码任务</h3>
 <p>准备 Python 3.11+、Git 和 POSIX 环境；Windows 使用 WSL。先按安装章节从 <code>coding-agent</code> 分支安装 Flora 并配置模型。目标仓库必须已经有提交，且没有未提交的修改或未忽略的新文件。</p>
@@ -1010,7 +1060,7 @@ with CodingAgent(
 <p>结束使用时，先确认修改已经保存或应用。可用 <code>git -C ./my-project worktree list</code> 查看检出；不要直接删除还需要的会话。清理脏 worktree 需要 Git 的强制删除选项，Flora 不会自动替你执行这类丢弃修改的操作。</p>
 <h3 id="coding-h12">已验证的范围</h3>
 <p>公开仓库编码验收基于固定的 more-itertools 提交，包含 6 项植入回归和 2 项新 API 要求。8 项任务首次完整通过 3 项；每个失败任务最多一次显式恢复后，完整通过 4 项。6 项补丁通过外部检查，但其中有任务仍因模型输出或预算问题无法完成，不能按 6 项完整成功解释。</p>
-<p><a href="https://github.com/wongzbb/Flora/blob/coding-agent/reports/REPOSITORY_EVALUATION.md">完整验收报告</a>包含任务设计、逐项失败原因、用量与限制。这是开发验收集，不是官方 benchmark，也没有证明双重控制或合约带来统计性能增益。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/23-coding-agent.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="troubleshooting"><div class="chapter-label">14 / 使用指南</div><h2 id="troubleshooting-h1">排错与限制</h2>
+<p><a href="https://github.com/wongzbb/Flora/blob/coding-agent/reports/REPOSITORY_EVALUATION.md">完整验收报告</a>包含任务设计、逐项失败原因、用量与限制。这是开发验收集，不是官方 benchmark，也没有证明双重控制或合约带来统计性能增益。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/23-coding-agent.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="troubleshooting"><div class="chapter-label">15 / 使用指南</div><h2 id="troubleshooting-h1">排错与限制</h2>
 <p>定位故障时先确定它位于哪一层：安装与导入、静态 IR、纯 VM、工具效果、模型传输、预算、历史锚点或合约关系。不要把所有错误归为“模型不够聪明”。</p>
 <h3 id="troubleshooting-h2">先检查直接使用入口</h3>
 <div class="table-wrap"><table><thead><tr><th>现象</th><th>处理</th></tr></thead><tbody>
@@ -1069,7 +1119,7 @@ with CodingAgent(
 <li>官方 AppWorld / StuLife 数据与已经取得的性能优势。</li>
 <li>所有供应商协议、完整 JSON Schema、任意对象的跨进程序列化。</li>
 </ul>
-<p>这些边界不影响已实现机制的运行；它们决定如何诚实解释执行结果，以及未来扩展需要新增哪些明确接口。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/15-troubleshooting.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="operations"><div class="chapter-label">15 / 使用指南</div><h2 id="operations-h1">部署、预算与可观测性</h2>
+<p>这些边界不影响已实现机制的运行；它们决定如何诚实解释执行结果，以及未来扩展需要新增哪些明确接口。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/15-troubleshooting.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="operations"><div class="chapter-label">16 / 使用指南</div><h2 id="operations-h1">部署、预算与可观测性</h2>
 <p>Flora 的核心是同步、单真实轨迹执行内核。多个任务可以由宿主服务分配到独立 runtime；同一个 Runtime 实例一次只允许一个 run。宿主工具是可信 Python 代码，解释器约束不能替代业务权限和进程隔离。</p>
 <h3 id="operations-h2">最小部署形态</h3>
 <p>本地验证使用一个 Python 进程、内存工具和 <code>MemoryTrace</code>。需要保留真实运行状态时，为每个任务使用独立 SQLite trace，并保留工具适配器版本、运行配置、模型 ID 和运行结果。</p>
@@ -1111,7 +1161,7 @@ print(budget.to_dict())</code></pre></div>
 <p>不要直接编辑生产 trace 数据库来修复状态。使用明确 resolution 记录已核实的结果；无法迁移的旧程序可以作为参考输入重新编译，但真实事件历史不能被抹除。</p>
 <h3 id="operations-h8">交付验证怎样理解</h3>
 <p>交付报告记录实际运行的测试、环境与结果。离线 provider 测试使用本地受控 HTTP 服务，不构成对所有供应商兼容性的证明。离线工作流运行真实 IR、效果执行器和事件记录，但不是隐藏 benchmark 任务。</p>
-<p>生产部署前的关键检查应围绕具体工具：权限是否正确、远端 timeout 是否设置、写入是否有幂等策略、审计能否核实中断效果、敏感返回能否持久化。无需给没有写权限的纯演示增加形式化审批流程。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/13-operations.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="configuration"><div class="chapter-label">16 / 开发者参考</div><h2 id="configuration-h1">配置与命令行</h2>
+<p>生产部署前的关键检查应围绕具体工具：权限是否正确、远端 timeout 是否设置、写入是否有幂等策略、审计能否核实中断效果、敏感返回能否持久化。无需给没有写权限的纯演示增加形式化审批流程。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/13-operations.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="configuration"><div class="chapter-label">17 / 开发者参考</div><h2 id="configuration-h1">配置与命令行</h2>
 <p>CLI 是 Python API 的薄入口。所有执行仍经过相同校验、预算、事件记录与效果边界。可以用 <code>flora</code> 或 <code>python -m flora</code>；后者便于确认使用当前虚拟环境的解释器。</p>
 <h3 id="configuration-h2">直接使用命令</h3>
 <div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora setup --model YOUR_MODEL_ID
@@ -1263,7 +1313,7 @@ python -m flora contracts contracts.json --program program.json --relation DEFIN
 <p><code>--outcome</code> 是已核实的状态信封文件，而不是字符串内联 JSON。例如 returned 需要 status 与 value。只允许解决已有 pending 或 interrupted_unknown；不会再次调用原工具，也不会把任务回滚。reason 必须说明真实核实依据，不能填写期待结果来继续运行。</p>
 <h3 id="configuration-h15">退出码</h3>
 <p>CLI 解析或执行错误返回 2，并把简短 JSON 错误写到 stderr。正常完成与纯分析命令通常返回 0。run/demo 的 budget_exhausted、needs_program、incomplete、interrupted_unknown 返回 2。</p>
-<p>replay 即使输出 diverged 或 exhausted 也可以返回 0，因为分析操作本身成功；自动化脚本必须同时检查 JSON status，不能仅依赖进程退出码判断任务成功。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/11-configuration.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="api"><div class="chapter-label">17 / 开发者参考</div><h2 id="api-h1">Python API 索引</h2>
+<p>replay 即使输出 diverged 或 exhausted 也可以返回 0，因为分析操作本身成功；自动化脚本必须同时检查 JSON status，不能仅依赖进程退出码判断任务成功。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/11-configuration.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="api"><div class="chapter-label">18 / 开发者参考</div><h2 id="api-h1">Python API 索引</h2>
 <p>常用入口从包根导入：<code>Agent</code>、<code>invoke</code>、<code>AgentRunError</code>、<code>tool</code> 和 <code>make_registry</code>。内部组件使用 <code>flora.&lt;module&gt;</code>。本章列出主要接口，完整输入格式见对应专题。</p>
 <h3 id="api-h2">直接使用 API</h3>
 <div class="table-wrap"><table><thead><tr><th>接口</th><th>参数与结果</th></tr></thead><tbody>
@@ -1390,7 +1440,7 @@ assert runtime.trace.epoch == 0</code></pre></div>
 <p><code>resources.ResourceLimitExceeded</code> 是 BudgetExceeded 子类，保留 resource、limit 与可得的 required 字节数。<code>encoded_size()</code> 计算规范 JSON 字节，<code>retain_newest()</code> 只适用于可替换的可选记录，禁止用它裁剪真实 journal。<code>ContractStore.trim_bytes(max_bytes)</code> 整条移除最旧见证并返回保留统计。</p>
 <h3 id="api-h15">严格 JSON 与异常</h3>
 <p><code>values.canonical_json(value)</code> 产生排序、无多余空格的严格 JSON；<code>digest(value)</code> 为其 SHA256；<code>clone(value)</code> 复制并校验；<code>bounded_clone(value, max_bytes)</code> 增加指定字节界限。</p>
-<p>异常基类为 <code>FloraError</code>。常用子类：<code>ValidationError</code>、<code>MachineStateError</code>、<code>BudgetExceeded</code>、<code>StaleAnchor</code>、<code>InterruptedEffect</code>、<code>CompilerError</code>、<code>TraceIntegrityError</code>；provider 的 <code>ProviderError</code> 是 CompilerError 子类。不要捕获所有异常后无条件重新提交工具。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/12-api.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="tools"><div class="chapter-label">18 / 开发者参考</div><h2 id="tools-h1">接入工具与业务系统</h2>
+<p>异常基类为 <code>FloraError</code>。常用子类：<code>ValidationError</code>、<code>MachineStateError</code>、<code>BudgetExceeded</code>、<code>StaleAnchor</code>、<code>InterruptedEffect</code>、<code>CompilerError</code>、<code>TraceIntegrityError</code>；provider 的 <code>ProviderError</code> 是 CompilerError 子类。不要捕获所有异常后无条件重新提交工具。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/12-api.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="tools"><div class="chapter-label">19 / 开发者参考</div><h2 id="tools-h1">接入工具与业务系统</h2>
 <p>工具是模型生成程序与宿主系统之间唯一受控的效果入口。IR 不能自行注册工具、导入模块或调用 Python 对象方法。普通使用时把函数交给 Agent 即可自动注册；本章介绍需要精确 schema、异步超时或不透明对象时的底层 <code>ToolSpec</code>。模型只看到名称、说明与参数 schema。</p>
 <h3 id="tools-h2">注册一个同步工具</h3>
 <div class="code-wrap"><div class="code-head"><span>python</span><button class="copy" type="button">复制代码</button></div><pre><code>from flora.tools import ToolRegistry, ToolSpec
@@ -1491,7 +1541,7 @@ assert store.stats()[&quot;persistence&quot;] == &quot;process_local&quot;</code
 <p>句柄数限制不等于对象占用内存上限。一个数据库连接或大对象可能持有大量宿主资源，适配器仍需负责关闭、释放与账户配额。</p>
 <p>同 token 只表示对象身份；它可能已被上一次工具调用修改。因此，不能把 token 相等推导为状态相等。合约谓词对句柄内容、元数据和涉及它的相等检查返回 UNKNOWN；SAME_BOUNDARY 与 SOURCE_FIDELITY 比较结果涉及句柄时也返回 UNKNOWN。普通 JSON 外壳中与句柄无关的已知字段仍可检查。</p>
 <h4 id="tools-h10">重启之后</h4>
-<p>SQLite 保存的是 carrier 引用，不保存宿主对象。进程或 store 丢失后，不能从日志重建原对象。需要通过原任务实际开放的工具重新取得对象，并产生新的真实事件，或者停止运行；本包不会自动重获、自动重试或偷偷恢复对象状态。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/04-tools.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="models"><div class="chapter-label">19 / 开发者参考</div><h2 id="models-h1">连接固定语言模型</h2>
+<p>SQLite 保存的是 carrier 引用，不保存宿主对象。进程或 store 丢失后，不能从日志重建原对象。需要通过原任务实际开放的工具重新取得对象，并产生新的真实事件，或者停止运行；本包不会自动重获、自动重试或偷偷恢复对象状态。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/04-tools.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="models"><div class="chapter-label">20 / 开发者参考</div><h2 id="models-h1">连接固定语言模型</h2>
 <p>模型在系统中承担“编译剩余任务”的角色，输出一个严格 JSON bundle。模型没有直接执行工具的接口。编译器将 bundle 交给 IR、工具名单、输入参数和历史锚点校验，只有通过后运行时才安装候选。</p>
 <h3 id="models-h2">使用兼容 HTTP 服务</h3>
 <div class="code-wrap"><div class="code-head"><span>python</span><button class="copy" type="button">复制代码</button></div><pre><code>from flora.budget import Budget, BudgetLimits
@@ -1512,7 +1562,7 @@ compiler = LLMCompiler(
     on_usage=budget.record_model_usage,
 )</code></pre></div>
 <p>上面只创建对象，不发送请求。将该编译器交给 Runtime 后，运行时会通过 <code>set_accounting()</code> 绑定自己的同一份预算与持久化回调；Standalone 编译调用则使用你显式设置的回调。将环境变量设为自己的密钥，并替换服务地址和模型 ID 后，才可实际编译。示例不声称任何供应商、模型或额度在当前环境中可用。</p>
-<p>provider 向 <code>{base_url}/chat/completions</code> 发送一个非流式请求。<code>base_url</code> 通常应包含 <code>/v1</code>，不要再包含 <code>/chat/completions</code>。密钥在每次请求时从指定环境变量读取，错误消息不输出原始 HTTP 错误正文或密钥。</p>
+<p>provider 向 <code>{base_url}/chat/completions</code> 发送一个非流式请求。<code>base_url</code> 通常应包含 <code>/v1</code>，不要再包含 <code>/chat/completions</code>。脚本密钥在每次请求时从指定环境变量读取；交互终端使用本次启动输入的进程内密钥，错误消息不输出原始 HTTP 错误正文或密钥。</p>
 <h3 id="models-h3">兼容服务的差异</h3>
 <p>默认输出 token 字段为 <code>max_completion_tokens</code>。使用只接受旧字段的兼容服务时：</p>
 <div class="code-wrap"><div class="code-head"><span>python</span><button class="copy" type="button">复制代码</button></div><pre><code>from flora.providers import OpenAICompatibleProvider
@@ -1577,7 +1627,7 @@ class MyProvider:
 <tr><td>compiler</td><td><code>max_context_bytes</code></td><td>256 KiB</td></tr>
 <tr><td>compiler</td><td><code>max_visible_receipts</code></td><td>64</td></tr>
 <tr><td>compiler</td><td><code>before_call</code>、<code>on_usage</code></td><td>无；生产使用应接入共享预算</td></tr>
-</tbody></table></div><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/05-models.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="architecture"><div class="chapter-label">20 / 研究与内部实现</div><h2 id="architecture-h1">执行架构与能力边界</h2>
+</tbody></table></div><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/05-models.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="architecture"><div class="chapter-label">21 / 研究与内部实现</div><h2 id="architecture-h1">执行架构与能力边界</h2>
 <p>Flora 是一个独立的 Python agent 运行时。固定语言模型生成受限制的程序；运行时在内部比较候选计算，只执行一条真实的外部轨迹；消费者检查为程序修改提供局部证据。它没有借用 JAZ 的解释器，没有 <code>realize</code> 包装层，也不训练模型权重。</p>
 <h3 id="architecture-h2">本版本交付什么</h3>
 <p>本版本包含独立 IR 与解释器、候选调度、显式工具效果、消费者合约、有限谓词规则综合、预测诊断、模型编译器、持久化事件记录、CLI、可运行离线示例和完整文档。核心运行依赖仅为 Python 标准库。模型接口使用可配置的 Chat Completions 风格 HTTP 请求；不绑定某个模型供应商。</p>
@@ -1604,7 +1654,7 @@ class MyProvider:
 <p>实际工具结果要求新的语言理解时，程序可以通过 <code>replan</code> 请求再次编译剩余任务。状态来自已实际运行的寄存器和真实观察；这一步消耗同一预算，不产生额外世界分支。默认正常候选的 replan 才驱动实际下一步编译，假想分支不能冒充模型已经理解了未知返回。</p>
 <p>阅读后续章节可以手工构造小型 IR 来检查具体语义，但这不是使用 Agent 的前置要求。低层 API 保留给运行时扩展、受控实验和故障诊断。</p>
 <h3 id="architecture-h6">版本承诺</h3>
-<p>Flora 是可运行、可检查的研究工程实现。测试通过说明指定检查在交付环境下通过，不等于分布式 exactly-once、任意第三方工具安全、形式化任务正确性或生产认证。真实模型任务性能需要在指定模型、任务和预算下另行测量。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/22-architecture.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="tutorials"><div class="chapter-label">21 / 研究与内部实现</div><h2 id="tutorials-h1">两个离线工作流</h2>
+<p>Flora 是可运行、可检查的研究工程实现。测试通过说明指定检查在交付环境下通过，不等于分布式 exactly-once、任意第三方工具安全、形式化任务正确性或生产认证。真实模型任务性能需要在指定模型、任务和预算下另行测量。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/22-architecture.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="tutorials"><div class="chapter-label">22 / 研究与内部实现</div><h2 id="tutorials-h1">两个离线工作流</h2>
 <p>本章所有 Python 示例都可以在已安装包的环境中直接运行，不请求语言模型。它们用人工编写的 IR 作为编译结果，专门验证执行语义。把确定性程序换成 LLMCompiler 后，使用的是同一个运行时。</p>
 <h3 id="tutorials-h2">教程一：日程诊断</h3>
 <p>任务是把事件 A 调整到事件 B 当前开始时间之后 30 分钟。旧观察支持 B=14:00，后来的消息支持 B=15:00。正常候选分别准备把 A 调到 14:30 或 15:30；诊断程序先读 B，再按实际返回计算 A。</p>
@@ -1699,7 +1749,7 @@ result = runtime.run(
 )
 assert result.value == [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]
 assert len(runtime.contracts.records) &gt; 0</code></pre></div>
-<p>自定义环境只需替换 registry；真实模型模式再提供 compiler。普通工具、预算和事件记录路径不会因编译器类型改变。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/02-tutorials.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="language"><div class="chapter-label">22 / 研究与内部实现</div><h2 id="language-h1">编写第一个 IR 程序</h2>
+<p>自定义环境只需替换 registry；真实模型模式再提供 compiler。普通工具、预算和事件记录路径不会因编译器类型改变。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/02-tutorials.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="language"><div class="chapter-label">23 / 研究与内部实现</div><h2 id="language-h1">编写第一个 IR 程序</h2>
 <p>本章供内部语言维护与研究实验使用；日常调用 Agent 无需手写本章格式。Flora 的语言是有版本的 JSON IR。它没有 Python <code>eval</code>、<code>exec</code>、导入、反射或隐式文件访问。JSON 是机器接口：生产环境中通常由模型编译器生成，开发者可以手工编写小程序来验证工具和运行语义。</p>
 <h3 id="language-h2">最小程序</h3>
 <p>下面的程序不调用工具，直接返回一个普通对象。</p>
@@ -1804,7 +1854,7 @@ assert second.value == {&quot;start&quot;: 900}</code></pre></div>
 <p><code>branch</code> 根据纯布尔条件选择块；<code>jump</code> 带着新的参数进入块。循环由回跳构成，并受每次纯运行的 fuel 限制。<code>call</code> 是内部程序调用，它用显式调用栈返回 <code>resume</code>，不产生真实工具事件。</p>
 <p><code>alternative</code> 在内部产生多个机器状态。它本身不复制环境，也不调用工具。运行时限制活跃候选数；候选达到效果边界之后，仍然只能提交一个真实动作。</p>
 <h3 id="language-h7">从手写到模型生成</h3>
-<p>手写 IR 适用于最小集成、故障定位和确定性工具流程。模型编译器接收相同的语言定义并输出相同的 JSON 结构。无论作者是人还是模型，都经过同一 <code>parse_program</code>、工具名单与运行时边界检查，不存在“模型代码可跳过校验”的路径。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/03-language.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="runtime"><div class="chapter-label">23 / 研究与内部实现</div><h2 id="runtime-h1">运行时与候选生命周期</h2>
+<p>手写 IR 适用于最小集成、故障定位和确定性工具流程。模型编译器接收相同的语言定义并输出相同的 JSON 结构。无论作者是人还是模型，都经过同一 <code>parse_program</code>、工具名单与运行时边界检查，不存在“模型代码可跳过校验”的路径。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/03-language.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="runtime"><div class="chapter-label">24 / 研究与内部实现</div><h2 id="runtime-h1">运行时与候选生命周期</h2>
 <p>运行时是连接纯程序、真实工具和证据记录的协调层。解释器只能提出请求；运行时判断是否在正确的历史位置提交，并保证程序不会因为内部比较而偷偷执行外部动作。</p>
 <h3 id="runtime-h2">候选与默认程序</h3>
 <p>一个编译 bundle 包含正常候选、默认候选和可选诊断。默认候选负责在没有有效诊断时推进任务。候选由固定模型提出，并不代表真实世界的概率分布。候选之间也可能共享同一个错误。</p>
@@ -1832,7 +1882,7 @@ assert second.value == {&quot;start&quot;: 900}</code></pre></div>
 <p><code>read_receipt</code> 与 <code>read_memory</code> 只读取宿主明确传入的视图。解释器不会枚举文件系统、浏览网络或读取模型供应商环境变量。需要这些行为，必须在任务权限内注册显式工具。</p>
 <h3 id="runtime-h8">正常结束与失败结束</h3>
 <p>一个 IR <code>return</code> 表示程序自己返回，不自动表示任务成功。成功指标来自任务原本提供的评估方式。运行结果应同时检查：运行是否完成、是否有未决外部效果、返回值是什么、消耗了多少预算，以及任务环境是否给出了成功反馈。</p>
-<p>普通工具异常可以成为程序处理的数据；预算耗尽、取消和无法确认效果状态的中断不能用普通“错误分支”绕过去重试。遇到状态未知应先核实已发生的真实动作。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/06-runtime.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="contracts"><div class="chapter-label">24 / 研究与内部实现</div><h2 id="contracts-h1">消费者合约与规则综合</h2>
+<p>普通工具异常可以成为程序处理的数据；预算耗尽、取消和无法确认效果状态的中断不能用普通“错误分支”绕过去重试。遇到状态未知应先核实已发生的真实动作。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/06-runtime.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="contracts"><div class="chapter-label">25 / 研究与内部实现</div><h2 id="contracts-h1">消费者合约与规则综合</h2>
 <p>消费者合约把“这段程序可以怎样复用”变成可执行的局部关系。它不是由模型自行签发的保证，也不把工具成功返回直接视为任务成功。</p>
 <h3 id="contracts-h2">三种已实现关系</h3>
 <div class="table-wrap"><table><thead><tr><th>关系</th><th>PASS 的含义</th><th>FAIL 的含义</th></tr></thead><tbody>
@@ -2005,7 +2055,7 @@ assert runtime.candidates[&quot;reader&quot;].machine.registers == {&quot;item&q
 assert len(runtime.reuse.variants) == 1</code></pre></div>
 <p>本教程用单步上限制造一个可检查的暂停点；它没有删除原始事件日志，也不声称已经降低整个系统的持久化体积。被压缩的是新消费者的程序状态。完整历史保留与否需要单独的数据保留策略，不得为了展示压缩而删掉用于审计的真实事件。</p>
 <p><code>PRESERVE</code> 要求保留上下文全部通过 SAME_BOUNDARY，且不能只挑最近一个成功案例。<code>EXTEND</code> 对旧程序可以正常运行的区域检查 SAME_BOUNDARY；对旧程序已有具体纯故障的区域改查 DEFINED_PREFIX，使修改能够修复失败输入。它没有证明所有未知新输入都正确。<code>CHANGE</code> 允许显式行为变化，但留下失败兼容见证，并把任务收益标为 <code>UNMEASURED</code>。三种方式都重新迁移当前真实状态并执行当前局部检查；历史样本通过不能替代当前检查。</p>
-<p>模型可在 bundle 的可选 <code>revisions</code> 数组提出同样的修改。要激活该修改，正常候选中的目标 ID 和程序必须与修订一致，输入来自经过检查的迁移；不能通过 bundle 里另填一份输入绕过保留关系。如果没有对应的新正常候选，则只记录修订提案。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/07-contracts.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="reuse"><div class="chapter-label">25 / 研究与内部实现</div><h2 id="reuse-h1">程序复用与条件路由</h2>
+<p>模型可在 bundle 的可选 <code>revisions</code> 数组提出同样的修改。要激活该修改，正常候选中的目标 ID 和程序必须与修订一致，输入来自经过检查的迁移；不能通过 bundle 里另填一份输入绕过保留关系。如果没有对应的新正常候选，则只记录修订提案。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/07-contracts.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="reuse"><div class="chapter-label">26 / 研究与内部实现</div><h2 id="reuse-h1">程序复用与条件路由</h2>
 <p>可复用组件不是一段脱离上下文的好代码。它必须说明：替换的是哪个消费者位置、旧状态如何迁移、什么条件下值得尝试，以及当前真实输入上的局部关系是否通过。</p>
 <p><code>ReuseLibrary</code> 实现这一流程。经验 guard 命中只是启动检查；迁移和当前消费者检查通过后，才会返回新的机器状态。整个过程不调用外部工具。</p>
 <h3 id="reuse-h2">一条复用项包含什么</h3>
@@ -2086,7 +2136,7 @@ assert any(r[&quot;kind&quot;] == &quot;reuse_checked&quot; and r[&quot;accepted
 <h3 id="reuse-h7">持久化与容量</h3>
 <p><code>ReuseLibrary(max_variants=64)</code> 最多接受 64 个变体。达到数量上限时淘汰最旧项，并累计 <code>dropped_variants</code>；存储另有 1 MiB 编码上限，接近上限时整条淘汰最旧项；单项本身无法装入时拒绝新登记。任务检查点本身还有更严格的整体大小限制。</p>
 <p><code>to_dict()</code> 和 <code>from_dict()</code> 保存、校验复用库。恢复会检查程序、迁移、scope、谓词、ID 冲突和容量；已保存的 guard 不能作为当前输入 PASS 的缓存。</p>
-<p>普通字段中的新值可以在同一个 scope 中再次检查。涉及不透明对象的状态关系、不匹配调用栈或没有对应观察的续行，仍必须保持未知或拒绝复用。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/17-reuse.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="diagnostics"><div class="chapter-label">26 / 研究与内部实现</div><h2 id="diagnostics-h1">预测、诊断与双重控制</h2>
+<p>普通字段中的新值可以在同一个 scope 中再次检查。涉及不透明对象的状态关系、不匹配调用栈或没有对应观察的续行，仍必须保持未知或拒绝复用。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/17-reuse.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="diagnostics"><div class="chapter-label">27 / 研究与内部实现</div><h2 id="diagnostics-h1">预测、诊断与双重控制</h2>
 <p>双重控制在这里指一个真实行动既推进任务，又为以后采用哪段程序提供信息。它不是两个 LLM 角色互相对话，也不是给模型加一个“信息增益”打分提示。</p>
 <h3 id="diagnostics-h2">诊断是带续行的程序</h3>
 <p>编译 bundle 中一个诊断包含以下字段：</p>
@@ -2147,7 +2197,7 @@ assert choose(frontiers, &quot;first&quot;, diagnostic_allowed=False) == &quot;f
 <p>实际返回超出全部预测时，保留这些失败或未知结果，并继续运行诊断自己的真实续行。不要把返回强制投到最接近的假想值。</p>
 <h3 id="diagnostics-h8">假想数据的隔离</h3>
 <p>假想 VM 状态保留 <code>mode=&quot;hypothetical&quot;</code>，效果执行器拒绝这种模式提交外部动作。诊断报告带有 <code>hypothetical: true</code> 和 <code>contract_evidence: false</code>。将假想计算输出作为观察写入真实 trace 是违反执行边界的行为。</p>
-<p>假想值能够说明“如果收到这个值，代码会怎样分支”，不能说明该值在环境中可达，也不能说明它有多大概率出现。这也是本版本分数被称为结构辨别指标的原因。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/08-diagnostics.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="persistence"><div class="chapter-label">27 / 研究与内部实现</div><h2 id="persistence-h1">事件存储、恢复与重放</h2>
+<p>假想值能够说明“如果收到这个值，代码会怎样分支”，不能说明该值在环境中可达，也不能说明它有多大概率出现。这也是本版本分数被称为结构辨别指标的原因。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/08-diagnostics.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="persistence"><div class="chapter-label">28 / 研究与内部实现</div><h2 id="persistence-h1">事件存储、恢复与重放</h2>
 <p>真实工具调用和程序内部计算必须分开保存。事件日志回答“宿主实际提交了什么、得到了什么”；机器检查点回答“程序准备从哪里继续”。两者的存在不提供环境回滚能力。</p>
 <h3 id="persistence-h2">内存与 SQLite</h3>
 <div class="code-wrap"><div class="code-head"><span>python</span><button class="copy" type="button">复制代码</button></div><pre><code>from flora.trace import MemoryTrace, SQLiteTrace
@@ -2267,7 +2317,7 @@ config = RuntimeConfig(
     max_reports_bytes=256 * 1024,
 )
 assert trace.export()[&quot;limits&quot;][&quot;max_journal_bytes&quot;] == 6 * 1024 * 1024</code></pre></div>
-<p>CLI 使用 trace 的默认存储上限；自定义 trace 上限通过 Python API 设置，不往仅有四个顶层对象的 CLI 配置中添加未支持的 storage 部分。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/09-persistence.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="reference"><div class="chapter-label">28 / 研究与内部实现</div><h2 id="reference-h1">IR 指令与表达式全集</h2>
+<p>CLI 使用 trace 的默认存储上限；自定义 trace 上限通过 Python API 设置，不往仅有四个顶层对象的 CLI 配置中添加未支持的 storage 部分。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/09-persistence.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="reference"><div class="chapter-label">29 / 研究与内部实现</div><h2 id="reference-h1">IR 指令与表达式全集</h2>
 <p>本章描述 IR version 1。JSON schema 文件可帮助编辑器提供提示；最终授权与语义校验以 <code>ir.parse_program()</code> 和运行时检查为准。通过 schema 不代表程序能完成任务。</p>
 <h3 id="reference-h2">静态结构限制</h3>
 <div class="table-wrap"><table><thead><tr><th>项</th><th>限制</th></tr></thead><tbody>
@@ -2352,7 +2402,7 @@ assert trace.export()[&quot;limits&quot;][&quot;max_journal_bytes&quot;] == 6 * 
 <p><code>new_machine(program, inputs=None, mode=&quot;observed&quot;)</code> 建立机器状态。<code>inputs</code> key 必须准确匹配入口参数。<code>mode</code> 只能为 observed、hypothetical 或 replay；模式不会在 <code>resume()</code> 时自动升级为 observed。</p>
 <p><code>run_until_boundary(machine, receipts=(), memory=None, fuel=50000, max_value_bytes=1048576)</code> 返回新状态，不修改传入机器。<code>Boundary.kind</code> 可以为 effect、return、fault、unknown、alternative、replan；按种类读取 <code>request</code>、<code>value</code>、<code>details</code> 或 <code>alternatives</code>。</p>
 <p><code>resume(machine, outcome)</code> 仅接受暂停于效果边界的机器。成功信封必须恰好包含 status 和 value；普通异常信封包含 status 及 error 的 type、message。<code>interrupted_unknown</code> 使机器进入未知状态，不通过用户代码隐藏重试。</p>
-<p><code>Machine.to_dict()</code> 与 <code>Machine.from_dict()</code> 用于完整机器序列化。恢复时验证块、寄存器、指令位置、续行帧和暂停请求是否一致，不能随便修改 pending 请求后继续执行。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/10-ir-reference.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="benchmarks"><div class="chapter-label">29 / 研究与内部实现</div><h2 id="benchmarks-h1">公平实验与消融</h2>
+<p><code>Machine.to_dict()</code> 与 <code>Machine.from_dict()</code> 用于完整机器序列化。恢复时验证块、寄存器、指令位置、续行帧和暂停请求是否一致，不能随便修改 pending 请求后继续执行。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/10-ir-reference.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="benchmarks"><div class="chapter-label">30 / 研究与内部实现</div><h2 id="benchmarks-h1">公平实验与消融</h2>
 <p>Flora 改变的是内部程序执行与修订机制，不是任务能观察到什么。研究对比必须先固定信息与预算边界，再讨论成功率。</p>
 <h3 id="benchmarks-h2">与基线保持一致的条件</h3>
 <div class="table-wrap"><table><thead><tr><th>条件</th><th>要求</th></tr></thead><tbody>
@@ -2485,7 +2535,7 @@ assert runtime.trace.epoch == 2
 assert env.done</code></pre></div>
 <p>带有必需 positional-only 参数的 callable 不能直接通过本桥接的 keyword JSON 传输，建立 bridge 时会拒绝。动态树只允许 1–32 个公开标识符，且终点必须可调用。动态树传输主要面向同步 keyword endpoint，不承诺任意对象方法和 async 叶节点都兼容。桥接器不会执行类型注解来猜出新工具约束。这些都是明确的传输限制，不能靠假设所有原工具都可适配而忽略。</p>
 <h3 id="benchmarks-h13">直接使用接口不改变实验能力</h3>
-<p>Flora 的 Agent 与普通函数注册只是接入层。与 JAZ 对齐实验时，使用原环境公开工具、任务和完成协议，不启用额外 workspace 或命令工具。高层 API 不默认开放文件系统；模型重新规划照常计入共享模型预算。进程本地 HTTP fixture 用于验证传输与执行链，不能作为真实模型基准成绩。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/14-benchmarks.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="glossary"><div class="chapter-label">30 / 研究与内部实现</div><h2 id="glossary-h1">术语、设计取舍与来源</h2>
+<p>Flora 的 Agent 与普通函数注册只是接入层。与 JAZ 对齐实验时，使用原环境公开工具、任务和完成协议，不启用额外 workspace 或命令工具。高层 API 不默认开放文件系统；模型重新规划照常计入共享模型预算。进程本地 HTTP fixture 用于验证传输与执行链，不能作为真实模型基准成绩。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/14-benchmarks.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="glossary"><div class="chapter-label">31 / 研究与内部实现</div><h2 id="glossary-h1">术语、设计取舍与来源</h2>
 <h3 id="glossary-h2">术语表</h3>
 <div class="table-wrap"><table><thead><tr><th>术语</th><th>在本项目中的具体含义</th></tr></thead><tbody>
 <tr><td>未决程序</td><td>仍保留多个候选内部实现的程序</td></tr>

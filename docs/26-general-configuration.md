@@ -18,7 +18,7 @@
 flora agent "任务文本" --workspace ./workspace --session ./sessions/task --config profile.json
 ```
 
-新会话的模型选择顺序为命令行参数、配置中的明确值、`FLORA_*` 环境变量、已保存的 `flora setup` 设置，再到默认服务地址。模型 ID 没有可用值时会报错。已有会话直接使用其保存的完整配置；不通过修改环境中的模型名称暗中切换。
+显式 `flora agent ... --session DIR` 脚本入口的模型选择顺序为命令行参数、配置中的明确值、`FLORA_*` 环境变量、已保存的 `flora setup` 设置，再到默认服务地址。模型 ID 没有可用值时会报错。已有会话直接使用其保存的完整配置；不通过修改环境中的模型名称暗中切换。
 
 ## provider
 
@@ -28,13 +28,13 @@ flora agent "任务文本" --workspace ./workspace --session ./sessions/task --c
 | --- | --- |
 | `model` | 服务真实支持的模型 ID |
 | `base_url` | 通常以 `/v1` 结尾的接口前缀 |
-| `api_key_env` | 密钥环境变量名；明确为 null 表示无认证服务 |
+| `api_key_env` | 密钥环境变量名；未提供进程内 session_key 时，null 表示无认证服务 |
 | `timeout` | 单次模型 HTTP 请求超时，单位秒 |
 | `max_tokens_parameter` | 服务支持的输出上限字段，通常为 `max_tokens` |
 | `request_options` | 服务特定的 JSON 模式、推理设置等附加参数 |
 | `allow_insecure_http` | 是否明确允许非 HTTPS 服务 |
 
-示例中永远不要填密钥值。服务只支持 HTTP 时，需要明确配置 `allow_insecure_http: true`。这不会自动开放网页工具的私有网络访问；模型端点与通用网页工具具有不同授权边界。
+示例中永远不要填密钥值。脚本服务只支持 HTTP 时，需要明确配置 `allow_insecure_http: true`；交互输入 HTTP 地址时会显示传输提示并设置该项。这不会自动开放网页工具的私有网络访问；模型端点与通用网页工具具有不同授权边界。
 
 ## compiler 与 runtime
 
@@ -58,7 +58,7 @@ flora agent "任务文本" --workspace ./workspace --session ./sessions/task --c
 
 额度覆盖同一个持久会话的所有轮次，包括初次编译、格式修复与重编译。恢复不会退款。输出 tokens 在调用前预留；服务无法报告使用量时会保守计费。输入 tokens 的精确统计依赖服务返回的使用量，不声称在任意服务上具有完全准确的调用前额度判断。
 
-墙钟预算包含会话进程保持打开的时间，包括交互等待；进程关闭后的离线时间不计入。长时间使用 Web 界面时，请在新会话创建前设置合适的墙钟上限。预算是执行约束，不是后台自动续费或重置机制。
+墙钟预算包含会话进程保持打开的时间，包括交互等待；进程关闭后的离线时间不计入。长时间使用交互终端时，请在新会话创建前设置合适的墙钟上限。预算是执行约束，不是后台自动续费或重置机制。
 
 ## general
 
@@ -73,6 +73,7 @@ flora agent "任务文本" --workspace ./workspace --session ./sessions/task --c
 | `allow_commands` | false | 是否暴露宿主命令执行 |
 | `require_report` | false | 完成前是否要求本任务存在当前有效的登记成果 |
 | `instructions` | 空字符串 | 最多 32000 字符的应用工作说明 |
+| `subagents` | API 默认关闭，终端默认开启 | 独立只读子 agent 的并行与会话配额，详见终端章节 |
 | `storage_bytes` | 268435456 | 来源库配额，16 MiB 至 1 GiB |
 
 `require_report` 是文件交付检查，不是任务正确性 oracle。它只要求本轮至少一个通过报告/导出工具登记的成果，且当前文件仍匹配登记哈希。复杂任务可通过 Python 自定义应用层增加自己的验收规则，但不能假装能验证未知外部事实。
@@ -117,14 +118,22 @@ flora agent "任务文本" --workspace ./workspace --session ./sessions/task --c
 
 ## 常用命令
 
-| 命令 | 用途 |
-| --- | --- |
-| `flora agent TASK --workspace DIR --session DIR` | 新任务 |
-| `flora agent --session DIR` | 打开交互终端 |
-| `flora agent --session DIR --resume` | 继续尚未完成的任务 |
-| `flora agent --session DIR --status` | 离线读取已持久化状态 |
-| `flora agent TASK ... --json` | 输出结构化结果 |
-| `flora serve --workspace DIR --session DIR --port 8765` | 启动本地 Web 服务 |
-| `flora serve --session DIR --port 0` | 使用系统分配的可用本地端口 |
+```bash
+flora
+flora -C /path/to/workspace
+flora --resume
+flora --resume SESSION_ID
+flora --config /absolute/path/profile.json
+```
 
-共同参数为 `--config`、`--model`、`--base-url`、`--api-key-env`、`--quiet`。`--resume`、`--status` 与新任务文本互斥。已有会话的配置变更会被拒绝；配置新任务时使用新的会话目录。
+交互启动每次都提示 Base URL、API Key 和 Model。新会话的提示输入覆盖 profile 中的 model 和 base_url；其余高级 provider 参数保留。会话恢复使用原配置，并验证输入地址和模型匹配。密钥只在内存中传给模型传输对象。
+
+脚本自动化可继续使用显式 session 参数：
+
+```bash
+flora agent TASK --workspace DIR --session DIR --config profile.json --json
+flora agent --session DIR --resume --json
+flora agent --session DIR --status
+```
+
+脚本入口从 profile 指定的环境变量读取密钥。`--status` 不连接模型。日常自动会话和脚本管理会话的区别见「终端、会话与子 agent」。

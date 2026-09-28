@@ -20,6 +20,12 @@
       "file": "24-general-agent.md"
     },
     {
+      "id": "terminal",
+      "group": "通用 Agent",
+      "title": "终端、会话与子 agent",
+      "file": "30-terminal.md"
+    },
+    {
       "id": "documents",
       "group": "通用 Agent",
       "title": "文档、表格与报告",
@@ -46,7 +52,7 @@
     {
       "id": "generalapi",
       "group": "通用 Agent",
-      "title": "GeneralAgent API 与本地 HTTP",
+      "title": "GeneralAgent API",
       "file": "29-general-api.md"
     },
     {

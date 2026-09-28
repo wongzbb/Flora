@@ -1,101 +1,101 @@
-# Flora 通用 Agent：从任务到交付
+# Flora 通用 Agent：在终端里开始
 
-Flora General Agent 把网页、文件、表格和外部服务接到同一个执行内核。你描述任务，它观察现有信息、执行工具、保存证据并交付结果。日常使用不需要编写内部程序。
+进入你想处理的文件夹，运行 `flora`。Flora 使用这个文件夹作为工作目录，自动创建会话，然后引导你连接模型。像素形象、花形 Logo、紫色与薄荷绿沿用 Flora overview。
 
-这部分对应 `general-agent` 分支。独立内核在 `core`，编码应用在 `coding-agent`；当前分支同时保留编码入口。完整手册留在 `docs` 分支。
+## 安装一次
 
-## 安装
+需要 Python 3.11+，以及 Linux、macOS 或 Windows WSL。Windows 用户在 WSL 中安装和启动；文件工具依赖 POSIX 路径与描述符语义。原生 Windows Python 不是当前支持的运行环境。
 
-需要 Python 3.11 或更高版本，以及 Linux、macOS 或 Windows WSL。文件工具依赖 POSIX 的描述符相对访问和不跟随符号链接语义，不支持直接在原生 Windows Python 上降低安全要求运行。
+安装 [pipx](https://pipx.pypa.io/stable/installation/) 后：
 
 ```bash
 git clone --branch general-agent https://github.com/wongzbb/Flora.git
 cd Flora
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install '.[general,mcp,browser]'
+pipx install '.[general,mcp]'
+pipx ensurepath
 ```
 
-如需复现 Python 3.12 验证环境中的依赖版本，安装时追加 `-c constraints/tested-py312.txt`。这份约束记录实际使用版本，不替代依赖安全更新策略。
+如果 PATH 刚刚更新，打开一个新终端。之后无需激活虚拟环境，也无需进入 Flora 的源码文件夹。
 
-可按需要安装依赖：`.[general]` 提供 PDF、Word 和电子表格；`.[mcp]` 提供 MCP SDK 与完整 JSON Schema 验证；`.[browser]` 提供 Playwright。执行内核本身仍只依赖标准库。
+`general` 提供 PDF、Word 和电子表格依赖；`mcp` 提供外部工具接入。终端显示所需的 Rich 和 prompt-toolkit 会随基本安装提供。需要浏览器工具时可安装 `.[general,mcp,browser]`，再通过 `pipx list` 查看虚拟环境位置，运行该环境内的 `bin/playwright install chromium`。这样安装的 Chromium 与实际使用的 Playwright 版本一致。终端本身不需要 Chromium。
 
-使用网页自动化时，另外安装浏览器：
+## 启动
+
+在自己的项目或文件夹里执行：
 
 ```bash
-python -m playwright install chromium
+flora
 ```
 
-Linux 缺少浏览器系统库时，按 Playwright 官方安装说明配置宿主系统。Flora 不会静默执行 sudo 或安装系统包。使用 Web 聊天界面本身不需要 Playwright；它由 Python 本地 HTTP 服务提供。
+屏幕依次提示以下三项。直接输入值，不加单引号或双引号：
 
-## 配置模型
+| 提示 | 输入 |
+| --- | --- |
+| Base URL | 兼容 Chat Completions 的 API 地址，例如 `https://your-provider.example/v1` |
+| API Key | 你的密钥；输入时隐藏，不写入会话文件或环境变量 |
+| Model | 已列出的候选编号，或完整模型 ID |
+
+若 Base URL 只有域名和端口，终端会补上 `/v1`；已有自定义路径则保留。不要填写 `/chat/completions` 请求地址。Flora 使用你输入的地址获取 `/models`，支持标准 `data[].id` 列表及 `has_more/last_id` 分页。获取失败不阻止启动，可以手填模型。候选列表只证明服务列出了模型，不保证账户有使用权限或模型能正确生成程序。
+
+每次启动都会提示三项信息，恢复历史时也一样。不从上一次启动自动读取密钥。远程 HTTP 会发送未加密凭据，界面会提示该连接属性。
+
+## 输入任务
+
+例如：
+
+```text
+读取 sales.csv，按地区汇总收入，生成带来源引用的 analysis.md，并导出 analysis.docx。
+```
+
+按 Enter 发送。Alt+Enter 换行；支持多行粘贴、历史输入与 Tab 命令补全。运行时显示实际模型调用、工具执行，以及已创建子 agent 的状态。
+
+文件已在工作目录时，可以直接提及文件名，也可以输入：
+
+```text
+/attach project brief.docx
+```
+
+路径不用额外引号，可以包含空格。它会作为下一条任务的文件路径提示，不会立即上传全部内容；agent 根据任务调用读取工具。输出文件直接生成在工作目录，`/artifacts` 可以查看其路径与哈希状态。
+
+## 指定目录与恢复
 
 ```bash
-export OPENAI_API_KEY="你的密钥"
-flora setup --model YOUR_MODEL_ID --base-url https://your-provider.example/v1
+flora -C /path/to/project
+flora --workspace /path/to/project
+flora --resume
+flora --resume SESSION_ID
+flora -C /path/to/project --resume SESSION_ID
 ```
 
-`YOUR_MODEL_ID` 和示例地址必须替换为模型服务实际支持的值。密钥值放在环境变量中，配置文件只记录变量名。`flora setup` 与内核的直接使用入口共用非敏感设置。
+`--resume` 列出选定工作目录的历史记录，包含标题、ID、轮数和状态。输入序号或 ID 打开。`--resume ID` 直接打开，支持不歧义且至少四位的 ID 前缀。
 
-需要设置输出长度、推理模式或预算时，复制并编辑 `configs/general.json` 或 `configs/general-deepseek.json`。DeepSeek 示例中的 `thinking`、`reasoning_effort`、`response_format` 并非所有兼容服务都支持；根据服务实际接口调整。对于输出 IR 的任务，推理模式可能明显影响格式可靠性。验证报告给出实际测试配置，不代表任意兼容模型都表现相同。
+打开后展示最近两轮已完成对话；可以继续输入。若存在未完成任务，界面会提示，输入 `/resume` 明确续跑。已经结算的工具效果不会重新派发，预算不会重置。恢复需要保持原模型、API 地址、工具和技能配置；API Key 可以更新。更换模型或能力时，用不带 `--resume` 的 `flora` 创建新会话。
 
-## 打开界面
+## 常用命令
+
+| 命令 | 功能 |
+| --- | --- |
+| `/help` | 查看操作说明 |
+| `/status` | 当前任务、状态、会话位置及预算 |
+| `/agents` | 独立子 agent 的任务和状态 |
+| `/agent ID` | 阅读子 agent 的结果，必要时按提示分页 |
+| `/history` | 查看保留的历史对话 |
+| `/sources` | 查看保存的来源 |
+| `/artifacts` | 查看生成的文件 |
+| `/new` | 当前目录创建新会话，沿用本次进程已输入的连接 |
+| `/exit` | 保存并退出 |
+
+提示符处 Ctrl+D 也会退出；Ctrl+C 清空正在输入的内容。任务运行时 Ctrl+C 请求暂停，已派发的调用会先返回或超时。
+
+## 更多配置
 
 ```bash
-mkdir -p workspace
-flora serve --workspace ./workspace --session ./sessions/research
+flora --config /absolute/path/profile.json
+flora --allow-commands
+flora --no-subagents
+flora --plain
 ```
 
-终端会打印 `http://127.0.0.1:端口/#token=...`。在同一台机器的浏览器中打开完整链接。链接中的随机令牌只用于这个本地服务，前端会将它保存在当前浏览器标签会话中并从地址栏移除。服务重新启动后，使用新打印的链接。
+JSON profile 用于 MCP、浏览器、搜索、预算和模型高级参数。终端仍会提示 Base URL、API Key、Model。`--allow-commands` 为主 agent 启用本地命令执行；子 agent 不继承这项权限。`--plain` 适用于低能力终端或日志记录。
 
-1. 在输入框描述目标，例如“比较两份方案，列出成本与缺失信息，生成建议书”。
-2. 点击 Attach 上传文件；每个文件最多 8 MiB。上传会创建新的工作目录文件，不覆盖同名原件。
-3. 点击 Run task。Activity 展示实际执行事件。
-4. Sources 展示真实读取的网页、附件和外部结果；点击可分页查看保存的内容。
-5. Artifacts 展示已登记的报告与导出文件，可直接下载。
-6. 如果任务停在可继续状态，点击 Resume。Pause 会在下一次外部行动被选中、尚未派发时暂停；正在运行的调用会先返回或超时。
-
-Sources 窗口显示的是某次读取留下的内容，不会自动刷新外部网页。Artifacts 会重新比较文件哈希；“文件变化或不可用”意味着当前文件与发布记录不一致。
-
-## 在终端完成同一任务
-
-```bash
-cp examples/general/sales.csv workspace/sales.csv
-flora agent "读取 sales.csv，按地区汇总收入，用来源引用标注数字，生成 analysis.md 并导出 analysis.docx。" \
-  --workspace ./workspace --session ./sessions/sales
-```
-
-指定配置：
-
-```bash
-flora agent "阅读工作目录中的附件并写比较报告。" \
-  --workspace ./workspace --session ./sessions/comparison \
-  --config configs/general.json
-```
-
-省略任务文本进入交互模式：
-
-```bash
-flora agent --workspace ./workspace --session ./sessions/research
-```
-
-交互命令为 `/status`、`/resume`、`/sources`、`/artifacts`、`/exit`。`/sources` 展示来源首页，完整分页可通过 Web UI 或 Python 调用查看。
-
-## 恢复与状态
-
-```bash
-flora agent --session ./sessions/research --status
-flora agent --session ./sessions/research --resume
-```
-
-`--status` 只读取最后持久化的快照，不连接模型、MCP 或浏览器。进程正在工作时，快照可能落后于尚未完成的调用。
-
-重新打开已有会话时会加载保存的配置。修改模型、工具、技能内容、预算或工作目录后，应创建新的会话目录。旧会话的实际执行历史、已消耗额度和未知结果不会被配置变化抹掉。
-
-## 下一步阅读
-
-- 「文档、表格与报告」：支持格式、引用、精确统计与导出。
-- 「通用 Agent 配置」：每个配置字段与完整样例。
-- 「MCP、浏览器与外部系统」：扩展能力与生命周期。
-- 「通用 Agent 运维与恢复」：状态、预算、未知结果与部署。
-- 「GeneralAgent API」：Python 与本地 HTTP 接口。
+日常使用详见「终端、会话与子 agent」；工具细节见「文档、表格与报告」及「MCP、浏览器与外部系统」；程序化调用见「GeneralAgent API」。
