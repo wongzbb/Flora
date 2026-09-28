@@ -50,10 +50,15 @@ flora --config /path/profile.json
 | `/agent ID` | 阅读子 agent 的实际结果 |
 | `/resume-agent ID` | 显式继续中断的子任务 |
 | `/history`、`/status` | 查看保留的对话或当前状态、预算 |
+| `/log [CURSOR]` | 分页查看实际请求提示词、模型输出、工具参数和结果 |
 | `/sources`、`/artifacts` | 查看来源与输出文件 |
 | `/new`、`/exit` | 新建会话或保存退出 |
 
 运行中 Ctrl+C 请求在下一个执行边界暂停，正在进行的请求会先返回或超时。提示符处 Ctrl+D 退出。详细命令和恢复规则见[终端手册](https://github.com/wongzbb/Flora/blob/docs/docs/30-terminal.md)。
+
+运行时直接展示模型实际返回的响应与工具交互，并标出主 agent 和子 agent。模型支持流式输出时，内容随返回更新；程序通过严格校验后才执行。完整请求提示词可在 `/log 0` 中查看，`/log` 默认显示最近记录。
+
+通用入口默认请求 JSON 输出，对暂时性连接错误、限流和部分服务端错误进行有预算的有限恢复。认证失败、错误模型地址等会给出具体原因。断流产生的残缺程序不会执行；工具结果未知时不会自动重做。详见[故障处理](https://github.com/wongzbb/Flora/blob/docs/docs/28-general-operations.md)。
 
 ## 能力
 

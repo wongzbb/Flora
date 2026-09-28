@@ -138,12 +138,21 @@ class PauseRequested(KeyboardInterrupt):
 
 
 class GeneralAgent:
-    def __init__(self, *, session_dir, workspace=None, profile=None, provider=None, on_event=None,
-                 session_key=None):
+    def __init__(
+        self,
+        *,
+        session_dir,
+        workspace=None,
+        profile=None,
+        provider=None,
+        on_event=None,
+        session_key=None,
+    ):
         self.directory = Path(session_dir).expanduser().resolve()
         self.directory.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.lease = Lease(self.directory)
         self.connections, self.browser, self.agent, self.store = [], None, None, None
+        self.dialogue = None
         self.delegation = None
         self._session_key = session_key
         self.lock, self.pause = threading.Lock(), threading.Event()
@@ -192,6 +201,9 @@ class GeneralAgent:
                 max_bytes=general.get("storage_bytes", 268435456),
                 max_item_bytes=16777216,
             )
+            from .observability import Dialogue
+
+            self.dialogue = Dialogue(self.store, self._notify, secrets=(session_key,))
             task_path = self.directory / "task.json"
             self.task = (
                 read_profile(task_path, max_bytes=1048576)
@@ -278,7 +290,7 @@ class GeneralAgent:
                 model=model if provider is None else None,
                 provider=provider,
                 provider_options=options if provider is None else None,
-                tools=bounded_specs(specs),
+                tools=self.dialogue.tools(bounded_specs(specs)),
                 session_dir=self.directory / "kernel",
                 instructions=instructions,
                 compiler_options=compiler,
@@ -286,14 +298,20 @@ class GeneralAgent:
                 budget_limits=self.profile.get("budget"),
                 on_event=self._event,
                 completion_guard=self._ready_to_finish
-                if general.get("require_report") or self.delegation else None,
+                if general.get("require_report") or self.delegation
+                else None,
             )
             if session_key is not None:
                 from flora.integrations.providers import OpenAICompatibleProvider
 
                 if not isinstance(self.agent.provider, OpenAICompatibleProvider):
-                    raise ValidationError("Session credentials require an OpenAI-compatible provider")
+                    raise ValidationError(
+                        "Session credentials require an OpenAI-compatible provider"
+                    )
                 self.agent.provider.set_session_key(session_key)
+            from .observability import connect
+
+            connect(self.agent, self.dialogue, self.profile)
             if not saved:
                 atomic_json(
                     meta_path,
@@ -315,14 +333,17 @@ class GeneralAgent:
             self.close()
             raise
 
-    def _event(self, event):
-        self.store.event(event)
+    def _notify(self, event):
         if self.on_event:
             try:
                 self.on_event(event)
             except Exception:
                 pass
-        if self.pause.is_set() and event.get("kind") == "action_selected":
+
+    def _event(self, event):
+        self.store.event(event)
+        self._notify(event)
+        if self.pause.is_set() and event.get("kind") in {"action_selected", "model_call_started"}:
             raise PauseRequested
 
     def _child_event(self, event):
@@ -482,6 +503,12 @@ class GeneralAgent:
                 self.agent.close()
         finally:
             self._session_key = None
+            if self.dialogue:
+                self.dialogue.close()
+            if self.agent:
+                self.agent.compiler.on_event = None
+                if hasattr(self.agent.provider, "on_event"):
+                    self.agent.provider.on_event = None
             for connection in self.connections:
                 connection.close()
             if self.browser:

@@ -162,6 +162,7 @@ delegate. The parent must inspect your result; never claim it has been verified.
 
     def _run(self, ident):
         agent = None
+        dialogue = None
         try:
             if self.stop.is_set():
                 self._update(ident, status="paused", detail="Paused before dispatch")
@@ -192,11 +193,28 @@ delegate. The parent must inspect your result; never claim it has been verified.
                 **self.owner.profile.get("compiler", {}),
             }
             compiler["max_output_tokens"] = min(compiler["max_output_tokens"], 12000)
+            from .observability import Dialogue, connect
+
+            dialogue = Dialogue(
+                self.owner.store,
+                self.owner._notify,
+                actor=ident,
+                secrets=(self.owner._session_key,),
+            )
+            child_provider = self.provider
+            # A built-in provider's streaming callbacks belong to one worker.
+            from flora.integrations.providers import OpenAICompatibleProvider
+
+            if isinstance(child_provider, OpenAICompatibleProvider):
+                from copy import copy
+
+                child_provider = copy(child_provider)
+                child_provider._disabled_features = set(child_provider._disabled_features)
             agent = Agent(
                 model=model if self.provider is None else None,
-                provider=self.provider,
+                provider=child_provider,
                 provider_options=options if self.provider is None else None,
-                tools=bounded_specs(tools),
+                tools=dialogue.tools(bounded_specs(tools)),
                 session_dir=self.root / ident / "kernel",
                 instructions=self.child_instructions,
                 compiler_options=compiler,
@@ -206,6 +224,7 @@ delegate. The parent must inspect your result; never claim it has been verified.
             )
             if self.owner._session_key is not None:
                 agent.provider.set_session_key(self.owner._session_key)
+            connect(agent, dialogue, self.owner.profile)
             if agent.status()["requires_resume"]:
                 result = agent.resume().to_dict()
             elif agent.status()["completed_turns"]:
@@ -246,6 +265,11 @@ delegate. The parent must inspect your result; never claim it has been verified.
                 if self.provider is None and hasattr(agent.provider, "set_session_key"):
                     agent.provider.set_session_key(None)
                 agent.close()
+                agent.compiler.on_event = None
+                if agent.provider is not self.provider and hasattr(agent.provider, "on_event"):
+                    agent.provider.on_event = None
+            if dialogue:
+                dialogue.close()
 
     def agent_status(self) -> dict:
         """List durable subagent identities, tasks, statuses and separate budget usage."""

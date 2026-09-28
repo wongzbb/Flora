@@ -106,6 +106,7 @@ def help_text(ui):
         "/resume-agent ID      Explicitly continue an interrupted child\n"
         "/resume               Continue this conversation's unfinished task\n"
         "/history              Retained conversation turns\n"
+        "/log [CURSOR]         Actual prompts, model output and tool dialogue (paged)\n"
         "/sources              Saved sources (paged)\n"
         "/artifacts            Generated files and current hashes\n"
         "/attach PATH          Attach a workspace file to your next task\n"
@@ -173,10 +174,33 @@ def conversation(agent, ui, sessions, path, *, initial_task=None):
                         )
                     },
                 )
+                if state.get("last_result"):
+                    show_json(
+                        ui,
+                        {
+                            "last_status": state["last_result"].get("status"),
+                            "last_reason": state["last_result"].get("reason"),
+                        },
+                    )
+                provider = agent.agent.provider
+                show_json(
+                    ui,
+                    {
+                        "transport": {
+                            "stream": getattr(provider, "stream", None),
+                            "read_timeout_seconds": getattr(provider, "timeout", None),
+                            "total_timeout_seconds": getattr(provider, "total_timeout", None),
+                            "recovery_calls_per_compilation": agent.agent.compiler.transport_retries,
+                        },
+                        "actual_dialogue": "/log (latest) or /log 0 (from first retained record)",
+                    },
+                )
                 if agent.delegation:
                     show_json(ui, agent.delegation.agent_status())
             elif task == "/history":
                 ui.history(agent.status()["history"])
+            elif command == "/log":
+                ui.transcript(agent.store.transcript(after=int(argument) if argument else None))
             elif task == "/agents":
                 ui.agents(agent.delegation.agent_status()["agents"] if agent.delegation else [])
             elif command in {"/agent", "/resume-agent"}:

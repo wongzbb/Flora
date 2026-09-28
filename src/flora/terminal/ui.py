@@ -45,6 +45,7 @@ COMMANDS = [
     "/resume-agent",
     "/resume",
     "/history",
+    "/log",
     "/sources",
     "/artifacts",
     "/attach",
@@ -92,6 +93,9 @@ class TerminalUI:
         self.phase = "Ready"
         self.started = time.monotonic()
         self.input_session = None
+        self.dialogue = {}
+        self.dialogue_truncated = set()
+        self.dropped_events = 0
 
     def banner(self, workspace):
         if self.plain or self.console.width < 64:
@@ -213,15 +217,23 @@ class TerminalUI:
             self.events.put_nowait(event)
         except queue.Full:
             # This is only a view queue. Durable events remain in the observation store.
-            pass
+            self.dropped_events += 1
 
     def consume_events(self):
+        if self.dropped_events:
+            self.note(
+                f"{self.dropped_events} display events omitted; /log reads the retained transcript."
+            )
+            self.dropped_events = 0
         while True:
             try:
                 event = self.events.get_nowait()
             except queue.Empty:
                 break
             kind = event.get("kind", "")
+            if kind == "transcript":
+                self.consume_dialogue(event)
+                continue
             if kind in {"subagent_status", "subagent_spawned", "subagent_event"}:
                 ident = event["agent_id"]
                 actor = self.actors.setdefault(
@@ -250,7 +262,7 @@ class TerminalUI:
     def describe(event):
         kind = event.get("kind")
         if kind == "model_call_started":
-            return "Planning · model call " + str(event.get("model_calls", ""))
+            return "Requesting model · call " + str(event.get("model_calls", ""))
         if kind == "action_selected":
             label = "Investigating" if event.get("diagnostic") else "Using"
             return label + " · " + str(event.get("tool", "tool"))
@@ -265,6 +277,81 @@ class TerminalUI:
             "task_finished": "Task finished",
         }.get(kind, "")
 
+    def consume_dialogue(self, event):
+        actor, channel = event["actor"], event["channel"]
+        text = safe(event["text"])
+        label = "Flora" if actor == "main" else actor
+        if channel.startswith("prompt/"):
+            return  # Full actual outbound prompts are available through /log.
+        if channel in {"program", "reasoning"}:
+            key = (actor, event.get("request", ""), channel)
+            old = self.dialogue.get(key, "")
+            if len(old + text) > 12000:
+                self.dialogue_truncated.add(key)
+            self.dialogue[key] = (old + text)[-12000:]
+            if self.plain:
+                self.console.print(Text(f"{label} · {channel} › {text}", style="white"))
+            self.phase = label + " · receiving " + channel
+            return
+        if channel in {
+            "model_response",
+            "model_failure",
+            "compiler_rejected",
+            "compiler_validated",
+        }:
+            for key in list(self.dialogue):
+                if key[0] == actor:
+                    if not self.plain:
+                        title = (
+                            "model output · pending validation"
+                            if key[2] == "program"
+                            else "provider reasoning_content"
+                        )
+                        if key in self.dialogue_truncated:
+                            title += " · last 12,000 characters; /log for more"
+                        self.console.print(
+                            Panel(
+                                Text(self.dialogue[key]),
+                                title=safe(label + " / " + title),
+                                border_style="violet" if key[2] == "program" else "line",
+                            )
+                        )
+                    del self.dialogue[key]
+                    self.dialogue_truncated.discard(key)
+        if channel == "request":
+            self.note(label + " · model request " + text + " · outbound prompts: /log 0")
+        elif channel.startswith("tool/"):
+            tool = safe(event.get("tool", ""))
+            self.console.print(
+                Panel(
+                    Text(text[:6000] + ("\n… /log for more" if len(text) > 6000 else "")),
+                    title=safe(f"{label} / {channel} / {tool}"),
+                    border_style="mint",
+                )
+            )
+        else:
+            self.note(label + " · " + channel + " · " + text)
+
+    def transcript(self, page):
+        if page["history_truncated"]:
+            self.note("Older transcript records are outside the rolling 8 MiB display log.")
+        if not page["records"]:
+            self.note(
+                "No transcript records at this cursor. Earlier releases did not record dialogue."
+            )
+        for row in page["records"]:
+            self.console.print(
+                Panel(
+                    Text(safe(row["text"])),
+                    title=safe(f"#{row['id']} / {row['actor']} / {row['channel']}"),
+                    border_style="line",
+                )
+            )
+        self.note(
+            f"Next page: /log {page['next_cursor']}"
+            + ("" if page["has_more"] else " · end of retained log")
+        )
+
     def running(self):
         elapsed = int(time.monotonic() - self.started)
         head = Table.grid(expand=True)
@@ -275,6 +362,15 @@ class TerminalUI:
             Text(f"{elapsed}s", style="muted"),
         )
         elements = [head]
+        for (actor, _, channel), text in list(self.dialogue.items())[-4:]:
+            tail = "\n".join(text[-1600:].splitlines()[-8:])
+            elements.append(
+                Panel(
+                    Text(safe(tail)),
+                    title=safe(actor + " / " + channel + " · live"),
+                    border_style="violet",
+                )
+            )
         if self.actors:
             elements.append(self.agent_table(list(self.actors.values())))
         elements.append(

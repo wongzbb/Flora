@@ -9,11 +9,18 @@ callbacks. A stale execution anchor is rejected instead of silently rewritten.
 from __future__ import annotations
 
 import json
+import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
-from flora.integrations.providers import ModelResponse, Provider, ProviderError, _strict_json_loads
+from flora.integrations.providers import (
+    ModelResponse,
+    Provider,
+    ProviderError,
+    TransportError,
+    _strict_json_loads,
+)
 from flora.language.ir import parse_program
 from flora.support.errors import CompilerError, StaleAnchor, ValidationError
 from flora.support.values import canonical_json, clone, digest
@@ -481,6 +488,18 @@ class LLMCompiler:
         self.max_context_bytes = max_context_bytes
         self.max_visible_receipts = max_visible_receipts
         self.before_call, self.on_usage = before_call, on_usage
+        # Application-level recovery is opt-in; the low-level compiler keeps
+        # its one-request transport contract. All retries still use _request_once.
+        self.transport_retries = 0
+        self.on_event = None
+        self._recovery_left = 0
+
+    def _emit(self, event):
+        if self.on_event:
+            try:
+                self.on_event(event)
+            except Exception:
+                pass
 
     def set_accounting(
         self,
@@ -552,6 +571,45 @@ class LLMCompiler:
         ]
 
     def _request(self, messages: list[dict], attempt: int) -> ModelResponse:
+        while True:
+            result = self._request_once(messages, attempt)
+            if not isinstance(result, TransportError):
+                return result
+            self._emit(
+                {
+                    "kind": "model_failure",
+                    "category": result.category,
+                    "http_status": result.status,
+                    "message": str(result),
+                }
+            )
+            if self._recovery_left <= 0:
+                raise result
+            adapt = getattr(self.provider, "adapt", None)
+            adapted = callable(adapt) and adapt(result)
+            if not adapted and not result.retryable:
+                raise result
+            self._recovery_left -= 1
+            delay = (
+                0
+                if adapted
+                else max(
+                    result.retry_after,
+                    min(2 ** (self.transport_retries - self._recovery_left - 1), 4),
+                )
+            )
+            self._emit(
+                {
+                    "kind": "model_retry",
+                    "reason": result.category,
+                    "unsupported": result.unsupported if adapted else None,
+                    "delay_seconds": delay,
+                    "retries_remaining": self._recovery_left,
+                }
+            )
+            time.sleep(delay)
+
+    def _request_once(self, messages: list[dict], attempt: int) -> ModelResponse | TransportError:
         info = {
             "attempt": attempt,
             "max_output_tokens": self.max_output_tokens,
@@ -559,6 +617,17 @@ class LLMCompiler:
         }
         if self.before_call is not None:
             self.before_call(clone(info))
+        observe = not getattr(self.provider, "on_event", None)
+        if observe:
+            self._emit(
+                {
+                    "kind": "model_request",
+                    "messages": messages,
+                    "model": getattr(self.provider, "model", "custom provider"),
+                    "stream": False,
+                    "json_mode": False,
+                }
+            )
         try:
             response = self.provider.complete(messages, max_tokens=self.max_output_tokens)
             if not isinstance(response, ModelResponse):
@@ -577,7 +646,19 @@ class LLMCompiler:
                         "usage_known": input_tokens is not None and output_tokens is not None,
                     }
                 )
+            if isinstance(exc, TransportError):
+                return exc  # Only provider failures with completed accounting are recoverable.
+            if isinstance(exc, ProviderError):
+                self._emit({"kind": "model_failure", "category": "response", "message": str(exc)})
             raise
+        if observe:
+            self._emit({"kind": "model_delta", "channel": "program", "text": response.text})
+            self._emit(
+                {
+                    "kind": "model_response",
+                    "finish_reason": response.raw_metadata.get("finish_reason"),
+                }
+            )
         if self.on_usage is not None:
             self.on_usage(
                 {
@@ -589,11 +670,18 @@ class LLMCompiler:
                     "usage_known": response.input_tokens is not None
                     and response.output_tokens is not None,
                     "output_diagnostics": {
-                        key: value for key, value in response.raw_metadata.items()
-                        if (key in {"text_bytes", "reasoning_bytes", "reasoning_tokens"}
-                            and type(value) is int and value >= 0)
-                        or (key == "finish_reason" and value in
-                            ("stop", "length", "content_filter", "tool_calls", "function_call"))
+                        key: value
+                        for key, value in response.raw_metadata.items()
+                        if (
+                            key in {"text_bytes", "reasoning_bytes", "reasoning_tokens"}
+                            and type(value) is int
+                            and value >= 0
+                        )
+                        or (
+                            key == "finish_reason"
+                            and value
+                            in ("stop", "length", "content_filter", "tool_calls", "function_call")
+                        )
                     },
                 }
             )
@@ -602,8 +690,12 @@ class LLMCompiler:
     def compile(self, context: CompilerContext) -> dict:
         snapshot = CompilerContext(**context.to_dict())
         messages = self.build_messages(snapshot)
+        if type(self.transport_retries) is not int or not 0 <= self.transport_retries <= 3:
+            raise ValidationError("transport_retries must be between 0 and 3")
+        self._recovery_left = self.transport_retries
         for attempt in range(self.max_repairs + 1):
             response = self._request(messages, attempt)
+            syntax_window = None
             try:
                 if len(response.text.encode("utf-8")) > self.max_output_bytes:
                     raise ValidationError("compiler response exceeds output byte limit")
@@ -624,6 +716,11 @@ class LLMCompiler:
                 try:
                     bundle = _strict_json_loads(response.text)
                 except json.JSONDecodeError as exc:
+                    syntax_window = {
+                        "offset": exc.pos,
+                        "start": max(0, exc.pos - 384),
+                        "text": response.text[max(0, exc.pos - 384) : exc.pos + 384],
+                    }
                     raise ValidationError(
                         f"compiler output must be strict JSON: {exc.msg} "
                         f"at line {exc.lineno}, column {exc.colno}"
@@ -632,14 +729,24 @@ class LLMCompiler:
                     raise ValidationError(
                         "compiler output must be strict JSON without duplicates or nonfinite numbers"
                     ) from None
-                return validate_bundle(
+                validated = validate_bundle(
                     bundle,
                     snapshot,
                     max_programs=self.max_programs,
                     max_diagnostics=self.max_diagnostics,
                     max_bytes=self.max_output_bytes,
                 )
+                self._emit({"kind": "compiler_validated", "attempt": attempt})
+                return validated
             except ValidationError as exc:
+                self._emit(
+                    {
+                        "kind": "compiler_rejected",
+                        "attempt": attempt,
+                        "message": str(exc)[:1024],
+                        "will_repair": attempt < self.max_repairs,
+                    }
+                )
                 if attempt == self.max_repairs:
                     raise CompilerError(
                         f"compiler output failed validation after {attempt + 1} attempt(s): {str(exc)[:512]}"
@@ -651,25 +758,34 @@ class LLMCompiler:
                 # A cut-off program is not a useful syntax-repair example. Ask
                 # for a fresh compact bundle without replaying its partial text.
                 truncated = response.raw_metadata.get("finish_reason") == "length"
-                messages = self.build_messages(snapshot) + ([] if truncated else [
-                    {"role": "assistant", "content": fragment}]) + [
-                    {
-                        "role": "user",
-                        "content": canonical_json(
-                            {
-                                "repair": "Return a complete corrected JSON bundle for the SAME anchor. This is the final format repair.",
-                                "validation_error": str(exc)[:1024],
-                                "previous_output_truncated": len(fragment) < len(response.text),
-                                "output_budget_exhausted": truncated,
-                                "guidance": (
-                                    "Generate a fresh compact complete bundle, not a continuation. "
-                                    "Avoid duplicated programs; keep meaningful alternatives and diagnostics. "
-                                    "Use pure operations for known data transformations. Do not return "
-                                    "success before requested effects. Keep the same anchor and capabilities."
-                                    if truncated else "Correct the stated validation error; preserve the task and anchor."
-                                ),
-                            }
-                        ),
-                    },
-                ]
+                messages = (
+                    self.build_messages(snapshot)
+                    + ([] if truncated else [{"role": "assistant", "content": fragment}])
+                    + [
+                        {
+                            "role": "user",
+                            "content": canonical_json(
+                                {
+                                    "repair": "Return a complete corrected JSON bundle for the SAME anchor. This is the final format repair.",
+                                    "validation_error": str(exc)[:1024],
+                                    "syntax_window": syntax_window,
+                                    "previous_output_truncated": len(fragment) < len(response.text),
+                                    "output_budget_exhausted": truncated,
+                                    "guidance": (
+                                        "Generate a fresh compact complete bundle, not a continuation. "
+                                        "Avoid duplicated programs; keep meaningful alternatives and diagnostics. "
+                                        "Use pure operations for known data transformations. Do not return "
+                                        "success before requested effects. Keep the same anchor and capabilities."
+                                        if truncated
+                                        else "Return a fresh COMPLETE JSON object, not a patch or continuation. "
+                                        "Correct the stated error and check every delimiter and escaped string. "
+                                        "Compile only the next observable phase; use replan after its new evidence "
+                                        "instead of embedding a long speculative report. Keep meaningful alternatives "
+                                        "and diagnostics. Preserve the task, exact anchor and tool capabilities."
+                                    ),
+                                }
+                            ),
+                        },
+                    ]
+                )
         raise CompilerError("compiler exhausted its configured attempts")  # pragma: no cover

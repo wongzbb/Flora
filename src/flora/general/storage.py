@@ -64,6 +64,8 @@ class ObservationStore:
               task_key TEXT NOT NULL, created TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
             CREATE TABLE IF NOT EXISTS events(
               id INTEGER PRIMARY KEY AUTOINCREMENT, payload TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS transcript(
+              id INTEGER PRIMARY KEY AUTOINCREMENT, payload TEXT NOT NULL, bytes INTEGER NOT NULL);
         """)
         self.db.commit()
         columns = {row[1] for row in self.db.execute("PRAGMA table_info(artifacts)")}
@@ -192,4 +194,54 @@ class ObservationStore:
             "events": [{"id": r["id"], **json.loads(r["payload"])} for r in rows],
             "history_truncated": bool(first and after + 1 < first),
             "next_cursor": rows[-1]["id"] if rows else after,
+        }
+
+    def transcript_append(self, value):
+        """An 8 MiB rolling display log, separate from authoritative receipts/context."""
+        encoded = json.dumps(value, ensure_ascii=False, allow_nan=False)
+        size = len(encoded.encode("utf-8"))
+        if size > 32768:
+            raise ValidationError("Transcript record exceeds 32 KiB")
+        with self.lock, self.db:
+            cursor = self.db.execute(
+                "INSERT INTO transcript(payload,bytes) VALUES(?,?)", (encoded, size)
+            )
+            used = self.db.execute("SELECT coalesce(sum(bytes),0) FROM transcript").fetchone()[0]
+            while used > 8388608:
+                rows = self.db.execute(
+                    "SELECT id,bytes FROM transcript ORDER BY id LIMIT 128"
+                ).fetchall()
+                self.db.execute("DELETE FROM transcript WHERE id<=?", (rows[-1]["id"],))
+                used -= sum(row["bytes"] for row in rows)
+            return cursor.lastrowid
+
+    def transcript(self, after=None, limit=20):
+        if (
+            (after is not None and (type(after) is not int or after < 0))
+            or type(limit) is not int
+            or not 1 <= limit <= 100
+        ):
+            raise ValidationError("Invalid transcript cursor or limit")
+        with self.lock:
+            if after is None:
+                rows = list(
+                    reversed(
+                        self.db.execute(
+                            "SELECT * FROM transcript ORDER BY id DESC LIMIT ?", (limit,)
+                        ).fetchall()
+                    )
+                )
+            else:
+                rows = self.db.execute(
+                    "SELECT * FROM transcript WHERE id>? ORDER BY id LIMIT ?", (after, limit)
+                ).fetchall()
+            first = self.db.execute("SELECT min(id) FROM transcript").fetchone()[0]
+            last = self.db.execute("SELECT max(id) FROM transcript").fetchone()[0]
+        cursor = rows[-1]["id"] if rows else (after or 0)
+        return {
+            "records": [{"id": r["id"], **json.loads(r["payload"])} for r in rows],
+            "next_cursor": cursor,
+            "has_more": bool(last and last > cursor),
+            "history_truncated": bool(first and (after or 0) + 1 < first),
+            "retention_bytes": 8388608,
         }
