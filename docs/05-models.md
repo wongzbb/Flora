@@ -26,7 +26,7 @@ compiler = LLMCompiler(
 
 上面只创建对象，不发送请求。将该编译器交给 Runtime 后，运行时会通过 `set_accounting()` 绑定自己的同一份预算与持久化回调；Standalone 编译调用则使用你显式设置的回调。将环境变量设为自己的密钥，并替换服务地址和模型 ID 后，才可实际编译。示例不声称任何供应商、模型或额度在当前环境中可用。
 
-provider 向 `{base_url}/chat/completions` 发送一个非流式请求。`base_url` 通常应包含 `/v1`，不要再包含 `/chat/completions`。脚本密钥在每次请求时从指定环境变量读取；交互终端使用本次启动输入的进程内密钥，错误消息不输出原始 HTTP 错误正文或密钥。
+provider 每次 complete 向 `{base_url}/chat/completions` 发送一个请求，内部没有隐藏重试。直接创建 Provider 时默认非流式；通用 Agent 默认启用 SSE 流式读取和 JSON 对象输出。`base_url` 通常应包含 `/v1`，不要再包含 `/chat/completions`。脚本密钥在每次请求时从指定环境变量读取；交互终端使用本次启动输入的进程内密钥，错误消息不输出原始 HTTP 错误正文或密钥。
 
 ## 兼容服务的差异
 
@@ -45,7 +45,7 @@ provider = OpenAICompatibleProvider(
 
 loopback HTTP 可用于本地服务；远程 HTTP 默认拒绝。需要经过明确部署评估才能设置 `allow_insecure_http=True`。URL 不允许嵌入用户名、密码、query 或 fragment。HTTP 重定向被拒绝，以避免认证头转发到其他目的地。
 
-`request_options` 可以包含目标模型支持的额外参数，例如某些服务的温度设置。本项目不会默认添加模型不一定支持的温度、JSON mode 或 reasoning 参数。传输关键字段、模型工具调用字段和输出预算字段不能通过该字典覆盖。
+`request_options` 可以包含目标模型支持的额外参数，例如某些服务的温度设置。直接创建 Provider 时不会默认添加温度、JSON mode 或 reasoning 参数。通用 Agent 会优先请求 JSON 对象输出，并处理自动添加字段的明确不兼容反馈；不擅自设置温度或厂商推理参数。传输关键字段、模型工具调用字段和输出预算字段不能通过该字典覆盖。
 
 ## Provider 协议
 
@@ -88,9 +88,9 @@ class MyProvider:
 
 ## 格式修复与预算
 
-`max_repairs` 只允许 0 或 1。第一次响应的 JSON、IR 或 bundle 校验失败时，编译器可以发送一次有界的错误报告和前次输出片段，请模型生成完整修正结果。修复使用相同历史锚点，并且是一笔正常计费的模型调用。
+`max_repairs` 只允许 0 或 1。第一次响应的 JSON、IR 或 bundle 校验失败时，编译器可以发送一次有界的错误报告和前次输出片段，请模型生成完整修正结果。修复使用相同历史锚点，并且是一笔正常计费的模型调用。JSON 语法错误额外提供出错位置附近的原文窗口，即使错误在前 16 KiB 片段之外也可定位；始终要求完整的新程序，不自动拼接残缺 JSON。
 
-网络错误不等于格式错误，不触发格式修复。预算回调失败也不被修复循环吞掉。过期锚点拒绝安装，不由编译器擅自改写为当前锚点。
+网络错误不等于格式错误，不触发格式修复。通用 Agent 在编译层为暂时性传输故障提供独立、共享、最多两次的恢复机会，每次都经过同样的预算回调。独立 LLMCompiler 默认 transport_retries=0。预算回调失败也不被修复循环吞掉。过期锚点拒绝安装，不由编译器擅自改写为当前锚点。
 
 ## 离线编译器
 
@@ -110,7 +110,9 @@ from flora.compiler import ScriptedCompiler
 | provider | `base_url` | `https://api.openai.com/v1` |
 | provider | `model` | 必填 |
 | provider | `api_key_env` | `OPENAI_API_KEY` |
-| provider | `timeout` | 60 秒 |
+| provider | `timeout` | 60 秒；连接／读取无数据超时 |
+| provider | `total_timeout` | 600 秒；响应读取整体时间上限 |
+| provider | `stream` | false；通用应用默认 true |
 | provider | `max_response_bytes` | 4 MiB |
 | provider | `max_request_bytes` | 2 MiB |
 | provider | `max_tokens_parameter` | `max_completion_tokens` |

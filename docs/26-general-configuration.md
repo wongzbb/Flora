@@ -29,16 +29,34 @@ flora agent "任务文本" --workspace ./workspace --session ./sessions/task --c
 | `model` | 服务真实支持的模型 ID |
 | `base_url` | 通常以 `/v1` 结尾的接口前缀 |
 | `api_key_env` | 密钥环境变量名；未提供进程内 session_key 时，null 表示无认证服务 |
-| `timeout` | 单次模型 HTTP 请求超时，单位秒 |
+| `timeout` | 连接／读取无数据的超时；交互启动默认 120 秒，直接 Provider 默认 60 秒 |
+| `total_timeout` | 响应读取的整体时间上限，默认 600 秒；不会因 keep-alive 无限延长 |
+| `stream` | 通用应用默认 true；显式 false 使用普通 JSON 响应 |
 | `max_tokens_parameter` | 服务支持的输出上限字段，通常为 `max_tokens` |
 | `request_options` | 服务特定的 JSON 模式、推理设置等附加参数 |
 | `allow_insecure_http` | 是否明确允许非 HTTPS 服务 |
 
 示例中永远不要填密钥值。脚本服务只支持 HTTP 时，需要明确配置 `allow_insecure_http: true`；交互输入 HTTP 地址时会显示传输提示并设置该项。这不会自动开放网页工具的私有网络访问；模型端点与通用网页工具具有不同授权边界。
 
+通用应用会自动请求 `response_format: {"type":"json_object"}`，流式请求同时请求用量统计。显式 `request_options.response_format` 优先；不会覆盖用户指定的模型推理或温度参数。仅当 HTTP 400／422 明确指出自动添加的字段不受支持时，才在有限恢复额度内移除那个字段重试；显式设置的 JSON／stream_options 不会被静默删掉。接口忽略 stream 并返回普通 JSON 时也可读取。
+
+为较慢的服务建立新会话时，可使用以下 profile：
+
+```json
+{
+  "provider": {"timeout": 180, "total_timeout": 600, "stream": true},
+  "compiler": {"max_output_tokens": 16000},
+  "budget": {"max_output_tokens": 160000}
+}
+```
+
+这是超时与输出额度示例，不是所有模型都必须使用的设置。启动时仍输入地址、密钥、模型。已有会话保持原 profile 和已消费预算；不要修改其指纹来换参数。
+
 ## compiler 与 runtime
 
 通用入口默认每次编译最多输出 12,000 tokens，最多进行一次格式修复；其它编译器和运行时字段沿用内核默认值。一次修复也是实际模型调用，占用同一份预算。
+
+每次编译另有最多两次传输恢复机会，格式修复共享这两次机会。因此默认一次编译最多发起四次模型请求，且预算可以更早阻止后续请求。每次 POST 都独立预留输出额度、记录调用和已知／未知用量；provider 内没有隐藏的网络重试。暂时性错误的等待通常为 1、2 秒，数字 Retry-After 最多等待 30 秒。工具操作不进入这个重试循环。
 
 需要更多推理输出的服务可显式增加 `compiler.max_output_tokens`，同时保证 `budget.max_output_tokens` 足以容纳下一次完整预留。不要通过关闭语法校验来接受截断程序或不完整 JSON。
 

@@ -180,6 +180,7 @@ flora --plain</code></pre></div>
 <tr><td><code>/resume-agent ID</code></td><td>显式恢复指定子任务，完成过的子任务直接返回结果</td></tr>
 <tr><td><code>/resume</code></td><td>继续当前主任务的检查点</td></tr>
 <tr><td><code>/history</code></td><td>保留的已完成轮次；遗漏旧轮次的数量会提示</td></tr>
+<tr><td><code>/log [CURSOR]</code></td><td>实际后台交互；无参数显示最近 20 条，<code>/log 0</code> 从首条保留记录开始，按 next_cursor 翻页</td></tr>
 <tr><td><code>/sources [OFFSET]</code></td><td>来源索引分页；后续 offset 取返回记录</td></tr>
 <tr><td><code>/artifacts</code></td><td>登记成果与当前文件哈希是否匹配</td></tr>
 <tr><td><code>/attach PATH</code></td><td>为下一条任务附加工作目录内的常规文件路径，最多 8 MiB</td></tr>
@@ -187,17 +188,28 @@ flora --plain</code></pre></div>
 <tr><td><code>/exit</code> 或 <code>/quit</code></td><td>退出</td></tr>
 </tbody></table></div>
 <p>路径可包含空格，<code>/attach</code> 后面的整段文字按路径处理。附件必须在当前工作目录内；不会将附件内容偷偷注入系统指令。读取后的内容仍按不可信任务材料处理。</p>
-<h3 id="terminal-h5">会话位置和历史</h3>
+<h3 id="terminal-h5">查看真实后台交互</h3>
+<p>运行区域显示以下实际数据，主 agent 标为 Flora，子 agent 标出自己的 ID：</p>
+<ul>
+<li><code>request</code>：本次模型请求与流式／JSON 模式。完整 system、user、assistant 请求消息保存在 <code>/log</code>，不在运行区反复刷出整个上下文。</li>
+<li><code>reasoning</code>：仅当服务实际返回 <code>reasoning_content</code> 时显示。没有这个字段就没有这部分内容，不补写或猜测模型内部思考。</li>
+<li><code>program</code>：模型实际生成的程序文本。生成过程中标为待校验，不代表程序已经获准执行。</li>
+<li><code>tool/call</code>、<code>tool/result</code>、<code>tool/error</code>：实际工具参数、返回数据或异常。没有派发的候选动作不会伪装成工具对话。</li>
+<li><code>model_failure</code>、<code>model_retry</code>、<code>compiler_rejected</code>、<code>compiler_validated</code>：连接错误、有限恢复、校验反馈和通过记录。</li>
+</ul>
+<p>支持 SSE 的接口按返回内容实时更新；只返回普通 JSON 的兼容服务在完整响应收到后展示。彩色终端保留滚动输出，同时实时区域显示最近内容；plain 模式逐段打印。单个运行区模型通道保留最后 12,000 字符，工具参数／结果的显示日志最多 24,000 字符并明确标记截断。完整执行结果以效果日志和来源库为准。</p>
+<p><code>/log</code> 是独立的 8 MiB 滚动显示日志，默认每页 20 条，每条文本最多 4096 字符。它包含发给模型的实际提示词和上下文，不会被重新注入模型上下文，也不替代效果日志。历史裁减、翻页位置及显示队列遗漏会明确提示。API 密钥、常见认证字段及跨网络片段的已知密钥在记录前脱敏；任意业务内容仍可能敏感，应保护整个会话目录。未记录的过去调用无法补造后台对话。</p>
+<h3 id="terminal-h6">会话位置和历史</h3>
 <p>默认存储位置为 <code>$XDG_STATE_HOME/flora/projects/&lt;目录哈希&gt;/&lt;会话ID&gt;</code>；未设置 XDG_STATE_HOME 时为 <code>~/.local/state/flora/projects/...</code>。可以用 <code>FLORA_STATE_HOME</code> 指定另一个持久目录。在 WSL 中使用的是 Linux 用户的目录。</p>
 <p>每个会话 ID 由本地日期、时间与随机后缀生成，用户无需手动命名。第一条任务自动成为列表标题。应用会话文件与工作目录分离。标题、对话、文档原文和来源可能涉及业务数据，请按实际内容保护会话目录。</p>
 <p><code>terminal.json</code> 保存 ID、工作目录、时间和标题；<code>general.json</code> 保存非敏感配置；<code>kernel/</code> 保存运行状态、历史、预算和效果日志；<code>subagents/</code> 保存独立子 agent 的状态与轨迹。损坏的会话会在列表中标为 damaged，不会悄悄创建一个同名新任务。</p>
 <p>内核对话上下文最多保留 32 轮、64 KiB 精确记录。超过限制会记录 omitted_turns，不声称模型记得全部旧内容。恢复会话不会给模型提供并不存在的历史或当前世界状态。</p>
-<h3 id="terminal-h6">独立子 agent</h3>
+<h3 id="terminal-h7">独立子 agent</h3>
 <p>主 agent 在任务适合拆分时，可以调用 <code>spawn_agent</code>。每个子 agent 有独立的模型上下文、Flora 编译器／运行时、候选程序、消费者合约、效果日志和预算。它们与同一个内核中的“候选程序”是不同概念；终端只把真实子任务显示在 Subagent 区域。</p>
 <p>主 agent 可先发起多个子任务，再通过 <code>wait_agents</code> 获取完成状态，通过 <code>read_agent</code> 分页读取真实结果。任务描述必须携带子 agent 所需上下文；子 agent 不会自动得到主 agent 的整个对话。所有子 agent 共用经过锁保护的来源账本，因此子任务返回的 src ID 可被主 agent 读取。</p>
 <p>默认子 agent 只读：文件列表、文本读取与搜索、文档读取、表格查询、网页获取与搜索、已保存来源读取。它们不能修改工作目录、运行命令、递归创建子 agent、执行浏览器操作或调用 MCP／HTTP 服务修改工具。主 agent 集中处理写入与交付，避免并行编辑冲突。</p>
 <p>子 agent 的结论不是自动验证过的事实。主 agent 需要检查来源与局限；各自的源数据仍要用实际回执支撑。普通任务可以完全由主 agent 执行，界面不会为了展示多 agent 而创建空角色。</p>
-<h3 id="terminal-h7">子 agent 配置与资源上限</h3>
+<h3 id="terminal-h8">子 agent 配置与资源上限</h3>
 <div class="code-wrap"><div class="code-head"><span>json</span><button class="copy" type="button">复制代码</button></div><pre><code>{
   &quot;general&quot;: {
     &quot;subagents&quot;: {
@@ -211,7 +223,7 @@ flora --plain</code></pre></div>
 <p>每个子 agent 的固定预算上限为 8 次模型调用、40 次工具调用、240,000 输入 token、96,000 输出 token、600 秒墙钟预算。每次模型输出上限取父配置与 12,000 中的较小值。未知用量沿用内核的保守预留计费规则。</p>
 <p>子任务预算与主任务分别记录，主任务 budget 数字不包含子任务消费。默认配置下子任务层最多为 8 份上述预算，外加父任务预算。输入 token 只能在服务返回计量后检查；这些限额不代表精确的货币账单硬上限。</p>
 <p>退出会请求子 agent 在边界暂停并等待已经开始的调用返回。恢复父会话时，上次留下的 queued/running 子任务标为 interrupted，不自动发起模型请求。<code>/resume-agent ID</code> 才继续，保持原预算和日志；若内核已提交完成但状态更新前进程结束，恢复从完成记录读取结果，不重跑该任务。</p>
-<h3 id="terminal-h8">脚本与 Python 集成</h3>
+<h3 id="terminal-h9">脚本与 Python 集成</h3>
 <p>自动化脚本可使用显式 session 接口；其凭据来自配置指定的环境变量，不经过交互提示：</p>
 <div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora agent &quot;读取附件并生成摘要&quot; --workspace ./workspace --session ./sessions/task --config profile.json --json
 flora agent --session ./sessions/task --status
@@ -300,14 +312,25 @@ flora agent --session ./sessions/task --resume --json</code></pre></div>
 <tr><td><code>model</code></td><td>服务真实支持的模型 ID</td></tr>
 <tr><td><code>base_url</code></td><td>通常以 <code>/v1</code> 结尾的接口前缀</td></tr>
 <tr><td><code>api_key_env</code></td><td>密钥环境变量名；未提供进程内 session_key 时，null 表示无认证服务</td></tr>
-<tr><td><code>timeout</code></td><td>单次模型 HTTP 请求超时，单位秒</td></tr>
+<tr><td><code>timeout</code></td><td>连接／读取无数据的超时；交互启动默认 120 秒，直接 Provider 默认 60 秒</td></tr>
+<tr><td><code>total_timeout</code></td><td>响应读取的整体时间上限，默认 600 秒；不会因 keep-alive 无限延长</td></tr>
+<tr><td><code>stream</code></td><td>通用应用默认 true；显式 false 使用普通 JSON 响应</td></tr>
 <tr><td><code>max_tokens_parameter</code></td><td>服务支持的输出上限字段，通常为 <code>max_tokens</code></td></tr>
 <tr><td><code>request_options</code></td><td>服务特定的 JSON 模式、推理设置等附加参数</td></tr>
 <tr><td><code>allow_insecure_http</code></td><td>是否明确允许非 HTTPS 服务</td></tr>
 </tbody></table></div>
 <p>示例中永远不要填密钥值。脚本服务只支持 HTTP 时，需要明确配置 <code>allow_insecure_http: true</code>；交互输入 HTTP 地址时会显示传输提示并设置该项。这不会自动开放网页工具的私有网络访问；模型端点与通用网页工具具有不同授权边界。</p>
+<p>通用应用会自动请求 <code>response_format: {&quot;type&quot;:&quot;json_object&quot;}</code>，流式请求同时请求用量统计。显式 <code>request_options.response_format</code> 优先；不会覆盖用户指定的模型推理或温度参数。仅当 HTTP 400／422 明确指出自动添加的字段不受支持时，才在有限恢复额度内移除那个字段重试；显式设置的 JSON／stream_options 不会被静默删掉。接口忽略 stream 并返回普通 JSON 时也可读取。</p>
+<p>为较慢的服务建立新会话时，可使用以下 profile：</p>
+<div class="code-wrap"><div class="code-head"><span>json</span><button class="copy" type="button">复制代码</button></div><pre><code>{
+  &quot;provider&quot;: {&quot;timeout&quot;: 180, &quot;total_timeout&quot;: 600, &quot;stream&quot;: true},
+  &quot;compiler&quot;: {&quot;max_output_tokens&quot;: 16000},
+  &quot;budget&quot;: {&quot;max_output_tokens&quot;: 160000}
+}</code></pre></div>
+<p>这是超时与输出额度示例，不是所有模型都必须使用的设置。启动时仍输入地址、密钥、模型。已有会话保持原 profile 和已消费预算；不要修改其指纹来换参数。</p>
 <h3 id="generalconfig-h4">compiler 与 runtime</h3>
 <p>通用入口默认每次编译最多输出 12,000 tokens，最多进行一次格式修复；其它编译器和运行时字段沿用内核默认值。一次修复也是实际模型调用，占用同一份预算。</p>
+<p>每次编译另有最多两次传输恢复机会，格式修复共享这两次机会。因此默认一次编译最多发起四次模型请求，且预算可以更早阻止后续请求。每次 POST 都独立预留输出额度、记录调用和已知／未知用量；provider 内没有隐藏的网络重试。暂时性错误的等待通常为 1、2 秒，数字 Retry-After 最多等待 30 秒。工具操作不进入这个重试循环。</p>
 <p>需要更多推理输出的服务可显式增加 <code>compiler.max_output_tokens</code>，同时保证 <code>budget.max_output_tokens</code> 足以容纳下一次完整预留。不要通过关闭语法校验来接受截断程序或不完整 JSON。</p>
 <p><code>runtime</code> 可以设置内核已有的诊断、合约、步骤数和资源上限。通用应用没有关闭双重控制或合约功能来伪造更高成功率。完整默认配置与字段见「配置与命令行完整参考」。</p>
 <h3 id="generalconfig-h5">budget</h3>
@@ -468,12 +491,12 @@ flora agent --session DIR --status</code></pre></div>
 <tr><td><code>general.json</code></td><td>工作目录、非敏感配置、skill 内容指纹</td></tr>
 <tr><td><code>task.json</code></td><td>当前应用任务标识与原始任务文本</td></tr>
 <tr><td><code>result.json</code></td><td>最近一次运行结果与成果记录</td></tr>
-<tr><td><code>observations.sqlite3</code></td><td>来源、原始内容、成果索引与界面事件</td></tr>
+<tr><td><code>observations.sqlite3</code></td><td>来源、原始内容、成果索引、界面事件与独立的后台交互日志</td></tr>
 <tr><td><code>kernel/session.json</code></td><td>内核会话、历史、累计预算与配置指纹</td></tr>
 <tr><td><code>kernel/turn-*.sqlite</code></td><td>每一轮的效果日志和检查点</td></tr>
 </tbody></table></div>
 <p>不要把会话目录提交到源码仓库。来源与任务记录可能包含业务文档内容，即使配置没有密钥也不代表整个会话不敏感。示例建议把 <code>workspace</code> 与 <code>sessions</code> 分开。</p>
-<p>应用事件最多保留最近 2000 条；终端执行区域展示当前阶段和独立子 agent 状态。事件接口会报告前面的记录是否已被裁减。该活动列表是进度视图，不替代内核效果日志。跨轮对话使用内核的有界精确历史，默认最多 32 轮、64 KiB，并明确记录省略数量，不把丢弃内容伪装成“长期完整记忆”。</p>
+<p>应用事件最多保留最近 2000 条；后台交互日志另有 8 MiB 滚动上限，可用 <code>/log</code> 分页查看。终端展示实际模型输出、工具参数／结果和独立子 agent 状态。裁减会明确提示。显示日志不替代内核效果日志，也不会自动加入模型上下文。跨轮对话使用内核的有界精确历史，默认最多 32 轮、64 KiB，并明确记录省略数量，不把丢弃内容伪装成“长期完整记忆”。</p>
 <p>备份时停止当前进程，再复制会话目录和工作目录。不要只复制单个 SQLite 主文件而遗漏仍存在的 WAL；不要在模型执行期间把不一致的文件快照当成可靠备份。</p>
 <h3 id="generalops-h3">状态解释</h3>
 <div class="table-wrap"><table><thead><tr><th>状态</th><th>含义与处理</th></tr></thead><tbody>
@@ -496,7 +519,7 @@ flora agent --session DIR --status</code></pre></div>
 </ol>
 <p><code>outcome.json</code> 必须符合对应工具的实际结果 envelope，完整格式见「事件存储、恢复与重放」与 CLI <code>resolve --help</code>。不要根据猜测生成成功结果，不要编辑数据库来删掉待定事件。一般模型网络错误属于编译失败和计费不确定，不会凭空制造一个成功工具回执。</p>
 <h3 id="generalops-h5">暂停、退出与进程异常</h3>
-<p>运行时按 Ctrl+C，在下一次 <code>action_selected</code> 事件处生效，发生在效果日志开始和工具派发之前。它不会强杀正在进行的支付、写入或浏览器点击，也不会把客户端中断当作取消了服务器操作。若程序先完成，任务可能直接完成而不是暂停。</p>
+<p>运行时按 Ctrl+C，在下一次 <code>action_selected</code> 或 <code>model_call_started</code> 边界处生效，在下一工具或模型请求派发前暂停。它不会强杀正在进行的支付、写入或浏览器点击，也不会把客户端中断当作取消了服务器操作。若程序先完成，任务可能直接完成而不是暂停。</p>
 <p>退出交互终端时会请求暂停独立子 agent，并等待已开始的调用返回。模型和网络适配器有自己的超时；极端情况下，应通过宿主进程管理器处理进程并在重开后检查日志。强制结束进程可能留下未知结果，必须按上述流程恢复。</p>
 <p>恢复保留真实效果和累计预算；相同的已结算效果由检查点消费，不重新执行。MCP 与浏览器等外部状态不在本地检查点中，重新打开客户端不会恢复旧世界。</p>
 <h3 id="generalops-h6">终端与工作环境</h3>
@@ -506,20 +529,34 @@ flora agent --session DIR --status</code></pre></div>
 <h4 id="generalops-h8">缺少模型或密钥</h4>
 <p>交互入口每次输入 Base URL、API Key 和 Model；恢复时保持原地址与模型。脚本入口设置 <code>api_key_env</code> 指向的环境变量。<code>--status</code> 不需要模型或工具在线。</p>
 <h4 id="generalops-h9">输出不是严格 JSON / 内部程序不合法</h4>
-<p>这属于模型编译阶段，不会执行那段无效程序。最多一次格式修复已在预算中计费。检查模型是否支持结构化输出、输出是否被截断、推理 tokens 是否占满输出上限。如果模型给出与真实轨迹不同的证据指纹，内核会拒绝该程序，通用入口返回 needs_program；它不会替模型改写指纹或退款，显式 resume 才会按当前真实上下文重新编译。不要无限增加自动重试，也不要删除语法检查来“通过”。</p>
-<h4 id="generalops-h10">搜索被限流或挑战</h4>
+<p>这属于模型编译阶段，不会执行那段无效程序。通用入口默认请求 JSON 对象输出，但供应商不一定保证语法或 IR 正确。编译器保留严格本地检查；一次格式修复携带错误类型、行列、错误位置附近原文，以及有界的前次响应。要求重新生成完整的当前阶段程序，而不是盲目拼接缺失括号。截断响应会要求从头生成较短程序，不把残片作为成功结果。</p>
+<p>用 <code>/log</code> 查看 <code>compiler_rejected</code> 的具体原因及后续修复输出；<code>/status</code> 显示最近结果与累计预算。检查输出是否被截断、推理 tokens 是否占满输出上限。需要调整参数时在新会话的 profile 中设置服务支持的推理选项或输出额度。如果模型给出与真实轨迹不同的证据指纹，内核会拒绝该程序；它不会替模型改写指纹或退款。修复后仍不通过会保留 needs_program，显式 <code>/resume</code> 才按当前真实上下文再次编译。</p>
+<h4 id="generalops-h10">模型连接失败，反复 resume 也失败</h4>
+<p>先看具体分类，不能把所有错误都当作等待不够长：</p>
+<div class="table-wrap"><table><thead><tr><th>原因</th><th>自动处理与下一步</th></tr></thead><tbody>
+<tr><td>timeout／connection／dns</td><td>每次编译共享最多两次有预算的恢复；持续失败时检查网络出口、地址与服务状态</td></tr>
+<tr><td>HTTP 408／429／500／502／503／504</td><td>有限退避恢复；持续限流时等待服务恢复，不要连续消耗会话额度</td></tr>
+<tr><td>HTTP 401／402／403</td><td>不自动重试；分别检查密钥、余额、模型权限</td></tr>
+<tr><td>HTTP 404</td><td>不自动重试；检查 Base URL 是否正确、模型 ID 是否存在</td></tr>
+<tr><td>HTTP 400／422</td><td>只对明确拒绝的自动添加兼容字段进行降级；其余情况检查请求配置</td></tr>
+<tr><td>TLS</td><td>不自动关闭证书校验；检查证书与网络代理</td></tr>
+<tr><td>stream_interrupted</td><td>丢弃未完整结束的模型程序，再在共享恢复额度内重试；不执行残片</td></tr>
+</tbody></table></div>
+<p><code>/status</code> 显示读取超时、响应整体时间限制和恢复次数；<code>/log</code> 显示每次实际请求、错误与等待。SSE keep-alive 会被正常消费，整体响应时间与字节上限仍然有效。普通 JSON 响应也兼容；模型发现接口 <code>/models</code> 失败不等于 <code>/chat/completions</code> 必然不可用，可以手填模型 ID。</p>
+<p>模型请求只生成程序，尚未执行工具，因此可单独恢复。已经执行的工具不会随模型重试而再派发。即使响应丢失也可能产生模型费用；每个请求都计入 model_calls，用量未知时按完整输出预留计费并增加 unknown_usage_calls。<code>/resume</code> 不会清空这些记录，也不能修复错误的地址、过期密钥或持续故障的服务。</p>
+<h4 id="generalops-h11">搜索被限流或挑战</h4>
 <p>配置自己的 Brave/Tavily/SearXNG。网页工具直接连接目标 IP；要求代理的环境需先配置受控网络出口。模型 API 可达不代表所有公网域名都能由网页客户端解析。</p>
-<h4 id="generalops-h11">PDF 没有文字</h4>
+<h4 id="generalops-h12">PDF 没有文字</h4>
 <p>检查是否是扫描件。内置解析器不做 OCR。使用经过授权的 OCR 服务或先在外部提取文字，再作为附件输入。</p>
-<h4 id="generalops-h12">文件修改失败</h4>
+<h4 id="generalops-h13">文件修改失败</h4>
 <p>确认父目录存在；新文件用独占创建，修改已有文件需要刚读到的完整 SHA-256。遇到并发修改，重新读取并决定如何合并，不能强行覆盖。</p>
-<h4 id="generalops-h13">重开提示配置或技能变化</h4>
+<h4 id="generalops-h14">重开提示配置或技能变化</h4>
 <p>使用创建会话时的模型、工具目录、工作目录与技能内容；有意更换配置时建立新会话。不要直接改写指纹绕过一致性检查。</p>
-<h4 id="generalops-h14">MCP 连接失败</h4>
+<h4 id="generalops-h15">MCP 连接失败</h4>
 <p>确认命令可执行、环境映射齐全、服务支持 stdio 或 Streamable HTTP、白名单工具真实存在。初始化失败不会降级成“连接成功但没有工具”。服务的业务错误与通信中断按不同结果处理。</p>
-<h4 id="generalops-h15">浏览器启动失败</h4>
+<h4 id="generalops-h16">浏览器启动失败</h4>
 <p>确认 Playwright Python 包和对应 Chromium 版本已安装、系统库齐全、宿主允许浏览器子进程运行。先在目标环境运行一个简单 Playwright 页面测试，再启动 Flora 浏览器工具。当前环境的适配器测试不能替代目标机器上的浏览器运行检查。</p>
-<h3 id="generalops-h16">验证边界</h3>
+<h3 id="generalops-h17">验证边界</h3>
 <p>确定性回归、协议夹具、真实模型任务和真实公网/浏览器交互是不同类别。查看 <code>general-agent</code> 分支的 <code>reports/TERMINAL_VALIDATION.md</code> 和 <code>reports/GENERAL_VALIDATION.md</code> 获取执行环境、逐类结果与未验证项。通过几项任务不等于在所有模型、所有网站上具有统一成功率，也不等于完成了生产安全审计或并发压力测试。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/28-general-operations.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="generalapi"><div class="chapter-label">09 / 通用 Agent</div><h2 id="generalapi-h1">GeneralAgent API</h2>
 <h3 id="generalapi-h2">构造 GeneralAgent</h3>
 <div class="code-wrap"><div class="code-head"><span>python network</span><button class="copy" type="button">复制代码</button></div><pre><code>from pathlib import Path
@@ -1562,7 +1599,7 @@ compiler = LLMCompiler(
     on_usage=budget.record_model_usage,
 )</code></pre></div>
 <p>上面只创建对象，不发送请求。将该编译器交给 Runtime 后，运行时会通过 <code>set_accounting()</code> 绑定自己的同一份预算与持久化回调；Standalone 编译调用则使用你显式设置的回调。将环境变量设为自己的密钥，并替换服务地址和模型 ID 后，才可实际编译。示例不声称任何供应商、模型或额度在当前环境中可用。</p>
-<p>provider 向 <code>{base_url}/chat/completions</code> 发送一个非流式请求。<code>base_url</code> 通常应包含 <code>/v1</code>，不要再包含 <code>/chat/completions</code>。脚本密钥在每次请求时从指定环境变量读取；交互终端使用本次启动输入的进程内密钥，错误消息不输出原始 HTTP 错误正文或密钥。</p>
+<p>provider 每次 complete 向 <code>{base_url}/chat/completions</code> 发送一个请求，内部没有隐藏重试。直接创建 Provider 时默认非流式；通用 Agent 默认启用 SSE 流式读取和 JSON 对象输出。<code>base_url</code> 通常应包含 <code>/v1</code>，不要再包含 <code>/chat/completions</code>。脚本密钥在每次请求时从指定环境变量读取；交互终端使用本次启动输入的进程内密钥，错误消息不输出原始 HTTP 错误正文或密钥。</p>
 <h3 id="models-h3">兼容服务的差异</h3>
 <p>默认输出 token 字段为 <code>max_completion_tokens</code>。使用只接受旧字段的兼容服务时：</p>
 <div class="code-wrap"><div class="code-head"><span>python</span><button class="copy" type="button">复制代码</button></div><pre><code>from flora.providers import OpenAICompatibleProvider
@@ -1574,7 +1611,7 @@ provider = OpenAICompatibleProvider(
     max_tokens_parameter=&quot;max_tokens&quot;,
 )</code></pre></div>
 <p>loopback HTTP 可用于本地服务；远程 HTTP 默认拒绝。需要经过明确部署评估才能设置 <code>allow_insecure_http=True</code>。URL 不允许嵌入用户名、密码、query 或 fragment。HTTP 重定向被拒绝，以避免认证头转发到其他目的地。</p>
-<p><code>request_options</code> 可以包含目标模型支持的额外参数，例如某些服务的温度设置。本项目不会默认添加模型不一定支持的温度、JSON mode 或 reasoning 参数。传输关键字段、模型工具调用字段和输出预算字段不能通过该字典覆盖。</p>
+<p><code>request_options</code> 可以包含目标模型支持的额外参数，例如某些服务的温度设置。直接创建 Provider 时不会默认添加温度、JSON mode 或 reasoning 参数。通用 Agent 会优先请求 JSON 对象输出，并处理自动添加字段的明确不兼容反馈；不擅自设置温度或厂商推理参数。传输关键字段、模型工具调用字段和输出预算字段不能通过该字典覆盖。</p>
 <h3 id="models-h4">Provider 协议</h3>
 <p>自定义 provider 只需实现以下方法：</p>
 <div class="code-wrap"><div class="code-head"><span>python</span><button class="copy" type="button">复制代码</button></div><pre><code>from flora.providers import ModelResponse
@@ -1600,8 +1637,8 @@ class MyProvider:
 <p><code>max_context_bytes</code> 限制编译上下文 JSON 的字节数，不包含固定 system prompt；完整 HTTP 请求还受到 provider 的 <code>max_request_bytes</code> 限制。</p>
 <p>若完整任务与工具定义本身已超过字节上限，编译失败，不会把它们悄悄裁掉后继续执行。</p>
 <h3 id="models-h7">格式修复与预算</h3>
-<p><code>max_repairs</code> 只允许 0 或 1。第一次响应的 JSON、IR 或 bundle 校验失败时，编译器可以发送一次有界的错误报告和前次输出片段，请模型生成完整修正结果。修复使用相同历史锚点，并且是一笔正常计费的模型调用。</p>
-<p>网络错误不等于格式错误，不触发格式修复。预算回调失败也不被修复循环吞掉。过期锚点拒绝安装，不由编译器擅自改写为当前锚点。</p>
+<p><code>max_repairs</code> 只允许 0 或 1。第一次响应的 JSON、IR 或 bundle 校验失败时，编译器可以发送一次有界的错误报告和前次输出片段，请模型生成完整修正结果。修复使用相同历史锚点，并且是一笔正常计费的模型调用。JSON 语法错误额外提供出错位置附近的原文窗口，即使错误在前 16 KiB 片段之外也可定位；始终要求完整的新程序，不自动拼接残缺 JSON。</p>
+<p>网络错误不等于格式错误，不触发格式修复。通用 Agent 在编译层为暂时性传输故障提供独立、共享、最多两次的恢复机会，每次都经过同样的预算回调。独立 LLMCompiler 默认 transport_retries=0。预算回调失败也不被修复循环吞掉。过期锚点拒绝安装，不由编译器擅自改写为当前锚点。</p>
 <h3 id="models-h8">离线编译器</h3>
 <p><code>ScriptedCompiler</code> 接收 bundle 列表或一个以 <code>CompilerContext</code> 为参数的 callable。它用于确定性示例、集成和复现实验，不运行模型推理。返回内容仍通过完整校验，不能借此绕过工具与历史锚点约束。</p>
 <div class="code-wrap"><div class="code-head"><span>python</span><button class="copy" type="button">复制代码</button></div><pre><code>from flora.compiler import ScriptedCompiler
@@ -1613,7 +1650,9 @@ class MyProvider:
 <tr><td>provider</td><td><code>base_url</code></td><td><code>https://api.openai.com/v1</code></td></tr>
 <tr><td>provider</td><td><code>model</code></td><td>必填</td></tr>
 <tr><td>provider</td><td><code>api_key_env</code></td><td><code>OPENAI_API_KEY</code></td></tr>
-<tr><td>provider</td><td><code>timeout</code></td><td>60 秒</td></tr>
+<tr><td>provider</td><td><code>timeout</code></td><td>60 秒；连接／读取无数据超时</td></tr>
+<tr><td>provider</td><td><code>total_timeout</code></td><td>600 秒；响应读取整体时间上限</td></tr>
+<tr><td>provider</td><td><code>stream</code></td><td>false；通用应用默认 true</td></tr>
 <tr><td>provider</td><td><code>max_response_bytes</code></td><td>4 MiB</td></tr>
 <tr><td>provider</td><td><code>max_request_bytes</code></td><td>2 MiB</td></tr>
 <tr><td>provider</td><td><code>max_tokens_parameter</code></td><td><code>max_completion_tokens</code></td></tr>
