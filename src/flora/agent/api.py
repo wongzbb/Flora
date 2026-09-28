@@ -284,7 +284,7 @@ class Agent:
     def _check_credentials(self):
         if isinstance(self.provider, OpenAICompatibleProvider):
             name = self.provider.api_key_env
-            if name is not None and not os.environ.get(name):
+            if not self.provider.has_credentials():
                 raise ValidationError(
                     f"Set the {name} environment variable before running this model. "
                     "For a server that intentionally needs no authentication, set "

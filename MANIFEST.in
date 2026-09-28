@@ -1,5 +1,5 @@
 include LICENSE README.md pyproject.toml
-recursive-include src/flora *.py *.typed *.html
+recursive-include src/flora *.py *.typed *.svg *.json
 recursive-include configs *.json
 recursive-include schemas *.json
 recursive-include examples *.py *.json *.csv *.md

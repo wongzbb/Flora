@@ -100,6 +100,7 @@ def _normalize(profile):
         "require_report",
         "instructions",
         "storage_bytes",
+        "subagents",
     }:
         raise ValidationError("Unknown general configuration field")
     for key in ("allow_commands", "require_report"):
@@ -119,6 +120,10 @@ def _normalize(profile):
         raise ValidationError("skills must be an array of directory paths")
     if len(general.get("mcp", {})) > 8:
         raise ValidationError("At most eight MCP servers are supported per session")
+    if "subagents" in general:
+        from .delegation import validate_options
+
+        validate_options(general["subagents"])
     quota = general.get("storage_bytes", 268435456)
     if type(quota) is not int or not 16777216 <= quota <= 1073741824:
         raise ValidationError("storage_bytes must be between 16 MiB and 1 GiB")
@@ -133,11 +138,14 @@ class PauseRequested(KeyboardInterrupt):
 
 
 class GeneralAgent:
-    def __init__(self, *, session_dir, workspace=None, profile=None, provider=None, on_event=None):
+    def __init__(self, *, session_dir, workspace=None, profile=None, provider=None, on_event=None,
+                 session_key=None):
         self.directory = Path(session_dir).expanduser().resolve()
         self.directory.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.lease = Lease(self.directory)
         self.connections, self.browser, self.agent, self.store = [], None, None, None
+        self.delegation = None
+        self._session_key = session_key
         self.lock, self.pause = threading.Lock(), threading.Event()
         self.closed, self.on_event = False, on_event
         self.cached_status = {}
@@ -218,6 +226,11 @@ class GeneralAgent:
             if general.get("services"):
                 functions.append(self.web.http_request)
             specs = self.files.specs() + list(make_registry(functions)._tools.values())
+            if general.get("subagents", {}).get("enabled", False):
+                from .delegation import Delegation
+
+                self.delegation = Delegation(self, general["subagents"], provider=provider)
+                specs += self.delegation.specs()
             for name, configuration in sorted(general.get("mcp", {}).items()):
                 from .mcp import MCPConnection
 
@@ -249,6 +262,8 @@ class GeneralAgent:
                 **self.profile.get("compiler", {}),
             }
             instructions = INSTRUCTIONS + "\n" + general.get("instructions", "")
+            if self.delegation:
+                instructions += self.delegation.instructions
             if general.get("require_report"):
                 instructions += "\nCompletion requires at least one current report/export made with write_report or export_document in this task."
             # Pin application capabilities and skills into the existing kernel identity.
@@ -270,8 +285,15 @@ class GeneralAgent:
                 config=self.profile.get("runtime"),
                 budget_limits=self.profile.get("budget"),
                 on_event=self._event,
-                completion_guard=self._complete if general.get("require_report") else None,
+                completion_guard=self._ready_to_finish
+                if general.get("require_report") or self.delegation else None,
             )
+            if session_key is not None:
+                from flora.integrations.providers import OpenAICompatibleProvider
+
+                if not isinstance(self.agent.provider, OpenAICompatibleProvider):
+                    raise ValidationError("Session credentials require an OpenAI-compatible provider")
+                self.agent.provider.set_session_key(session_key)
             if not saved:
                 atomic_json(
                     meta_path,
@@ -303,6 +325,14 @@ class GeneralAgent:
         if self.pause.is_set() and event.get("kind") == "action_selected":
             raise PauseRequested
 
+    def _child_event(self, event):
+        self.store.event(event)
+        if self.on_event:
+            try:
+                self.on_event(event)
+            except Exception:
+                pass
+
     def artifact_status(self) -> dict:
         """List registered artifacts and verify their current file hashes against publication receipts."""
         items = []
@@ -322,7 +352,7 @@ class GeneralAgent:
     def agent_capabilities(self) -> dict:
         """Discover configured HTTP service names/methods, browser grants, search and document capabilities."""
         general = self.profile["general"]
-        return {
+        result = {
             "search_provider": general.get("search", {}).get("provider", "duckduckgo"),
             "services": {
                 name: {"base_url": value["base_url"], "methods": value.get("methods", ["GET"])}
@@ -340,6 +370,14 @@ class GeneralAgent:
             "shell_commands": general.get("allow_commands", False),
             "require_report": general.get("require_report", False),
         }
+        if self.delegation:
+            result["subagents"] = self.delegation.capabilities()
+        return result
+
+    def _ready_to_finish(self):
+        if self.delegation and self.delegation.is_busy():
+            return False
+        return not self.profile["general"].get("require_report") or self._complete()
 
     def _complete(self):
         return any(
@@ -354,6 +392,8 @@ class GeneralAgent:
             raise ValidationError("A task is already running")
         try:
             self.pause.clear()
+            if self.delegation:
+                self.delegation.clear_pause()
             if not resume:
                 if self.agent.status()["requires_resume"]:
                     raise ValidationError("Resume the unfinished task before starting a new task")
@@ -407,6 +447,8 @@ class GeneralAgent:
 
     def request_pause(self):
         self.pause.set()
+        if self.delegation:
+            self.delegation.request_pause()
         return {"pause_requested": True, "takes_effect": "before the next selected external action"}
 
     def status(self):
@@ -432,9 +474,14 @@ class GeneralAgent:
             raise ValidationError("Wait for the active task before closing GeneralAgent")
         self.closed = True
         try:
+            if self.delegation:
+                self.delegation.close()
             if self.agent:
+                if hasattr(self.agent.provider, "set_session_key"):
+                    self.agent.provider.set_session_key(None)
                 self.agent.close()
         finally:
+            self._session_key = None
             for connection in self.connections:
                 connection.close()
             if self.browser:

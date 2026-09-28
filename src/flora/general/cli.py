@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Task, interactive terminal and local Web entry points."""
+"""Terminal launcher and explicit-session scripting entry point."""
 
 from __future__ import annotations
 
@@ -14,30 +14,22 @@ from .agent import GeneralAgent, read_profile, saved_status
 
 
 def add_general_commands(subparsers):
-    for command, help_text in (
-        ("agent", "Research, documents and external tools with Flora"),
-        ("serve", "Launch the authenticated local Flora Web interface"),
-    ):
-        p = subparsers.add_parser(command, help=help_text)
-        if command == "agent":
-            p.add_argument("task", nargs="?")
-            mode = p.add_mutually_exclusive_group()
-            mode.add_argument("--resume", action="store_true")
-            mode.add_argument("--status", action="store_true")
-            p.add_argument("--json", action="store_true")
-        else:
-            p.add_argument("--port", type=int, default=8765)
-        p.add_argument(
-            "--workspace", help="Existing workspace directory; required for a new session"
-        )
-        p.add_argument(
-            "--session", required=True, help="Persistent general-agent session directory"
-        )
-        p.add_argument("--config", help="JSON configuration; saved for subsequent resume")
-        p.add_argument("--model")
-        p.add_argument("--base-url")
-        p.add_argument("--api-key-env")
-        p.add_argument("--quiet", action="store_true")
+    p = subparsers.add_parser("agent", help="Launch Flora, or run a task in an explicitly managed session")
+    p.add_argument("task", nargs="?")
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument("--resume", nargs="?", const="", metavar="ID")
+    mode.add_argument("--status", action="store_true")
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--workspace", "-C", help="Workspace directory (default: current directory)")
+    p.add_argument("--session", help="Explicit session directory for scripted task/status operations")
+    p.add_argument("--config", help="Optional JSON profile")
+    p.add_argument("--model")
+    p.add_argument("--base-url")
+    p.add_argument("--api-key-env")
+    p.add_argument("--quiet", action="store_true")
+    p.add_argument("--plain", action="store_true")
+    p.add_argument("--allow-commands", action="store_true")
+    p.add_argument("--no-subagents", action="store_true")
 
 
 def _profile(args):
@@ -84,7 +76,17 @@ def _show(result, as_json=False):
 
 
 def general_main(args):
-    if args.command == "agent" and args.task and (args.resume or args.status):
+    if not args.session:
+        if args.status or args.json or args.model or args.base_url or args.api_key_env:
+            raise ValidationError("Scripting flags require --session DIR; run flora for guided interactive use")
+        from flora.terminal.cli import launch
+        return launch(args)
+    if args.resume not in (None, ""):
+        raise ValidationError("Use flora --resume ID for indexed conversations; --session uses --resume without ID")
+    if args.allow_commands or args.no_subagents:
+        raise ValidationError("Configure explicit-session capabilities in --config")
+    resume = args.resume is not None
+    if args.task and (resume or args.status):
         raise ValidationError("Do not combine a task with --resume or --status")
     if args.command == "agent" and args.status:
         print(json.dumps(saved_status(args.session), ensure_ascii=False, indent=2))
@@ -95,18 +97,11 @@ def general_main(args):
         profile=_profile(args),
         on_event=None if args.quiet else _progress,
     ) as agent:
-        if args.command == "serve":
-            if not 0 <= args.port <= 65535:
-                raise ValidationError("Invalid port")
-            from .server import serve
-
-            serve(agent, args.port)
-            return 0
         if args.status:
             print(json.dumps(agent.status(), ensure_ascii=False, indent=2))
             return 0
-        if args.resume or args.task:
-            result = agent.resume() if args.resume else agent.run(args.task)
+        if resume or args.task:
+            result = agent.resume() if resume else agent.run(args.task)
             _show(result, args.json)
             return 0 if result["status"] == "completed" else 2
         if args.json:

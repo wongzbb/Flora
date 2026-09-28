@@ -190,7 +190,22 @@ class OpenAICompatibleProvider:
         self.max_request_bytes = max_request_bytes
         self.max_tokens_parameter = max_tokens_parameter
         self.request_options = self._options({} if request_options is None else request_options)
+        self._session_key: str | None = None
         self._opener = urllib.request.build_opener(_NoRedirect())
+
+    def set_session_key(self, key: str | None) -> None:
+        """Use a process-local credential without storing it in configuration or the environment."""
+        if key is not None and (
+            not isinstance(key, str) or not key or len(key) > 8192
+            or any(ord(c) < 33 or ord(c) > 126 for c in key)
+        ):
+            raise ValidationError("API key must be nonempty printable ASCII without spaces")
+        self._session_key = key
+
+    def has_credentials(self) -> bool:
+        return self._session_key is not None or self.api_key_env is None or bool(
+            os.environ.get(self.api_key_env)
+        )
 
     @classmethod
     def _options(cls, options: dict) -> dict:
@@ -229,8 +244,8 @@ class OpenAICompatibleProvider:
             "Accept": "application/json",
             "User-Agent": "Flora/0.1.0",
         }
-        if self.api_key_env is not None:
-            key = os.environ.get(self.api_key_env)
+        if self._session_key is not None or self.api_key_env is not None:
+            key = self._session_key or os.environ.get(self.api_key_env)
             if not key:
                 raise ProviderError("API key environment variable is unset or empty")
             if any(ord(c) < 33 or ord(c) > 126 for c in key):

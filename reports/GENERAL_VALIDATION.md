@@ -1,5 +1,7 @@
 # Flora General Agent verification
 
+Scope: this report records verification of the general-application baseline at commit `3528e13796f8671d8fead2f5f207088715bcd038`. Its Web UI measurements are historical; current terminal behavior, removed Web packaging, credential changes and independent subagents are covered by [TERMINAL_VALIDATION.md](TERMINAL_VALIDATION.md).
+
 This report distinguishes application implementation, deterministic checks, real-model tasks and environment-limited checks. It does not claim universal task success, a production security audit or load-test certification.
 
 ## Implementation and kernel continuity

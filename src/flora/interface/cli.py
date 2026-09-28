@@ -111,6 +111,9 @@ def parser() -> argparse.ArgumentParser:
         prog="flora", description="Run natural-language tasks with Flora"
     )
     p.add_argument("--version", action="version", version=f"Flora {__version__}")
+    from flora.terminal.cli import add_launcher_options
+
+    add_launcher_options(p)
     subs = p.add_subparsers(dest="command")
     add_direct_commands(subs)
     from flora.coding.cli import add_coding_command
@@ -178,16 +181,14 @@ def parser() -> argparse.ArgumentParser:
 def main(argv=None) -> int:
     arguments = list(sys.argv[1:] if argv is None else argv)
     command_parser = parser()
-    if not arguments:
-        if sys.stdin.isatty():
-            arguments = ["chat"]
-        else:
-            command_parser.print_help()
-            return 0
     args = command_parser.parse_args(arguments)
     opened_trace = None
     try:
-        if args.command in {"agent", "serve"}:
+        if args.command is None:
+            from flora.terminal.cli import launch
+
+            return launch(args)
+        if args.command == "agent":
             from flora.general.cli import general_main
             return general_main(args)
         if args.command == "code":

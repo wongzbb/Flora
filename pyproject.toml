@@ -10,7 +10,7 @@ requires-python = ">=3.11"
 license = {text = "Apache-2.0"}
 authors = [{name = "Flora contributors"}]
 readme = "README.md"
-dependencies = []
+dependencies = ["rich>=13.9,<15", "prompt-toolkit>=3.0.48,<4"]
 classifiers = ["Development Status :: 3 - Alpha", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.12", "License :: OSI Approved :: Apache Software License"]
 
 [project.scripts]
@@ -27,7 +27,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 flora = ["py.typed"]
-"flora.general" = ["static/*.html"]
+"flora.terminal" = ["assets/*.json", "assets/*.svg"]
 
 [tool.ruff]
 target-version = "py311"
