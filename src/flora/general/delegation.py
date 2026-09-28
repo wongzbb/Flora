@@ -21,14 +21,25 @@ from .storage import atomic_json
 
 
 def validate_options(options):
-    if not isinstance(options, dict) or set(options) - {"enabled", "max_children", "max_parallel"}:
-        raise ValidationError("subagents accepts enabled, max_children and max_parallel")
+    if not isinstance(options, dict) or set(options) - {
+        "enabled",
+        "max_children",
+        "max_parallel",
+        "budget",
+    }:
+        raise ValidationError("subagents accepts enabled, max_children, max_parallel and budget")
     if type(options.get("enabled", False)) is not bool:
         raise ValidationError("subagents.enabled must be boolean")
     for key, default, maximum in (("max_children", 8, 32), ("max_parallel", 3, 4)):
         value = options.get(key, default)
         if type(value) is not int or not 1 <= value <= maximum:
             raise ValidationError(f"subagents.{key} must be between 1 and {maximum}")
+    if "budget" in options:
+        from .budgets import unlimited_defaults
+
+        if not isinstance(options["budget"], dict):
+            raise ValidationError("subagents.budget must be an object")
+        unlimited_defaults(options["budget"])
 
 
 class ChildPause(KeyboardInterrupt):
@@ -65,6 +76,18 @@ delegate. The parent must inspect your result; never claim it has been verified.
     def __init__(self, owner, options, *, provider=None):
         validate_options(options)
         self.owner, self.options, self.provider = owner, options, provider
+        if "budget" in options:
+            from .budgets import unlimited_defaults
+
+            self.child_limits = unlimited_defaults(options["budget"])
+            if any(value is None for value in self.child_limits.values()):
+                self.instructions = self.instructions.replace(
+                    "separate bounded ledgers", "separate usage ledgers"
+                )
+                self.child_instructions += (
+                    "\nA null cumulative budget limit means unlimited, not zero or unknown. "
+                    "Usage is still recorded. Per-response output limits and runtime checks still apply."
+                )
         self.root = owner.directory / "subagents"
         if self.root.is_symlink():
             raise ValidationError("Subagent directory cannot be a symbolic link")

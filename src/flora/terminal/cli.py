@@ -115,11 +115,28 @@ def help_text(ui):
     )
 
 
+def show_budget_mode(ui, agent, status):
+    limits = status["budget"]["limits"]
+    if all(value is None for value in limits.values()):
+        ui.note(
+            "Budget: unlimited · usage is recorded · request and runtime protections remain active."
+        )
+    else:
+        ui.note(
+            "Budget: configured limits · /status shows caps and cumulative usage; null means unlimited."
+        )
+        if not agent.unlimited_defaults:
+            ui.note(
+                "This saved conversation retains its original limits. /new uses unlimited budget defaults."
+            )
+
+
 def conversation(agent, ui, sessions, path, *, initial_task=None):
     ui.note("Session: " + path.name)
     ui.note("Resume here with: flora --resume " + path.name)
     ui.note("/help for commands. Ctrl+C pauses execution; Ctrl+D exits at the prompt.")
     status = agent.status()
+    show_budget_mode(ui, agent, status)
     if status["history"]["turns"]:
         ui.history(status["history"], limit=2)
     if agent.delegation:
@@ -160,6 +177,7 @@ def conversation(agent, ui, sessions, path, *, initial_task=None):
                 help_text(ui)
             elif task == "/status":
                 state = agent.status()
+                show_budget_mode(ui, agent, state)
                 show_json(
                     ui,
                     {

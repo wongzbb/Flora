@@ -993,7 +993,10 @@ class Runtime:
                     self.config.enable_diagnostics
                     and not self._last_inserted_diagnostic
                     and self.diagnostic_calls < self.config.max_diagnostic_calls
-                    and self.budget.limits.max_tool_calls - self.budget.tool_calls >= 2
+                    and (
+                        self.budget.limits.max_tool_calls is None
+                        or self.budget.limits.max_tool_calls - self.budget.tool_calls >= 2
+                    )
                 )
                 selected = choose(rows, self.incumbent, diagnostic_allowed=allowed)
                 chosen = boundaries[selected]

@@ -14,15 +14,15 @@ Verified on Python 3.12 / Linux. This report covers the default terminal launche
 
 ## Verification results
 
-**525 unique automated checks passed:**
+**546 unique automated checks passed:**
 
 | Suite | Checks | Coverage |
 | --- | ---: | --- |
 | Existing kernel/application regression | 401 | Compiler, IR/VM, scheduler, contracts, diagnostics, persistence, tools, provider behavior and application integration. Two default-entry expectations were updated to the requested terminal routing. |
 | General application regression | 59 | Document parsing/exports, table arithmetic, receipts, report guards, safe paths, source quotas, MCP stdio and Streamable HTTP, unknown outcomes and optional browser adapter lifecycle. The retired UI-server test is not included. |
 | Terminal and delegation suite | 38 | Guided connection, credentials, model list fallback/pagination/redirects, directory isolation, automatic IDs, history/context resume, attachments, child execution and recovery, output sanitization and terminal presentation. |
-
 | Transport, repair and dialogue regression | 27 | SSE completion/usage/UTF-8/keep-alives, partial-stream rejection, HTTP and timeout classification, bounded retry accounting, compatibility negotiation, precise JSON repair windows, stale-anchor rejection, same-budget resume, previous-distribution checkpoint resume without repeated writes, real child dialogue, transcript redaction/retention and another real PTY interaction. |
+| Unlimited-budget defaults | 21 | True null limits, independent finite caps, zero-budget semantics, usage and interrupted reservations, 34 main-agent calls across reopening, a 10-call child, legacy finite-session compatibility, unchanged low-level defaults, live UI mode labels, diagnostic selection and unknown-effect non-replay. |
 
 Three of the 38 new checks use real pseudo-terminal processes with prompt-toolkit and Rich: hidden credential entry and Ctrl+D; Alt+Enter multiline submission followed by the resume picker; and Ctrl+C before a file effect, then explicit resume with exactly one file write. These are executable terminal interactions, not mocked input-widget assertions.
 
@@ -32,20 +32,22 @@ The complete parent-to-subagent test sends real HTTP Chat Completions requests t
 
 - A wheel and source distribution were built successfully.
 - The wheel was installed in a separate Python 3.12 environment with the selected general, MCP and browser extras.
-- All 65 terminal/delegation and recovery checks also passed against that installed wheel, including subprocess and PTY launches without the source tree on their import path. This repeated installation run is not counted again in the 525 total.
+- All 86 terminal/delegation, recovery and unlimited-budget checks also passed against that installed wheel, including subprocess and PTY launches without the source tree on their import path. This repeated installation run is not counted again in the 546 total.
 - All three terminal asset files are present; obsolete Web UI/server files are absent.
 - `pip check` reports no broken requirements; Ruff and patch-whitespace checks pass for the changed implementation.
 - Tests, test dependencies, model journals, credentials, developer environments and build intermediates are excluded from the published repository contents and final source ZIP.
 
 ## Kernel continuity and limits
 
-The IR, VM, runtime, scheduler, effect executor, budget, contracts, diagnostics, reuse, opaque state, session and trace implementations remain unchanged from general-agent baseline tree `16f8606cdce958e24e2b957d4ff320f3e9a68977`. The provider now reads SSE or JSON with explicit error categories; the compiler adds an opt-in, accounted transport recovery policy and better syntax repair context. The general application enables streaming, JSON preference, two shared recovery calls and human dialogue logging. Low-level provider complete still sends exactly one POST; low-level LLMCompiler has no transport retries by default. No evidence anchors, contract checks, tool-effect recovery rules or budget accounting are weakened.
+The IR, VM, scheduler, effect executor, contracts, diagnostics, reuse, opaque state, session and trace implementations remain unchanged from general-agent baseline tree `16f8606cdce958e24e2b957d4ff320f3e9a68977`. The budget ledger accepts null for an uncapped limit while retaining its original finite low-level defaults; the runtime diagnostic guard handles an unlimited tool budget without disabling diagnostic selection. GeneralAgent resolves unspecified new-session limits to null and pins that policy in the saved profile. The provider reads SSE or JSON with explicit error categories; the compiler adds an opt-in, accounted transport recovery policy and better syntax repair context. The general application enables streaming, JSON preference, two shared recovery calls and human dialogue logging. Low-level provider complete still sends exactly one POST; low-level LLMCompiler has no transport retries by default. No evidence anchors, contract checks, tool-effect recovery rules or budget accounting are weakened.
 
 A dedicated compatibility check creates an unfinished task using the previously installed distribution, after a successful file write and failed subsequent compilation. The current implementation reopens that session with its original identity and budget, consumes the existing receipt and completes with exactly one total file write.
 
-Subagents use separate bounded budget ledgers, not the parent's ledger. Defaults allow three concurrent children and eight total children per conversation; every child has at most eight model calls and forty tool calls. Children are read-only and cannot recursively delegate, execute commands or invoke MCP/browser/service mutations. This is local bounded coordination, not a distributed agent scheduler or sandbox.
+Subagents use separate usage ledgers, not the parent's ledger. New general sessions default to unlimited cumulative model/tool calls, input/output tokens and wall time for both parent and children. Explicit limits remain enforceable. Defaults still allow three concurrent children and eight total children per conversation. Existing sessions retain their saved policy and usage; no fingerprint or old cap is silently rewritten. Children are read-only and cannot recursively delegate, execute commands or invoke MCP/browser/service mutations. This is local bounded coordination, not a distributed agent scheduler or sandbox.
 
 ## Authorized live-provider check
+
+This transport smoke test was run before the general budget-default change. The budget-only changes were validated with deterministic execution and persistence tests; no additional paid-model request was needed.
 
 The user-authorized OpenAI-compatible relay and `deepseek-v4-flash` completed a real task: read evidence.txt and state the observed project name and count. The actual answer reported Flora and 41 correctly. Elapsed time was 70.74 seconds: three model calls, one file tool call, 20,713 reported input tokens and 7,246 reported output tokens; no unknown-usage calls. One validation repair occurred before completion. The captured dialogue included actual provider reasoning_content, program text, repair feedback, tool arguments and tool results. The API credential was absent from the retained transcript.
 

@@ -163,6 +163,8 @@ class GeneralAgent:
             saved = read_profile(meta_path, max_bytes=1048576) if meta_path.exists() else None
             if saved and saved.get("format") != "flora-general-1":
                 raise ValidationError("Unsupported general-agent session format")
+            if saved and "budget_defaults" in saved and saved["budget_defaults"] != "unlimited":
+                raise ValidationError("Unsupported general-agent budget defaults")
             if workspace is None:
                 if not saved:
                     raise ValidationError("A new general-agent session requires a workspace")
@@ -170,6 +172,14 @@ class GeneralAgent:
             self.root = Path(workspace).expanduser().resolve(strict=True)
             selected = saved["profile"] if profile is None and saved else profile
             self.profile = _normalize(selected)
+            # Persist resolved defaults so a conversation's deliberate limits
+            # cannot change when the application default changes. Older sessions
+            # without this marker keep their original kernel/child defaults.
+            from .budgets import apply_defaults
+
+            self.unlimited_defaults = not saved or saved.get("budget_defaults") == "unlimited"
+            if self.unlimited_defaults:
+                apply_defaults(self.profile)
             if provider is None and not saved:
                 from flora.interface.settings import resolve_settings
 
@@ -274,6 +284,11 @@ class GeneralAgent:
                 **self.profile.get("compiler", {}),
             }
             instructions = INSTRUCTIONS + "\n" + general.get("instructions", "")
+            if any(value is None for value in self.profile.get("budget", {}).values()):
+                instructions += (
+                    "\nA null cumulative budget limit means unlimited, not zero or unknown. "
+                    "Usage is still recorded. Per-response output limits and runtime checks still apply."
+                )
             if self.delegation:
                 instructions += self.delegation.instructions
             if general.get("require_report"):
@@ -317,6 +332,7 @@ class GeneralAgent:
                     meta_path,
                     {
                         "format": "flora-general-1",
+                        "budget_defaults": "unlimited",
                         "workspace": str(self.root),
                         "profile": self.profile,
                         "skills": self.skills.manifest(),

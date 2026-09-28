@@ -12,19 +12,23 @@ from flora.support.errors import BudgetExceeded, ValidationError
 
 @dataclass(frozen=True)
 class BudgetLimits:
-    max_tool_calls: int = 200
-    max_model_calls: int = 30
-    max_input_tokens: int = 200_000
-    max_output_tokens: int = 100_000
-    max_wall_seconds: float = 3600.0
+    """None disables an individual cap; finite kernel defaults remain unchanged."""
+
+    max_tool_calls: int | None = 200
+    max_model_calls: int | None = 30
+    max_input_tokens: int | None = 200_000
+    max_output_tokens: int | None = 100_000
+    max_wall_seconds: float | None = 3600.0
 
     def __post_init__(self) -> None:
         for key, value in asdict(self).items():
+            if value is None:
+                continue
             if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
                 raise ValidationError(f"Invalid budget limit: {key}")
             if key != "max_wall_seconds" and not isinstance(value, int):
                 raise ValidationError(f"Budget count must be integer: {key}")
-        if not self.max_wall_seconds < float("inf"):
+        if self.max_wall_seconds is not None and not self.max_wall_seconds < float("inf"):
             raise ValidationError("Wall time must be finite")
 
 
@@ -52,13 +56,19 @@ class Budget:
         return self._elapsed + time.monotonic() - self._started
 
     def check_time(self) -> None:
-        if self.elapsed_seconds >= self.limits.max_wall_seconds:
+        if (
+            self.limits.max_wall_seconds is not None
+            and self.elapsed_seconds >= self.limits.max_wall_seconds
+        ):
             raise BudgetExceeded("Wall-time budget exhausted")
 
     def before_tool_call(self) -> None:
         with self._lock:
             self.check_time()
-            if self.tool_calls >= self.limits.max_tool_calls:
+            if (
+                self.limits.max_tool_calls is not None
+                and self.tool_calls >= self.limits.max_tool_calls
+            ):
                 raise BudgetExceeded("Tool-call budget exhausted")
             self.tool_calls += 1
 
@@ -72,11 +82,20 @@ class Budget:
                 raise BudgetExceeded(
                     "Concurrent model calls require separate reservations; this compiler is sequential"
                 )
-            if self.model_calls >= self.limits.max_model_calls:
+            if (
+                self.limits.max_model_calls is not None
+                and self.model_calls >= self.limits.max_model_calls
+            ):
                 raise BudgetExceeded("Model-call budget exhausted")
-            if self.input_tokens >= self.limits.max_input_tokens:
+            if (
+                self.limits.max_input_tokens is not None
+                and self.input_tokens >= self.limits.max_input_tokens
+            ):
                 raise BudgetExceeded("Input-token budget exhausted")
-            if self.output_tokens + amount > self.limits.max_output_tokens:
+            if (
+                self.limits.max_output_tokens is not None
+                and self.output_tokens + amount > self.limits.max_output_tokens
+            ):
                 raise BudgetExceeded("Insufficient output-token reservation")
             self.model_calls += 1
             self._active_reservation = amount
@@ -114,8 +133,11 @@ class Budget:
                 )
                 self.output_tokens += max(reservation, observed_output)
             if (
-                self.input_tokens > self.limits.max_input_tokens
-                or self.output_tokens > self.limits.max_output_tokens
+                self.limits.max_input_tokens is not None
+                and self.input_tokens > self.limits.max_input_tokens
+            ) or (
+                self.limits.max_output_tokens is not None
+                and self.output_tokens > self.limits.max_output_tokens
             ):
                 raise BudgetExceeded(
                     "Provider-reported usage exceeded remaining budget; stopping before another call"
@@ -123,10 +145,22 @@ class Budget:
 
     def can_compile(self, max_output_tokens: int = 8192) -> bool:
         return (
-            self.elapsed_seconds < self.limits.max_wall_seconds
-            and self.model_calls < self.limits.max_model_calls
-            and self.input_tokens < self.limits.max_input_tokens
-            and self.output_tokens + max_output_tokens <= self.limits.max_output_tokens
+            (
+                self.limits.max_wall_seconds is None
+                or self.elapsed_seconds < self.limits.max_wall_seconds
+            )
+            and (
+                self.limits.max_model_calls is None
+                or self.model_calls < self.limits.max_model_calls
+            )
+            and (
+                self.limits.max_input_tokens is None
+                or self.input_tokens < self.limits.max_input_tokens
+            )
+            and (
+                self.limits.max_output_tokens is None
+                or self.output_tokens + max_output_tokens <= self.limits.max_output_tokens
+            )
             and self._active_reservation is None
         )
 
