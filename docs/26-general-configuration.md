@@ -45,8 +45,7 @@ flora agent "任务文本" --workspace ./workspace --session ./sessions/task --c
 ```json
 {
   "provider": {"timeout": 180, "total_timeout": 600, "stream": true},
-  "compiler": {"max_output_tokens": 16000},
-  "budget": {"max_output_tokens": 160000}
+  "compiler": {"max_output_tokens": 16000}
 }
 ```
 
@@ -56,27 +55,47 @@ flora agent "任务文本" --workspace ./workspace --session ./sessions/task --c
 
 通用入口默认每次编译最多输出 12,000 tokens，最多进行一次格式修复；其它编译器和运行时字段沿用内核默认值。一次修复也是实际模型调用，占用同一份预算。
 
-每次编译另有最多两次传输恢复机会，格式修复共享这两次机会。因此默认一次编译最多发起四次模型请求，且预算可以更早阻止后续请求。每次 POST 都独立预留输出额度、记录调用和已知／未知用量；provider 内没有隐藏的网络重试。暂时性错误的等待通常为 1、2 秒，数字 Retry-After 最多等待 30 秒。工具操作不进入这个重试循环。
+每次编译另有最多两次传输恢复机会，格式修复共享这两次机会。因此默认一次编译最多发起四次模型请求，且显式设置的预算可以更早阻止后续请求。每次 POST 都独立预留输出额度、记录调用和已知／未知用量；provider 内没有隐藏的网络重试。暂时性错误的等待通常为 1、2 秒，数字 Retry-After 最多等待 30 秒。工具操作不进入这个重试循环。
 
-需要更多推理输出的服务可显式增加 `compiler.max_output_tokens`，同时保证 `budget.max_output_tokens` 足以容纳下一次完整预留。不要通过关闭语法校验来接受截断程序或不完整 JSON。
+需要更多推理输出的服务可显式增加 `compiler.max_output_tokens`，如果还显式设置了累计 `budget.max_output_tokens`，需保证它足以容纳下一次完整预留。不要通过关闭语法校验来接受截断程序或不完整 JSON。
 
 `runtime` 可以设置内核已有的诊断、合约、步骤数和资源上限。通用应用没有关闭双重控制或合约功能来伪造更高成功率。完整默认配置与字段见「配置与命令行完整参考」。
 
 ## budget
 
-未显式提供时沿用内核的累计会话额度：
+通用 Agent 新会话默认不设置累计预算上限，主 agent 与子 agent 均如此。JSON `null` 表示真正不限，`0` 表示零额度；没有用一个很大的数字冒充无限，也不写入非标准 JSON 的 Infinity。
 
-| 字段 | 默认值 |
-| --- | --- |
-| `max_model_calls` | 30 |
-| `max_tool_calls` | 200 |
-| `max_input_tokens` | 200000 |
-| `max_output_tokens` | 100000 |
-| `max_wall_seconds` | 3600 |
+| 字段 | 新建通用会话的默认值 | 范围 |
+| --- | --- | --- |
+| `max_model_calls` | null | 累计模型请求次数，包括格式修复和传输恢复 |
+| `max_tool_calls` | null | 累计工具调用次数 |
+| `max_input_tokens` | null | 累计已报告输入 tokens |
+| `max_output_tokens` | null | 累计输出 tokens 与未知用量预留 |
+| `max_wall_seconds` | null | 会话累计打开时长的限制 |
 
-额度覆盖同一个持久会话的所有轮次，包括初次编译、格式修复与重编译。恢复不会退款。输出 tokens 在调用前预留；服务无法报告使用量时会保守计费。输入 tokens 的精确统计依赖服务返回的使用量，不声称在任意服务上具有完全准确的调用前额度判断。
+这一默认策略仅用于 GeneralAgent、`flora` 和 `flora agent`。底层 `Agent` / `BudgetLimits` 以及 Coding Agent 的默认值不变。单次编译的输出上限、请求超时、有限修复和重试、VM 执行步数、工具权限、子 agent 并发与数量上限继续生效。
 
-墙钟预算包含会话进程保持打开的时间，包括交互等待；进程关闭后的离线时间不计入。长时间使用交互终端时，请在新会话创建前设置合适的墙钟上限。预算是执行约束，不是后台自动续费或重置机制。
+预算可按需显式设置；未写出的字段仍然不限。下面只限制主 agent 的模型请求和每个子 agent 的模型请求，不设置其它累计限制：
+
+```json
+{
+  "budget": {"max_model_calls": 100},
+  "general": {
+    "subagents": {
+      "enabled": true,
+      "budget": {"max_model_calls": 20}
+    }
+  }
+}
+```
+
+`budget` 与 `general.subagents.budget` 都接受上述五个字段。主任务和每个子任务分别记录、分别执行明确设置的额度；不会把父额度误称为所有子任务的合计费用硬上限。
+
+不限额度时仍正常记录所有消费。输出 tokens 在调用前预留，服务无法报告使用量时保守计量并增加 unknown_usage_calls；中断进程后的未结算预留也不退款。输入 tokens 的精确统计依赖服务返回，不声称具有供应商无关的精确货币计费能力。
+
+会话保存完整的已解析预算配置；恢复保持它和累计消费。有限额的已保存会话仍有限额，不因当前默认值不同而被静默放宽。启动区域和 `/status` 会显示当前模式；要使用默认不限的新对话，在终端输入 `/new` 或重新运行不带 `--resume` 的 `flora`。自带显式额度的 profile 会继续生效。
+
+默认不设时长上限，因此等待输入不会触发会话预算耗尽。如果用户显式设置 `max_wall_seconds`，它计算会话进程打开的时间，包括交互等待；进程关闭后的离线时间不计入。请求自身的 timeout 与 total_timeout 是独立的运行保护。
 
 ## general
 
@@ -91,7 +110,7 @@ flora agent "任务文本" --workspace ./workspace --session ./sessions/task --c
 | `allow_commands` | false | 是否暴露宿主命令执行 |
 | `require_report` | false | 完成前是否要求本任务存在当前有效的登记成果 |
 | `instructions` | 空字符串 | 最多 32000 字符的应用工作说明 |
-| `subagents` | API 默认关闭，终端默认开启 | 独立只读子 agent 的并行与会话配额，详见终端章节 |
+| `subagents` | API 默认关闭，终端默认开启 | 独立只读子 agent 的并行、数量和可选 budget；累计预算默认不限 |
 | `storage_bytes` | 268435456 | 来源库配额，16 MiB 至 1 GiB |
 
 `require_report` 是文件交付检查，不是任务正确性 oracle。它只要求本轮至少一个通过报告/导出工具登记的成果，且当前文件仍匹配登记哈希。复杂任务可通过 Python 自定义应用层增加自己的验收规则，但不能假装能验证未知外部事实。

@@ -96,6 +96,8 @@ flora --no-subagents
 flora --plain
 ```
 
-JSON profile 用于 MCP、浏览器、搜索、预算和模型高级参数。终端仍会提示 Base URL、API Key、Model。`--allow-commands` 为主 agent 启用本地命令执行；子 agent 不继承这项权限。`--plain` 适用于低能力终端或日志记录。
+通用新会话的主／子 agent 默认不限累计调用、tokens 和总时长，仍记录真实用量；`Budget: unlimited` 表示当前无累计硬上限。恢复会话遵循它已经保存的额度，可用 `/new` 新建默认不限的对话。
+
+JSON profile 用于 MCP、浏览器、搜索、可选预算和模型高级参数。终端仍会提示 Base URL、API Key、Model。`--allow-commands` 为主 agent 启用本地命令执行；子 agent 不继承这项权限。`--plain` 适用于低能力终端或日志记录。
 
 日常使用详见「终端、会话与子 agent」；工具细节见「文档、表格与报告」及「MCP、浏览器与外部系统」；程序化调用见「GeneralAgent API」。

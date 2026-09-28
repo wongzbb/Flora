@@ -139,7 +139,8 @@ flora -C /path/to/project --resume SESSION_ID</code></pre></div>
 flora --allow-commands
 flora --no-subagents
 flora --plain</code></pre></div>
-<p>JSON profile 用于 MCP、浏览器、搜索、预算和模型高级参数。终端仍会提示 Base URL、API Key、Model。<code>--allow-commands</code> 为主 agent 启用本地命令执行；子 agent 不继承这项权限。<code>--plain</code> 适用于低能力终端或日志记录。</p>
+<p>通用新会话的主／子 agent 默认不限累计调用、tokens 和总时长，仍记录真实用量；<code>Budget: unlimited</code> 表示当前无累计硬上限。恢复会话遵循它已经保存的额度，可用 <code>/new</code> 新建默认不限的对话。</p>
+<p>JSON profile 用于 MCP、浏览器、搜索、可选预算和模型高级参数。终端仍会提示 Base URL、API Key、Model。<code>--allow-commands</code> 为主 agent 启用本地命令执行；子 agent 不继承这项权限。<code>--plain</code> 适用于低能力终端或日志记录。</p>
 <p>日常使用详见「终端、会话与子 agent」；工具细节见「文档、表格与报告」及「MCP、浏览器与外部系统」；程序化调用见「GeneralAgent API」。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/24-general-agent.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="terminal"><div class="chapter-label">04 / 通用 Agent</div><h2 id="terminal-h1">终端、会话与子 agent</h2>
 <h3 id="terminal-h2">命令行参考</h3>
 <div class="table-wrap"><table><thead><tr><th>命令或参数</th><th>行为</th></tr></thead><tbody>
@@ -154,11 +155,11 @@ flora --plain</code></pre></div>
 <tr><td><code>--plain</code></td><td>不使用彩色像素形象、动画和增强输入</td></tr>
 <tr><td><code>--help</code> / <code>--version</code></td><td>查看帮助或版本，不请求凭据</td></tr>
 </tbody></table></div>
-<p>首次连接不要求创建配置文件、命名 session 或填写工作目录。<code>--resume</code> 是会话选择操作，<code>/resume</code> 是已打开会话中未完成任务的继续操作。两者不能混为“自动重试”。</p>
+<p>首次连接不要求创建配置文件、命名 session 或填写工作目录。新建会话默认没有累计调用次数、tokens 或总时长上限，启动时显示 <code>Budget: unlimited</code>，消费照常记录；单次请求和执行保护仍然有效。<code>--resume</code> 是会话选择操作，<code>/resume</code> 是已打开会话中未完成任务的继续操作。两者不能混为“自动重试”。</p>
 <p>工作目录按规范化后的真实路径识别，符号链接别名映射到同一目录。不同目录的会话不会混在同一个列表里。目录移动或重命名后会被视为另一处工作环境；不要手动改写会话的配置指纹。</p>
 <h3 id="terminal-h3">输入、模型和凭据</h3>
 <p>Base URL 与 Model 使用普通文本输入；API Key 使用隐藏输入。不要在值两端加引号。启动引导不会保存 API Key，不会导出到环境变量，也不会把它传给子进程命令。模型传输对象在内存中持有本次密钥，关闭应用时解除引用；这不是对 Python 内存进行密码学擦除的承诺。</p>
-<p>非敏感的模型和连接设置保存在会话 profile 中。恢复时仍重新询问三个字段，并要求地址与模型匹配原会话；密钥可以轮换。工具、技能、编译器参数和累计预算保持原记录。</p>
+<p>非敏感的模型和连接设置保存在会话 profile 中。恢复时仍重新询问三个字段，并要求地址与模型匹配原会话；密钥可以轮换。工具、技能、编译器参数、已解析预算配置和累计消费保持原记录。有限额的已保存会话会明确显示原额度；<code>/new</code> 使用当前默认配置，不清除旧会话的消费或效果日志。</p>
 <p>模型发现调用 <code>{base_url}/models</code>。收到的有效模型 ID 全部展示，不按厂商筛选或只取前几项。标准分页自动获取；遇到格式异常、网络错误、超过 4 MiB 单页上限、100 页上限或约 30 秒发现窗口，会明确提示列表可能不完整。HTTP 认证失败、没有 models 接口或空列表时仍允许手填。模型发现拒绝重定向，避免把 Authorization 转交其他地址。</p>
 <p>普通终端推荐至少 80 列。窄屏会简化欢迎区域；<code>NO_COLOR</code> 或 <code>--plain</code> 启用简洁显示。<code>TERM=dumb</code> 不使用交互动画。程序输出与文件名中的终端控制码在显示前过滤。</p>
 <h3 id="terminal-h4">键盘和斜杠命令</h3>
@@ -220,8 +221,8 @@ flora --plain</code></pre></div>
   }
 }</code></pre></div>
 <p><code>flora</code> 交互入口默认启用。Python API 与显式 session 脚本只有配置 enabled 才启用。max_parallel 允许 1–4；max_children 允许 1–32，是整个会话累计可创建的子任务数量，已完成任务仍占名额。超过配额需复用已有 ID 或新开对话，不能通过失败重启退款。</p>
-<p>每个子 agent 的固定预算上限为 8 次模型调用、40 次工具调用、240,000 输入 token、96,000 输出 token、600 秒墙钟预算。每次模型输出上限取父配置与 12,000 中的较小值。未知用量沿用内核的保守预留计费规则。</p>
-<p>子任务预算与主任务分别记录，主任务 budget 数字不包含子任务消费。默认配置下子任务层最多为 8 份上述预算，外加父任务预算。输入 token 只能在服务返回计量后检查；这些限额不代表精确的货币账单硬上限。</p>
+<p>每个新建子 agent 默认不限制累计模型请求、工具调用、输入／输出 tokens 和会话时长。可通过 <code>general.subagents.budget</code> 分别配置所需上限，字段与主任务的 budget 相同；省略字段或 null 表示不限，0 表示零额度。每次模型输出上限仍取父配置与 12,000 中的较小值。未知用量沿用内核的保守预留计量规则。</p>
+<p>子任务预算与主任务分别记录，主任务 budget 数字不包含子任务消费。默认没有累计消费硬上限；子 agent 数量和并发保护不等于费用预算。输入 token 只能在服务返回计量后检查；显式配置的 token 限额不代表精确的货币账单硬上限。</p>
 <p>退出会请求子 agent 在边界暂停并等待已经开始的调用返回。恢复父会话时，上次留下的 queued/running 子任务标为 interrupted，不自动发起模型请求。<code>/resume-agent ID</code> 才继续，保持原预算和日志；若内核已提交完成但状态更新前进程结束，恢复从完成记录读取结果，不重跑该任务。</p>
 <h3 id="terminal-h9">脚本与 Python 集成</h3>
 <p>自动化脚本可使用显式 session 接口；其凭据来自配置指定的环境变量，不经过交互提示：</p>
@@ -324,26 +325,38 @@ flora agent --session ./sessions/task --resume --json</code></pre></div>
 <p>为较慢的服务建立新会话时，可使用以下 profile：</p>
 <div class="code-wrap"><div class="code-head"><span>json</span><button class="copy" type="button">复制代码</button></div><pre><code>{
   &quot;provider&quot;: {&quot;timeout&quot;: 180, &quot;total_timeout&quot;: 600, &quot;stream&quot;: true},
-  &quot;compiler&quot;: {&quot;max_output_tokens&quot;: 16000},
-  &quot;budget&quot;: {&quot;max_output_tokens&quot;: 160000}
+  &quot;compiler&quot;: {&quot;max_output_tokens&quot;: 16000}
 }</code></pre></div>
 <p>这是超时与输出额度示例，不是所有模型都必须使用的设置。启动时仍输入地址、密钥、模型。已有会话保持原 profile 和已消费预算；不要修改其指纹来换参数。</p>
 <h3 id="generalconfig-h4">compiler 与 runtime</h3>
 <p>通用入口默认每次编译最多输出 12,000 tokens，最多进行一次格式修复；其它编译器和运行时字段沿用内核默认值。一次修复也是实际模型调用，占用同一份预算。</p>
-<p>每次编译另有最多两次传输恢复机会，格式修复共享这两次机会。因此默认一次编译最多发起四次模型请求，且预算可以更早阻止后续请求。每次 POST 都独立预留输出额度、记录调用和已知／未知用量；provider 内没有隐藏的网络重试。暂时性错误的等待通常为 1、2 秒，数字 Retry-After 最多等待 30 秒。工具操作不进入这个重试循环。</p>
-<p>需要更多推理输出的服务可显式增加 <code>compiler.max_output_tokens</code>，同时保证 <code>budget.max_output_tokens</code> 足以容纳下一次完整预留。不要通过关闭语法校验来接受截断程序或不完整 JSON。</p>
+<p>每次编译另有最多两次传输恢复机会，格式修复共享这两次机会。因此默认一次编译最多发起四次模型请求，且显式设置的预算可以更早阻止后续请求。每次 POST 都独立预留输出额度、记录调用和已知／未知用量；provider 内没有隐藏的网络重试。暂时性错误的等待通常为 1、2 秒，数字 Retry-After 最多等待 30 秒。工具操作不进入这个重试循环。</p>
+<p>需要更多推理输出的服务可显式增加 <code>compiler.max_output_tokens</code>，如果还显式设置了累计 <code>budget.max_output_tokens</code>，需保证它足以容纳下一次完整预留。不要通过关闭语法校验来接受截断程序或不完整 JSON。</p>
 <p><code>runtime</code> 可以设置内核已有的诊断、合约、步骤数和资源上限。通用应用没有关闭双重控制或合约功能来伪造更高成功率。完整默认配置与字段见「配置与命令行完整参考」。</p>
 <h3 id="generalconfig-h5">budget</h3>
-<p>未显式提供时沿用内核的累计会话额度：</p>
-<div class="table-wrap"><table><thead><tr><th>字段</th><th>默认值</th></tr></thead><tbody>
-<tr><td><code>max_model_calls</code></td><td>30</td></tr>
-<tr><td><code>max_tool_calls</code></td><td>200</td></tr>
-<tr><td><code>max_input_tokens</code></td><td>200000</td></tr>
-<tr><td><code>max_output_tokens</code></td><td>100000</td></tr>
-<tr><td><code>max_wall_seconds</code></td><td>3600</td></tr>
+<p>通用 Agent 新会话默认不设置累计预算上限，主 agent 与子 agent 均如此。JSON <code>null</code> 表示真正不限，<code>0</code> 表示零额度；没有用一个很大的数字冒充无限，也不写入非标准 JSON 的 Infinity。</p>
+<div class="table-wrap"><table><thead><tr><th>字段</th><th>新建通用会话的默认值</th><th>范围</th></tr></thead><tbody>
+<tr><td><code>max_model_calls</code></td><td>null</td><td>累计模型请求次数，包括格式修复和传输恢复</td></tr>
+<tr><td><code>max_tool_calls</code></td><td>null</td><td>累计工具调用次数</td></tr>
+<tr><td><code>max_input_tokens</code></td><td>null</td><td>累计已报告输入 tokens</td></tr>
+<tr><td><code>max_output_tokens</code></td><td>null</td><td>累计输出 tokens 与未知用量预留</td></tr>
+<tr><td><code>max_wall_seconds</code></td><td>null</td><td>会话累计打开时长的限制</td></tr>
 </tbody></table></div>
-<p>额度覆盖同一个持久会话的所有轮次，包括初次编译、格式修复与重编译。恢复不会退款。输出 tokens 在调用前预留；服务无法报告使用量时会保守计费。输入 tokens 的精确统计依赖服务返回的使用量，不声称在任意服务上具有完全准确的调用前额度判断。</p>
-<p>墙钟预算包含会话进程保持打开的时间，包括交互等待；进程关闭后的离线时间不计入。长时间使用交互终端时，请在新会话创建前设置合适的墙钟上限。预算是执行约束，不是后台自动续费或重置机制。</p>
+<p>这一默认策略仅用于 GeneralAgent、<code>flora</code> 和 <code>flora agent</code>。底层 <code>Agent</code> / <code>BudgetLimits</code> 以及 Coding Agent 的默认值不变。单次编译的输出上限、请求超时、有限修复和重试、VM 执行步数、工具权限、子 agent 并发与数量上限继续生效。</p>
+<p>预算可按需显式设置；未写出的字段仍然不限。下面只限制主 agent 的模型请求和每个子 agent 的模型请求，不设置其它累计限制：</p>
+<div class="code-wrap"><div class="code-head"><span>json</span><button class="copy" type="button">复制代码</button></div><pre><code>{
+  &quot;budget&quot;: {&quot;max_model_calls&quot;: 100},
+  &quot;general&quot;: {
+    &quot;subagents&quot;: {
+      &quot;enabled&quot;: true,
+      &quot;budget&quot;: {&quot;max_model_calls&quot;: 20}
+    }
+  }
+}</code></pre></div>
+<p><code>budget</code> 与 <code>general.subagents.budget</code> 都接受上述五个字段。主任务和每个子任务分别记录、分别执行明确设置的额度；不会把父额度误称为所有子任务的合计费用硬上限。</p>
+<p>不限额度时仍正常记录所有消费。输出 tokens 在调用前预留，服务无法报告使用量时保守计量并增加 unknown_usage_calls；中断进程后的未结算预留也不退款。输入 tokens 的精确统计依赖服务返回，不声称具有供应商无关的精确货币计费能力。</p>
+<p>会话保存完整的已解析预算配置；恢复保持它和累计消费。有限额的已保存会话仍有限额，不因当前默认值不同而被静默放宽。启动区域和 <code>/status</code> 会显示当前模式；要使用默认不限的新对话，在终端输入 <code>/new</code> 或重新运行不带 <code>--resume</code> 的 <code>flora</code>。自带显式额度的 profile 会继续生效。</p>
+<p>默认不设时长上限，因此等待输入不会触发会话预算耗尽。如果用户显式设置 <code>max_wall_seconds</code>，它计算会话进程打开的时间，包括交互等待；进程关闭后的离线时间不计入。请求自身的 timeout 与 total_timeout 是独立的运行保护。</p>
 <h3 id="generalconfig-h6">general</h3>
 <div class="table-wrap"><table><thead><tr><th>字段</th><th>默认值</th><th>含义</th></tr></thead><tbody>
 <tr><td><code>network</code></td><td>公网访问、25 秒、4 MiB、5 次重定向</td><td>网页与 HTTP 服务的网络边界</td></tr>
@@ -355,7 +368,7 @@ flora agent --session ./sessions/task --resume --json</code></pre></div>
 <tr><td><code>allow_commands</code></td><td>false</td><td>是否暴露宿主命令执行</td></tr>
 <tr><td><code>require_report</code></td><td>false</td><td>完成前是否要求本任务存在当前有效的登记成果</td></tr>
 <tr><td><code>instructions</code></td><td>空字符串</td><td>最多 32000 字符的应用工作说明</td></tr>
-<tr><td><code>subagents</code></td><td>API 默认关闭，终端默认开启</td><td>独立只读子 agent 的并行与会话配额，详见终端章节</td></tr>
+<tr><td><code>subagents</code></td><td>API 默认关闭，终端默认开启</td><td>独立只读子 agent 的并行、数量和可选 budget；累计预算默认不限</td></tr>
 <tr><td><code>storage_bytes</code></td><td>268435456</td><td>来源库配额，16 MiB 至 1 GiB</td></tr>
 </tbody></table></div>
 <p><code>require_report</code> 是文件交付检查，不是任务正确性 oracle。它只要求本轮至少一个通过报告/导出工具登记的成果，且当前文件仍匹配登记哈希。复杂任务可通过 Python 自定义应用层增加自己的验收规则，但不能假装能验证未知外部事实。</p>
@@ -503,7 +516,7 @@ flora agent --session DIR --status</code></pre></div>
 <tr><td><code>completed</code></td><td>程序完成；启用交付门槛时文件检查也已通过</td></tr>
 <tr><td><code>paused</code></td><td>在下一次外部动作派发前暂停；使用 resume</td></tr>
 <tr><td><code>needs_program</code></td><td>模型未产生可接受的完整程序；查看原因，预算允许时可显式 resume</td></tr>
-<tr><td><code>budget_exhausted</code></td><td>额度不足；resume 不会重置额度</td></tr>
+<tr><td><code>budget_exhausted</code></td><td>显式设置或已保存的额度不足；resume 不会重置消费；新建通用会话默认不限累计预算</td></tr>
 <tr><td><code>interrupted_unknown</code></td><td>已派发操作的最终结果不能确定；先核对真实外部状态</td></tr>
 <tr><td><code>incomplete</code></td><td>运行步骤等边界使任务尚未完成；查看 reason 和轨迹</td></tr>
 </tbody></table></div>
@@ -531,7 +544,9 @@ flora agent --session DIR --status</code></pre></div>
 <h4 id="generalops-h9">输出不是严格 JSON / 内部程序不合法</h4>
 <p>这属于模型编译阶段，不会执行那段无效程序。通用入口默认请求 JSON 对象输出，但供应商不一定保证语法或 IR 正确。编译器保留严格本地检查；一次格式修复携带错误类型、行列、错误位置附近原文，以及有界的前次响应。要求重新生成完整的当前阶段程序，而不是盲目拼接缺失括号。截断响应会要求从头生成较短程序，不把残片作为成功结果。</p>
 <p>用 <code>/log</code> 查看 <code>compiler_rejected</code> 的具体原因及后续修复输出；<code>/status</code> 显示最近结果与累计预算。检查输出是否被截断、推理 tokens 是否占满输出上限。需要调整参数时在新会话的 profile 中设置服务支持的推理选项或输出额度。如果模型给出与真实轨迹不同的证据指纹，内核会拒绝该程序；它不会替模型改写指纹或退款。修复后仍不通过会保留 needs_program，显式 <code>/resume</code> 才按当前真实上下文再次编译。</p>
-<h4 id="generalops-h10">模型连接失败，反复 resume 也失败</h4>
+<h4 id="generalops-h10">为什么恢复会话后仍有额度限制</h4>
+<p>会话保存创建时已解析的预算配置。当前启动界面的 <code>Budget: unlimited</code> 表示所有累计限额均为 null；<code>Budget: configured limits</code> 表示至少一项仍有限额。<code>/status</code> 可查看每个字段与消费。需要默认不限的新对话时用 <code>/new</code>，不要编辑指纹或删除账本。自定义 profile 中显式填写的额度不会被默认值覆盖。</p>
+<h4 id="generalops-h11">模型连接失败，反复 resume 也失败</h4>
 <p>先看具体分类，不能把所有错误都当作等待不够长：</p>
 <div class="table-wrap"><table><thead><tr><th>原因</th><th>自动处理与下一步</th></tr></thead><tbody>
 <tr><td>timeout／connection／dns</td><td>每次编译共享最多两次有预算的恢复；持续失败时检查网络出口、地址与服务状态</td></tr>
@@ -544,20 +559,21 @@ flora agent --session DIR --status</code></pre></div>
 </tbody></table></div>
 <p><code>/status</code> 显示读取超时、响应整体时间限制和恢复次数；<code>/log</code> 显示每次实际请求、错误与等待。SSE keep-alive 会被正常消费，整体响应时间与字节上限仍然有效。普通 JSON 响应也兼容；模型发现接口 <code>/models</code> 失败不等于 <code>/chat/completions</code> 必然不可用，可以手填模型 ID。</p>
 <p>模型请求只生成程序，尚未执行工具，因此可单独恢复。已经执行的工具不会随模型重试而再派发。即使响应丢失也可能产生模型费用；每个请求都计入 model_calls，用量未知时按完整输出预留计费并增加 unknown_usage_calls。<code>/resume</code> 不会清空这些记录，也不能修复错误的地址、过期密钥或持续故障的服务。</p>
-<h4 id="generalops-h11">搜索被限流或挑战</h4>
+<h4 id="generalops-h12">搜索被限流或挑战</h4>
 <p>配置自己的 Brave/Tavily/SearXNG。网页工具直接连接目标 IP；要求代理的环境需先配置受控网络出口。模型 API 可达不代表所有公网域名都能由网页客户端解析。</p>
-<h4 id="generalops-h12">PDF 没有文字</h4>
+<h4 id="generalops-h13">PDF 没有文字</h4>
 <p>检查是否是扫描件。内置解析器不做 OCR。使用经过授权的 OCR 服务或先在外部提取文字，再作为附件输入。</p>
-<h4 id="generalops-h13">文件修改失败</h4>
+<h4 id="generalops-h14">文件修改失败</h4>
 <p>确认父目录存在；新文件用独占创建，修改已有文件需要刚读到的完整 SHA-256。遇到并发修改，重新读取并决定如何合并，不能强行覆盖。</p>
-<h4 id="generalops-h14">重开提示配置或技能变化</h4>
+<h4 id="generalops-h15">重开提示配置或技能变化</h4>
 <p>使用创建会话时的模型、工具目录、工作目录与技能内容；有意更换配置时建立新会话。不要直接改写指纹绕过一致性检查。</p>
-<h4 id="generalops-h15">MCP 连接失败</h4>
+<h4 id="generalops-h16">MCP 连接失败</h4>
 <p>确认命令可执行、环境映射齐全、服务支持 stdio 或 Streamable HTTP、白名单工具真实存在。初始化失败不会降级成“连接成功但没有工具”。服务的业务错误与通信中断按不同结果处理。</p>
-<h4 id="generalops-h16">浏览器启动失败</h4>
+<h4 id="generalops-h17">浏览器启动失败</h4>
 <p>确认 Playwright Python 包和对应 Chromium 版本已安装、系统库齐全、宿主允许浏览器子进程运行。先在目标环境运行一个简单 Playwright 页面测试，再启动 Flora 浏览器工具。当前环境的适配器测试不能替代目标机器上的浏览器运行检查。</p>
-<h3 id="generalops-h17">验证边界</h3>
+<h3 id="generalops-h18">验证边界</h3>
 <p>确定性回归、协议夹具、真实模型任务和真实公网/浏览器交互是不同类别。查看 <code>general-agent</code> 分支的 <code>reports/TERMINAL_VALIDATION.md</code> 和 <code>reports/GENERAL_VALIDATION.md</code> 获取执行环境、逐类结果与未验证项。通过几项任务不等于在所有模型、所有网站上具有统一成功率，也不等于完成了生产安全审计或并发压力测试。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/28-general-operations.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="generalapi"><div class="chapter-label">09 / 通用 Agent</div><h2 id="generalapi-h1">GeneralAgent API</h2>
+<p>新建 GeneralAgent 的主／子任务累计预算默认不限；真实调用、tokens、未知用量与经过时间持续记录。profile.budget 和 general.subagents.budget 可显式设置个别限额，null 表示不限，0 表示零额度。已保存会话按原配置恢复；底层 Agent 和 Coding Agent 默认值保持各自定义。</p>
 <h3 id="generalapi-h2">构造 GeneralAgent</h3>
 <div class="code-wrap"><div class="code-head"><span>python network</span><button class="copy" type="button">复制代码</button></div><pre><code>from pathlib import Path
 from flora.general import GeneralAgent

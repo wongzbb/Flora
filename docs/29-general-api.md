@@ -1,5 +1,8 @@
 # GeneralAgent API
 
+
+新建 GeneralAgent 的主／子任务累计预算默认不限；真实调用、tokens、未知用量与经过时间持续记录。profile.budget 和 general.subagents.budget 可显式设置个别限额，null 表示不限，0 表示零额度。已保存会话按原配置恢复；底层 Agent 和 Coding Agent 默认值保持各自定义。
+
 ## 构造 GeneralAgent
 
 ```python network
