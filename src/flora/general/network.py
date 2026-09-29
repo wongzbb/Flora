@@ -87,6 +87,14 @@ class NetworkPolicy:
         for address in addresses:
             ip = ipaddress.ip_address(address.split("%")[0])
             if not self.allow_private and (not ip.is_global or ip.is_multicast):
+                effective_ip = getattr(ip, "ipv4_mapped", None) or ip
+                if effective_ip in ipaddress.ip_network("198.18.0.0/15"):
+                    raise ValidationError(
+                        "network_policy_benchmark_address: DNS returned a reserved benchmarking "
+                        "address (198.18.0.0/15), possibly synthetic/fake-IP DNS from a proxy. "
+                        "No request was dispatched. Check DNS/proxy routing or use an already "
+                        "configured authorized search provider; private-network protection stays enabled"
+                    )
                 raise ValidationError(
                     "Private, reserved, or local network destinations are disabled"
                 )

@@ -10,7 +10,6 @@ import json
 import os
 import re
 import subprocess
-import sys
 import uuid
 import zipfile
 from decimal import ROUND_HALF_EVEN, Decimal, InvalidOperation, localcontext
@@ -18,6 +17,8 @@ from pathlib import Path, PurePosixPath
 
 from flora.integrations.workspace import WorkspaceTools
 from flora.support.errors import InterruptedEffect, ValidationError
+
+from ._document_process import run_worker
 
 MAX_DOCUMENT = 8 * 1024 * 1024
 MAX_TEXT = 3 * 1024 * 1024
@@ -38,6 +39,57 @@ class DocumentWorkspace(WorkspaceTools):
                     "File was published but its artifact receipt could not be persisted"
                 ) from exc
         return result
+
+    def create_file(self, path: str, content: str) -> dict:
+        """Create a new UTF-8 file atomically; never overwrite an existing destination.
+
+        Parent directories must exist. Returns the actual publication path and sha256.
+        An existing destination raises FileExistsError, with no overwrite/publication.
+        """
+        try:
+            return self.write_file(path, content, create=True)
+        except ValidationError as exc:
+            # Preserve the actual OS conflict type for this new explicit API.
+            # Legacy write_file keeps its original ValidationError contract; no
+            # error-message matching, preflight race or additional write is used.
+            if isinstance(exc.__cause__, FileExistsError):
+                raise FileExistsError(
+                    "Destination already exists; no file was overwritten"
+                ) from exc
+            raise
+
+    def update_file(self, path: str, content: str, expected_sha256: str) -> dict:
+        """Replace full UTF-8 content using the full sha256 from an actual read_file.
+
+        Refuses stale hashes. Returns the actual publication path and sha256.
+        """
+        return self.write_file(path, content, expected_sha256=expected_sha256)
+
+    def append_lines(self, path: str, lines: list[str], expected_sha256: str) -> dict:
+        """Append lines atomically, preserving all existing bytes and checking the observed hash.
+
+        Prefer for adding lines: inserts a separator only if missing, then terminates
+        each new line. Uses the existing final newline style (otherwise LF). Supply
+        1..10000 lines without embedded CR/LF, and the full sha256 from read_file.
+        Returns the actual publication path and sha256; never creates a missing file.
+        """
+        if (
+            type(lines) is not list
+            or not 1 <= len(lines) <= 10000
+            or any(type(line) is not str or "\r" in line or "\n" in line for line in lines)
+        ):
+            raise ValidationError("lines must contain 1..10000 strings without CR/LF")
+
+        def transform(previous):
+            ending = (
+                "\r\n" if previous.endswith("\r\n") else ("\r" if previous.endswith("\r") else "\n")
+            )
+            separator = "" if not previous or previous.endswith(("\n", "\r")) else ending
+            return previous + separator + ending.join(lines) + ending
+
+        return self._write(
+            self._parts(path), None, expected_sha256=expected_sha256, transform=transform
+        )
 
     def read_bytes(self, path):
         parts = self._parts(path)
@@ -129,17 +181,7 @@ def _parse_worker(raw, suffix, operation):
     environment["PYTHONPATH"] = str(Path(__file__).resolve().parents[2])
     payload = json.dumps({"suffix": suffix, "operation": operation}).encode() + b"\n" + raw
     try:
-        result = subprocess.run(
-            [sys.executable, "-m", "flora.general._document_worker"],
-            input=payload,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            timeout=30,
-            env=environment,
-            close_fds=True,
-            start_new_session=True,
-            check=False,
-        )
+        result = run_worker(payload, environment)
     except subprocess.TimeoutExpired:
         raise ValidationError("Document parsing exceeded the 30-second deadline") from None
     if result.returncode != 0 or len(result.stdout) > 12 * 1024 * 1024:

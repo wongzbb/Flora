@@ -1,0 +1,29 @@
+{
+  "provider": {
+    "model": "deepseek-v4-flash",
+    "request_options": {
+      "thinking": {
+        "type": "enabled"
+      },
+      "reasoning_effort": "low"
+    },
+    "progress_timeout": 10,
+    "first_program_timeout": 60,
+    "max_json_whitespace": 2048,
+    "stream_fallback": true,
+    "stream_idle_fallback": true
+  },
+  "compiler": {
+    "syntax": "block-list-v2",
+    "prompt_style": "compact-v1",
+    "compilation_timeout": 120,
+    "max_output_tokens": 12000,
+    "max_repairs": 1
+  },
+  "budget": {},
+  "general": {
+    "protocol": "general-v3",
+    "allow_commands": false,
+    "require_report": false
+  }
+}

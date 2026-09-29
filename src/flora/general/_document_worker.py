@@ -10,7 +10,9 @@ import sys
 def main():
     import resource
 
-    resource.setrlimit(resource.RLIMIT_AS, (512 * 1024 * 1024, 512 * 1024 * 1024))
+    # macOS is monitored from the parent; RLIMIT_AS is rejected by that OS.
+    if sys.platform != "darwin":
+        resource.setrlimit(resource.RLIMIT_AS, (512 * 1024 * 1024, 512 * 1024 * 1024))
     resource.setrlimit(resource.RLIMIT_CPU, (20, 20))
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
     from flora.support.errors import ValidationError

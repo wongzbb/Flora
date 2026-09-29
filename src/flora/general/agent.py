@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import threading
 import uuid
 from pathlib import Path
@@ -47,6 +48,68 @@ Use concise programs and short literal strings; compile the next phase only afte
 its required observations exist. The runtime retains dual-control scheduling and
 locally synthesized contracts; do not substitute hypothetical tool results.
 """
+
+
+# New application protocol only. Do not change the instructions/tool identity of
+# a saved v1 session. The version and resolved defaults are persisted below.
+INSTRUCTIONS_V2 = (
+    INSTRUCTIONS.replace(
+        "When an observation is needed to decide what to do, replan with its actual value.",
+        "Consume actual observations in pure computations and explicit result branches. "
+        "Replan only when new semantic reasoning is needed, not after every tool call.",
+    )
+    + """
+Use workspace_context to obtain the actual workspace root and process working
+directory. Relative file paths are based on workspace_root, not process_cwd.
+Do not infer an absolute directory from a file listing or invent an environment fact.
+A network-policy rejection is not an empty search result. Do not repeat the same
+blocked request unchanged: explain the access limitation or use a different already
+configured authorized source. Never bypass private/reserved-address protections.
+"""
+)
+
+
+INSTRUCTIONS_V3 = (
+    INSTRUCTIONS_V2
+    + """
+Use create_file for a new file, update_file for full replacement, or append_lines
+for adding complete lines without newline mistakes. Updates/appends require the
+full sha256 from an actual read_file; never invent a hash or overwrite on mismatch.
+Read a specified relative file directly; workspace_context is needed only when the
+user asks about directories or an absolute path is genuinely required. Relative
+artifact paths from actual write receipts are sufficient unless an absolute path
+was requested. Do not add discovery/capability calls without a concrete need.
+A final return must answer the user, not describe how an answer could be produced.
+A consumer fault is not completion: inspect actual successful receipts, finish the
+remaining work, and never claim a publication without its successful write receipt.
+If an essential name is ambiguous, seek a targeted clarification rather than
+inventing the entity. Explain blocked research honestly; no invented recent facts.
+"""
+)
+
+
+def _new_session_defaults(profile, *, builtin_provider):
+    general = profile["general"]
+    general.setdefault("protocol", "general-v3")
+    if general["protocol"] == "general-v1":
+        return
+    compiler = profile.setdefault("compiler", {})
+    if general["protocol"] == "general-v3":
+        compiler.setdefault("syntax", "block-list-v2")
+        if compiler["syntax"] != "ir-v1":
+            compiler.setdefault("prompt_style", "compact-v1")
+    else:
+        compiler.setdefault("syntax", "observe-v1")
+    compiler.setdefault("compilation_timeout", 180)
+    if builtin_provider:
+        options = profile.setdefault("provider", {})
+        for key, value in {
+            "progress_timeout": 60,
+            "first_program_timeout": 120,
+            "max_json_whitespace": 2048,
+            "stream_fallback": True,
+        }.items():
+            options.setdefault(key, value)
 
 
 def read_profile(path, max_bytes=262144):
@@ -101,8 +164,11 @@ def _normalize(profile):
         "instructions",
         "storage_bytes",
         "subagents",
+        "protocol",
     }:
         raise ValidationError("Unknown general configuration field")
+    if general.get("protocol", "general-v1") not in ("general-v1", "general-v2", "general-v3"):
+        raise ValidationError("protocol must be general-v1, general-v2 or general-v3")
     for key in ("allow_commands", "require_report"):
         if key in general and type(general[key]) is not bool:
             raise ValidationError(key + " must be boolean")
@@ -172,6 +238,8 @@ class GeneralAgent:
             self.root = Path(workspace).expanduser().resolve(strict=True)
             selected = saved["profile"] if profile is None and saved else profile
             self.profile = _normalize(selected)
+            if not saved:
+                _new_session_defaults(self.profile, builtin_provider=provider is None)
             # Persist resolved defaults so a conversation's deliberate limits
             # cannot change when the application default changes. Older sessions
             # without this marker keep their original kernel/child defaults.
@@ -245,9 +313,19 @@ class GeneralAgent:
                 self.skills.list_skills,
                 self.skills.read_skill,
             ]
+            if general.get("protocol") in ("general-v2", "general-v3"):
+                functions.append(self.workspace_context)
             if general.get("services"):
                 functions.append(self.web.http_request)
-            specs = self.files.specs() + list(make_registry(functions)._tools.values())
+            file_specs = self.files.specs()
+            if general.get("protocol") == "general-v3":
+                # Explicit mutation modes, not inferred effects or automatic retries.
+                # Legacy saved sessions retain their original tool identities.
+                file_specs = [spec for spec in file_specs if spec.name != "write_file"]
+                functions.extend(
+                    [self.files.create_file, self.files.update_file, self.files.append_lines]
+                )
+            specs = file_specs + list(make_registry(functions)._tools.values())
             if general.get("subagents", {}).get("enabled", False):
                 from .delegation import Delegation
 
@@ -283,7 +361,12 @@ class GeneralAgent:
                 "max_repairs": 1,
                 **self.profile.get("compiler", {}),
             }
-            instructions = INSTRUCTIONS + "\n" + general.get("instructions", "")
+            base_instructions = {
+                "general-v1": INSTRUCTIONS,
+                "general-v2": INSTRUCTIONS_V2,
+                "general-v3": INSTRUCTIONS_V3,
+            }[general.get("protocol", "general-v1")]
+            instructions = base_instructions + "\n" + general.get("instructions", "")
             if any(value is None for value in self.profile.get("budget", {}).values()):
                 instructions += (
                     "\nA null cumulative budget limit means unlimited, not zero or unknown. "
@@ -305,7 +388,9 @@ class GeneralAgent:
                 model=model if provider is None else None,
                 provider=provider,
                 provider_options=options if provider is None else None,
-                tools=self.dialogue.tools(bounded_specs(specs)),
+                tools=self.dialogue.tools(
+                    bounded_specs(specs, describe_results=general.get("protocol") == "general-v3")
+                ),
                 session_dir=self.directory / "kernel",
                 instructions=instructions,
                 compiler_options=compiler,
@@ -386,6 +471,14 @@ class GeneralAgent:
             )
         return {"artifacts": items, "claims_verified": False}
 
+    def workspace_context(self) -> dict:
+        """Read workspace_root and relative_path_base (authorized file root), and process_cwd (actual process directory); no shell execution."""
+        return {
+            "workspace_root": str(self.root),
+            "relative_path_base": str(self.root),
+            "process_cwd": os.getcwd(),
+        }
+
     def agent_capabilities(self) -> dict:
         """Discover configured HTTP service names/methods, browser grants, search and document capabilities."""
         general = self.profile["general"]
@@ -407,6 +500,8 @@ class GeneralAgent:
             "shell_commands": general.get("allow_commands", False),
             "require_report": general.get("require_report", False),
         }
+        if general.get("protocol") in ("general-v2", "general-v3"):
+            result["workspace"] = self.workspace_context()
         if self.delegation:
             result["subagents"] = self.delegation.capabilities()
         return result

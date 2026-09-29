@@ -99,7 +99,12 @@ class Dialogue:
                 self.write(
                     "request",
                     json.dumps(
-                        {k: event[k] for k in ("model", "stream", "json_mode")}, ensure_ascii=False
+                        {
+                            k: event[k]
+                            for k in ("model", "stream", "json_mode", "reasoning_fallback")
+                            if k in event
+                        },
+                        ensure_ascii=False,
                     ),
                 )
                 for message in event["messages"]:

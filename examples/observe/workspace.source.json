@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "entry": "main",
+  "blocks": {
+    "main": {
+      "params": [],
+      "ops": [],
+      "term": {
+        "op": "observe",
+        "tool": "workspace_context",
+        "args": {},
+        "bind": "result",
+        "capture": {},
+        "success": "answer",
+        "error": "failed"
+      }
+    },
+    "answer": {
+      "params": ["result"],
+      "ops": [
+        {"op": "get", "dest": "root", "args": [{"var": "result"}, "workspace_root"]},
+        {"op": "concat", "dest": "text", "args": ["当前工作区：", {"var": "root"}]}
+      ],
+      "term": {"op": "return", "value": {"var": "text"}}
+    },
+    "failed": {
+      "params": ["result"],
+      "ops": [],
+      "term": {"op": "return", "value": {"unresolved": "无法读取工作区", "error": {"var": "result"}}}
+    }
+  }
+}

@@ -62,6 +62,12 @@ flora --config /path/profile.json
 
 通用入口默认请求 JSON 输出，对暂时性连接错误、限流和部分服务端错误进行计量明确的有限恢复。认证失败、错误模型地址等会给出具体原因。断流产生的残缺程序不会执行；工具结果未知时不会自动重做。详见[故障处理](https://github.com/wongzbb/Flora/blob/docs/docs/28-general-operations.md)。
 
+## 编译与恢复
+
+新通用会话使用 `block-list-v2` 与显式 `observe` 成功/失败消费者，再展开为原 IR 检查执行；候选、诊断和合约机制不变。新增工作区只读观测、流式无进展止损与整轮编译截止时间；输出预算耗尽但无程序正文时，不再原样重复格式修复。旧会话不自动切换协议或工具指纹。
+
+消费者故障后，编译器提供已有真实回执的有界索引，让模型修复剩余计算，而不是重做整项任务。这是有证据的恢复指导，不是确定性的正确性保证；这些改动不绕过网络保护，也不保证上游模型或网络始终可用。
+
 ## 能力
 
 | 能力 | 内容 |
@@ -92,3 +98,41 @@ flora --config /path/profile.json
 - [内核基线](https://github.com/wongzbb/Flora/tree/core) · [Coding Agent](https://github.com/wongzbb/Flora/tree/coding-agent) · [项目总览](https://github.com/wongzbb/Flora/tree/overview)
 
 `src/flora/terminal/` 负责终端；`general/` 组合应用工具和子任务；`agent/`、`engine/`、`language/`、`checks/`、`state/` 负责执行内核；`integrations/` 负责模型与工具接入。完整说明文档独立放在 `docs` 分支。
+
+## 可选性能配置
+
+新 General 会话默认使用 `general-v3`、`block-list-v2` 与 `compact-v1`：
+模型生成更简短的源程序，嵌套纯表达式机械展开为新鲜 SSA 操作，再经原有 IR、调度与合约检查。
+前端不隐式求值、不生成额外工具调用，也不改成逐工具重规划；旧 v1/v2 会话保留原协议与工具身份。
+
+兼容 DeepSeek 推理参数的接口可显式使用低延迟配置：
+
+```bash
+# 在本仓库目录执行，或将配置路径替换为仓库中的绝对路径
+flora --config configs/deepseek-fast.json
+```
+
+按提示输入自己的 Base URL、隐藏的 API Key 和接口支持的模型 ID。
+配置中的 `deepseek-v4-flash` 是测试网关公布的名称，不代表对其上游模型权重的独立认证；
+使用其他接口时应确认模型 ID 和推理参数受支持。
+配置不包含密钥或固定网关，启用低强度推理而非关闭推理。
+请开启新会话，不要将此配置强加给旧会话。单独运行 `flora` 不会自动加载此性能配置。
+
+v3 文件工具明确区分 `create_file`、`update_file`、`append_lines`；更新和追加仍需观测到的完整哈希，
+写入仍产生真实回执，不会自动覆盖、绕过路径限制或重跑未知效果。
+程序编译具有共享截止时间；可选停流恢复仅丢弃未执行的半成品，不重放已执行的工具。
+
+**适用边界：** 模型和上游服务仍可能出现错误及响应长尾；联网研究在部分代理 DNS 环境中仍可能被现有网络策略拒绝。
+当前版本不保证任意任务成功，也不能将正常结束或诚实报告网络失败当作研究任务完成。
+
+## 回归测试
+
+在安装项目依赖的 Python 环境中，于仓库根目录运行：
+
+```bash
+python -m unittest discover -s tests -q
+```
+
+默认测试不调用真实模型 API。`tests/live_*_probe.py` 是需手动运行的可复用验证工具，
+用于普通任务、已安装终端入口和消费者故障恢复测试；可先使用 `--help` 查看参数。
+接口和输出目录必须显式指定，密钥通过隐藏输入提供；请将运行输出保存在仓库外，不要提交日志或凭证。

@@ -9,6 +9,7 @@ callbacks. A stale execution anchor is rejected instead of silently rewritten.
 from __future__ import annotations
 
 import json
+import math
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -16,6 +17,7 @@ from typing import Any, Protocol
 
 from flora.integrations.providers import (
     ModelResponse,
+    OpenAICompatibleProvider,
     Provider,
     ProviderError,
     TransportError,
@@ -456,6 +458,9 @@ class LLMCompiler:
         max_output_bytes: int = 2 * 1024 * 1024,
         max_context_bytes: int = 256 * 1024,
         max_visible_receipts: int = 64,
+        syntax: str = "ir-v1",
+        prompt_style: str = "full-v1",
+        compilation_timeout: float | None = None,
         before_call: Callable[[dict], None] | None = None,
         on_usage: Callable[[dict], None] | None = None,
     ) -> None:
@@ -480,6 +485,30 @@ class LLMCompiler:
             callback is not None and not callable(callback) for callback in (before_call, on_usage)
         ):
             raise ValidationError("accounting callbacks must be callable")
+        if not isinstance(syntax, str) or syntax not in {
+            "ir-v1",
+            "observe-v1",
+            "block-list-v1",
+            "block-list-v2",
+        }:
+            raise ValidationError(
+                "syntax must be ir-v1, observe-v1, block-list-v1 or block-list-v2"
+            )
+        if compilation_timeout is not None and (
+            type(compilation_timeout) not in (int, float)
+            or not math.isfinite(compilation_timeout)
+            or compilation_timeout <= 0
+        ):
+            raise ValidationError("compilation_timeout must be positive and finite or None")
+        if prompt_style not in ("full-v1", "compact-v1"):
+            raise ValidationError("prompt_style must be full-v1 or compact-v1")
+        if prompt_style == "compact-v1" and syntax == "ir-v1":
+            raise ValidationError("compact-v1 requires observe-v1 or block-list syntax")
+        if syntax in ("block-list-v1", "block-list-v2") and prompt_style != "compact-v1":
+            raise ValidationError("block-list syntax requires compact-v1 prompt_style")
+        self.prompt_style = prompt_style
+        self.syntax, self.compilation_timeout = syntax, compilation_timeout
+        self._deadline = None
         self.provider = provider
         self.max_programs, self.max_diagnostics = max_programs, max_diagnostics
         self.max_repairs = max_repairs
@@ -547,7 +576,22 @@ class LLMCompiler:
             "max_output_tokens": self.max_output_tokens,
         }
         view["ir_operations"] = {key: list(value) for key, value in sorted(OP_ARITIES.items())}
-        while len(canonical_json(view).encode("utf-8")) > self.max_context_bytes:
+        if self.syntax != "ir-v1":
+            view["compiler_syntax"] = self.syntax
+        if self.prompt_style != "full-v1":
+            view["compiler_prompt_style"] = self.prompt_style
+        while True:
+            if self.syntax == "block-list-v2":
+                from flora.language.recovery import recovery_view
+
+                # Rebuild after EVERY omission; never smuggle omitted evidence
+                # back into the prompt through an unbounded auxiliary summary.
+                view.pop("compiler_recovery", None)
+                recovery = recovery_view(view)
+                if recovery is not None:
+                    view["compiler_recovery"] = recovery
+            if len(canonical_json(view).encode("utf-8")) <= self.max_context_bytes:
+                break
             if view["receipts"]:
                 view["receipts"].pop(0)
                 visibility["receipts_omitted"] += 1
@@ -565,22 +609,68 @@ class LLMCompiler:
                 raise CompilerError(
                     "task, tools and required compiler metadata exceed max_context_bytes"
                 )
+        system = SYSTEM_PROMPT
+        if self.syntax == "observe-v1":
+            from flora.language.frontend import OBSERVE_GUIDANCE
+
+            # Keep the complete language and core rules; replace only one verbose
+            # envelope-decoding example with its explicit-consumer shorthand.
+            begin = system.index("Tool-result example")
+            end = system.index("parse_json(string)", begin)
+            system = system[:begin] + OBSERVE_GUIDANCE + "\n" + system[end:]
+        content = canonical_json(view)
+        if self.prompt_style == "compact-v1":
+            from flora.language.prompts import compact_prompt
+
+            system = compact_prompt(self.syntax)
+            # Preserve every field and the complete task; put the user task last
+            # so tool catalogue boilerplate cannot bury the actual request.
+            view = {**{k: v for k, v in view.items() if k != "task"}, "task": view["task"]}
+            content = json.dumps(view, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+        if "compiler_recovery" in view:
+            from flora.language.recovery import RECOVERY_GUIDANCE
+
+            system += "\n\n" + RECOVERY_GUIDANCE
         return [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": canonical_json(view)},
+            {"role": "system", "content": system},
+            {"role": "user", "content": content},
         ]
+
+    def _check_deadline(self, delay=0):
+        if self._deadline is not None and time.monotonic() + delay >= self._deadline:
+            raise CompilerError(
+                "compilation_deadline: no time remains for this compilation; "
+                "partial programs are not executed"
+            )
 
     def _request(self, messages: list[dict], attempt: int) -> ModelResponse:
         while True:
+            self._check_deadline()
             result = self._request_once(messages, attempt)
+            self._check_deadline()
             if not isinstance(result, TransportError):
-                return result
+                if result.raw_metadata.get("finish_reason") != "length" or result.text.strip():
+                    return result
+                # A completed request with no program is not a syntax error.
+                # Usage was already accounted. Only an explicit, distinct profile
+                # can justify another request, using the shared recovery allowance.
+                has_reasoning = any(
+                    result.raw_metadata.get(k, 0) > 0
+                    for k in ("reasoning_tokens", "reasoning_bytes")
+                    if type(result.raw_metadata.get(k, 0)) is int
+                )
+                result = TransportError(
+                    "output budget exhausted before a program was produced; select an explicit "
+                    "reasoning profile or output budget; unchanged format repair was not sent",
+                    category="reasoning_exhausted" if has_reasoning else "empty_truncation",
+                )
             self._emit(
                 {
                     "kind": "model_failure",
                     "category": result.category,
                     "http_status": result.status,
                     "message": str(result),
+                    "diagnostics": result.diagnostics,
                 }
             )
             if self._recovery_left <= 0:
@@ -598,6 +688,7 @@ class LLMCompiler:
                     min(2 ** (self.transport_retries - self._recovery_left - 1), 4),
                 )
             )
+            self._check_deadline(delay)
             self._emit(
                 {
                     "kind": "model_retry",
@@ -607,7 +698,8 @@ class LLMCompiler:
                     "retries_remaining": self._recovery_left,
                 }
             )
-            time.sleep(delay)
+            if delay:
+                time.sleep(delay)
 
     def _request_once(self, messages: list[dict], attempt: int) -> ModelResponse | TransportError:
         info = {
@@ -629,7 +721,10 @@ class LLMCompiler:
                 }
             )
         try:
-            response = self.provider.complete(messages, max_tokens=self.max_output_tokens)
+            kwargs = {"max_tokens": self.max_output_tokens}
+            if isinstance(self.provider, OpenAICompatibleProvider) and self._deadline is not None:
+                kwargs["request_deadline"] = self._deadline
+            response = self.provider.complete(messages, **kwargs)
             if not isinstance(response, ModelResponse):
                 raise CompilerError("provider must return ModelResponse")
         except BaseException as exc:
@@ -688,6 +783,11 @@ class LLMCompiler:
         return response
 
     def compile(self, context: CompilerContext) -> dict:
+        self._deadline = (
+            None
+            if self.compilation_timeout is None
+            else time.monotonic() + self.compilation_timeout
+        )
         snapshot = CompilerContext(**context.to_dict())
         messages = self.build_messages(snapshot)
         if type(self.transport_retries) is not int or not 0 <= self.transport_retries <= 3:
@@ -729,6 +829,10 @@ class LLMCompiler:
                     raise ValidationError(
                         "compiler output must be strict JSON without duplicates or nonfinite numbers"
                     ) from None
+                if self.syntax in ("observe-v1", "block-list-v1", "block-list-v2"):
+                    from flora.language.frontend import lower_bundle
+
+                    bundle = lower_bundle(bundle, syntax=self.syntax)
                 validated = validate_bundle(
                     bundle,
                     snapshot,
@@ -736,6 +840,11 @@ class LLMCompiler:
                     max_diagnostics=self.max_diagnostics,
                     max_bytes=self.max_output_bytes,
                 )
+                if self.syntax in ("block-list-v1", "block-list-v2"):
+                    from flora.language.toolcheck import validate_effect_arguments
+
+                    validate_effect_arguments(validated, snapshot.tools)
+                self._check_deadline()
                 self._emit({"kind": "compiler_validated", "attempt": attempt})
                 return validated
             except ValidationError as exc:
@@ -767,7 +876,7 @@ class LLMCompiler:
                             "content": canonical_json(
                                 {
                                     "repair": "Return a complete corrected JSON bundle for the SAME anchor. This is the final format repair.",
-                                    "validation_error": str(exc)[:1024],
+                                    "validation_error": str(exc)[:4096],
                                     "syntax_window": syntax_window,
                                     "previous_output_truncated": len(fragment) < len(response.text),
                                     "output_budget_exhausted": truncated,
@@ -779,8 +888,8 @@ class LLMCompiler:
                                         if truncated
                                         else "Return a fresh COMPLETE JSON object, not a patch or continuation. "
                                         "Correct the stated error and check every delimiter and escaped string. "
-                                        "Compile only the next observable phase; use replan after its new evidence "
-                                        "instead of embedding a long speculative report. Keep meaningful alternatives "
+                                        "Compile the next closed phase, including known pure result consumers and branches. "
+                                        "Use replan only when new semantic reasoning is necessary. Keep meaningful alternatives "
                                         "and diagnostics. Preserve the task, exact anchor and tool capabilities."
                                     ),
                                 }

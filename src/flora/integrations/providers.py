@@ -84,11 +84,20 @@ class TransportError(ProviderError):
     """Safe, machine-readable transport diagnosis for explicitly budgeted recovery."""
 
     def __init__(
-        self, message, *, category, retryable=False, status=None, unsupported=None, retry_after=0
+        self,
+        message,
+        *,
+        category,
+        retryable=False,
+        status=None,
+        unsupported=None,
+        retry_after=0,
+        diagnostics=None,
     ):
         super().__init__(message)
         self.category, self.retryable, self.status = category, retryable, status
         self.unsupported, self.retry_after = unsupported, retry_after
+        self.diagnostics = clone(diagnostics or {})
 
 
 def _object_no_duplicates(pairs: list[tuple[str, Any]]) -> dict:
@@ -133,6 +142,7 @@ class OpenAICompatibleProvider:
             "tool_choice",
             "functions",
             "function_call",
+            "request_deadline",
         }
     )
 
@@ -150,6 +160,12 @@ class OpenAICompatibleProvider:
         request_options: dict[str, Any] | None = None,
         stream: bool = False,
         total_timeout: float = 600.0,
+        progress_timeout: float | None = None,
+        first_program_timeout: float | None = None,
+        max_json_whitespace: int | None = None,
+        stream_fallback: bool = False,
+        stream_idle_fallback: bool = False,
+        reasoning_fallback_options: dict[str, Any] | None = None,
     ) -> None:
         if not isinstance(base_url, str) or not base_url or any(c.isspace() for c in base_url):
             raise ValidationError("base_url must be a URL without whitespace")
@@ -215,6 +231,32 @@ class OpenAICompatibleProvider:
             or total_timeout <= 0
         ):
             raise ValidationError("stream must be boolean and total_timeout positive and finite")
+        for name, value in (
+            ("progress_timeout", progress_timeout),
+            ("first_program_timeout", first_program_timeout),
+        ):
+            if value is not None and (
+                type(value) not in (int, float) or not math.isfinite(value) or value <= 0
+            ):
+                raise ValidationError(name + " must be positive and finite or None")
+        if max_json_whitespace is not None and (
+            type(max_json_whitespace) is not int or max_json_whitespace < 1
+        ):
+            raise ValidationError("max_json_whitespace must be positive or None")
+        for name, value in (
+            ("stream_fallback", stream_fallback),
+            ("stream_idle_fallback", stream_idle_fallback),
+        ):
+            if type(value) is not bool:
+                raise ValidationError(name + " must be boolean")
+        self.stream_idle_fallback = stream_idle_fallback
+        self.progress_timeout, self.first_program_timeout = progress_timeout, first_program_timeout
+        self.max_json_whitespace, self.stream_fallback = max_json_whitespace, stream_fallback
+        self.reasoning_fallback_options = (
+            None
+            if reasoning_fallback_options is None
+            else self._options(reasoning_fallback_options)
+        )
         self.stream, self.total_timeout = stream, float(total_timeout)
         self.prefer_json = False
         self.on_event = None
@@ -259,7 +301,37 @@ class OpenAICompatibleProvider:
                 pass  # Presentation cannot change execution or accounting.
 
     def adapt(self, error):
-        """Downgrade only automatically added options explicitly rejected by HTTP 400/422."""
+        """Use bounded, explicit transport/profile recovery; never guess model options."""
+        category = getattr(error, "category", None)
+        # Only an explicit profile can change reasoning behavior. Never guess a
+        # vendor option from a model name or silently switch the chosen model.
+        if category in {"reasoning_exhausted", "empty_truncation"}:
+            fallback = self.reasoning_fallback_options
+            different = fallback and any(
+                key not in self.request_options or value != self.request_options[key]
+                for key, value in fallback.items()
+            )
+            if different and "reasoning_fallback" not in self._disabled_features:
+                self._disabled_features.add("reasoning_fallback")
+                return True
+            return False
+        if category == "model_no_progress":
+            # Only an idle transport gets one explicit non-streaming retry. A
+            # continuously thinking model or whitespace loop is not this case.
+            if (
+                self.stream_idle_fallback
+                and self.stream
+                and error.diagnostics.get("reason") == "output_idle_timeout"
+                and "stream" not in self._disabled_features
+            ):
+                self._disabled_features.add("stream")
+                return True
+            return False
+        if category == "stream_malformed":
+            if self.stream_fallback and self.stream and "stream" not in self._disabled_features:
+                self._disabled_features.add("stream")
+                return True
+            return False
         feature = getattr(error, "unsupported", None)
         if feature is None or feature in self._disabled_features:
             return False
@@ -270,7 +342,14 @@ class OpenAICompatibleProvider:
         self._disabled_features.add(feature)
         return True
 
-    def complete(self, messages: list[dict], *, max_tokens: int, **kwargs: Any) -> ModelResponse:
+    def complete(
+        self,
+        messages: list[dict],
+        *,
+        max_tokens: int,
+        request_deadline: float | None = None,
+        **kwargs: Any,
+    ) -> ModelResponse:
         if type(max_tokens) is not int or max_tokens < 1:
             raise ValidationError("max_tokens must be a positive integer")
         if not isinstance(messages, list) or not messages:
@@ -284,7 +363,13 @@ class OpenAICompatibleProvider:
                 or not isinstance(message["content"], str)
             ):
                 raise ValidationError("only plain-text chat messages are supported")
+        if request_deadline is not None and (
+            type(request_deadline) not in (int, float) or not math.isfinite(request_deadline)
+        ):
+            raise ValidationError("request_deadline must be a finite monotonic timestamp")
         payload = dict(self.request_options)
+        if "reasoning_fallback" in self._disabled_features:
+            payload.update(self.reasoning_fallback_options or {})
         payload.update(self._options(kwargs))
         streaming = self.stream and "stream" not in self._disabled_features
         if self.prefer_json and "response_format" not in self._disabled_features:
@@ -314,6 +399,14 @@ class OpenAICompatibleProvider:
             self.base_url + "/chat/completions", data=body, headers=headers, method="POST"
         )
         started = time.monotonic()
+        deadline = min(
+            started + self.total_timeout,
+            float("inf") if request_deadline is None else request_deadline,
+        )
+        if deadline <= started:
+            raise TransportError(
+                "Compilation deadline expired before dispatch", category="compilation_deadline"
+            )
         self._emit(
             {
                 "kind": "model_request",
@@ -321,12 +414,13 @@ class OpenAICompatibleProvider:
                 "model": self.model,
                 "stream": streaming,
                 "json_mode": "response_format" in payload,
+                "reasoning_fallback": "reasoning_fallback" in self._disabled_features,
             }
         )
         data = None
         try:
             with self._opener.open(
-                request, timeout=min(self.timeout, self.total_timeout)
+                request, timeout=min(self.timeout, deadline - started)
             ) as response:
                 request_id = response.headers.get("x-request-id")
                 if request_id is not None and (
@@ -334,29 +428,31 @@ class OpenAICompatibleProvider:
                 ):
                     request_id = None
                 if "text/event-stream" in response.headers.get("Content-Type", "").lower():
-                    from .streaming import read_completion
+                    from .streaming import StreamFailure, read_completion
 
                     try:
                         data = read_completion(
                             response,
                             limit=self.max_response_bytes,
-                            deadline=started + self.total_timeout,
+                            deadline=deadline,
                             loads=_strict_json_loads,
                             emit=self._emit,
                             idle_timeout=self.timeout,
+                            progress_timeout=self.progress_timeout,
+                            first_program_timeout=self.first_program_timeout,
+                            max_json_whitespace=self.max_json_whitespace,
+                            json_mode=payload.get("response_format", {}).get("type")
+                            in {"json_object", "json_schema"}
+                            if isinstance(payload.get("response_format"), dict)
+                            else False,
                         )
-                    except EOFError:
+                    except StreamFailure as exc:
                         raise TransportError(
-                            "model stream ended before completion; partial program discarded; "
-                            "usage may be unknown",
-                            category="stream_interrupted",
-                            retryable=True,
-                        ) from None
-                    except (ValueError, TypeError, RecursionError):
-                        raise TransportError(
-                            "model stream is malformed or exceeds its byte limit; "
-                            "partial program discarded",
-                            category="invalid_stream",
+                            f"model {exc.category}: {exc.reason}; partial program discarded",
+                            category=exc.category,
+                            retryable=exc.retryable,
+                            status=exc.status,
+                            diagnostics=exc.diagnostics,
                         ) from None
                 else:
                     if hasattr(response, "read1"):
@@ -367,7 +463,7 @@ class OpenAICompatibleProvider:
                                 chunks(
                                     response,
                                     self.max_response_bytes,
-                                    started + self.total_timeout,
+                                    deadline,
                                     self.timeout,
                                 )
                             )
@@ -379,7 +475,7 @@ class OpenAICompatibleProvider:
                         raw = response.read(self.max_response_bytes + 1)
                     if len(raw) > self.max_response_bytes:
                         raise ProviderError("model response exceeds configured byte limit")
-                    if time.monotonic() - started > self.total_timeout:
+                    if time.monotonic() >= deadline:
                         raise TimeoutError
         except urllib.error.HTTPError as exc:
             code = exc.code
@@ -392,7 +488,11 @@ class OpenAICompatibleProvider:
             )
             if code in (400, 422):
                 try:
-                    error = _strict_json_loads(exc.read(8193).decode("utf-8"))
+                    from .streaming import chunks
+
+                    reader = exc.fp if hasattr(exc.fp, "read1") else exc
+                    raw_error = b"".join(chunks(reader, 8192, deadline, self.timeout))
+                    error = _strict_json_loads(raw_error.decode("utf-8"))
                     error = error.get("error", {}) if isinstance(error, dict) else {}
                     if isinstance(error, dict):
                         param, message = error.get("param", ""), error.get("message", "")
