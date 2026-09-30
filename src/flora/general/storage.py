@@ -32,11 +32,17 @@ def atomic_json(path, value):
 
 class Lease:
     def __init__(self, directory):
-        import fcntl
-
         self.file = open(Path(directory) / "application.lock", "a+b")
         try:
-            fcntl.flock(self.file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            if os.name == "nt":
+                import msvcrt
+                self.file.write(b"\0")
+                self.file.flush()
+                self.file.seek(0)
+                msvcrt.locking(self.file.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(self.file, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
             self.file.close()
             raise ValidationError("This general-agent session is already open") from None

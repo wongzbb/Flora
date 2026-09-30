@@ -87,20 +87,47 @@ inventing the entity. Explain blocked research honestly; no invented recent fact
 """
 )
 
+INSTRUCTIONS_V4 = (
+    INSTRUCTIONS_V3
+    + """
+For complex work retain the goals and observed evidence in read_work/update_work.
+Preserve required goals and report blocked steps with specific limitations. Source
+and file references are checked for existence/integrity, never for semantic truth.
+Use read_work after context omissions or restart; avoid redoing successful actions.
+Runtime scheduling slices continue the same program, trace and cumulative budget.
+A completion_rejected report names remaining steps/worker reviews: finish those
+instead of submitting the same final answer repeatedly. Child claims are unverified
+inputs, not facts established by the parent. Distinguish a completed computation
+from a correct answer, and report outstanding limitations in the final answer.
+If no actual observation or strategy changes, repeated compilation is not progress.
+Do not retry a blocked network request unchanged. Only explicitly configured search
+alternatives can be used; synthetic DNS/private-network denials remain enforced.
+"""
+)
+
 
 def _new_session_defaults(profile, *, builtin_provider):
     general = profile["general"]
-    general.setdefault("protocol", "general-v3")
+    general.setdefault("protocol", "general-v4")
     if general["protocol"] == "general-v1":
         return
     compiler = profile.setdefault("compiler", {})
-    if general["protocol"] == "general-v3":
+    if general["protocol"] in {"general-v3", "general-v4"}:
         compiler.setdefault("syntax", "block-list-v2")
         if compiler["syntax"] != "ir-v1":
-            compiler.setdefault("prompt_style", "compact-v1")
+            compiler.setdefault(
+                "prompt_style",
+                "compact-v2" if general["protocol"] == "general-v4" else "compact-v1",
+            )
     else:
         compiler.setdefault("syntax", "observe-v1")
     compiler.setdefault("compilation_timeout", 180)
+    if general["protocol"] == "general-v4":
+        runtime = profile.setdefault("runtime", {})
+        runtime.setdefault("max_steps", None)
+        runtime.setdefault("max_compile_cycles", None)
+        if compiler["syntax"] != "ir-v1":
+            compiler.setdefault("prompt_style", "compact-v2")
     if builtin_provider:
         options = profile.setdefault("provider", {})
         for key, value in {
@@ -167,8 +194,13 @@ def _normalize(profile):
         "protocol",
     }:
         raise ValidationError("Unknown general configuration field")
-    if general.get("protocol", "general-v1") not in ("general-v1", "general-v2", "general-v3"):
-        raise ValidationError("protocol must be general-v1, general-v2 or general-v3")
+    if general.get("protocol", "general-v1") not in (
+        "general-v1",
+        "general-v2",
+        "general-v3",
+        "general-v4",
+    ):
+        raise ValidationError("protocol must be general-v1, general-v2, general-v3 or general-v4")
     for key in ("allow_commands", "require_report"):
         if key in general and type(general[key]) is not bool:
             raise ValidationError(key + " must be boolean")
@@ -220,6 +252,9 @@ class GeneralAgent:
         self.connections, self.browser, self.agent, self.store = [], None, None, None
         self.dialogue = None
         self.delegation = None
+        self.work = None
+        self._progress_epoch, self._progress_compiles = -1, 0
+        self._pause_reason = None
         self._session_key = session_key
         self.lock, self.pause = threading.Lock(), threading.Event()
         self.closed, self.on_event = False, on_event
@@ -288,6 +323,10 @@ class GeneralAgent:
                 if task_path.exists()
                 else {"key": "", "task": ""}
             )
+            if general.get("protocol") == "general-v4":
+                from .work import WorkLedger
+
+                self.work = WorkLedger(self)
             self.documents = DocumentTools(self.files, self.store, lambda: self.task["key"])
             self.files._published_callback = lambda receipt: self.store.record_artifact(
                 receipt["path"], receipt["sha256"], [], self.task["key"], kind="file"
@@ -313,12 +352,14 @@ class GeneralAgent:
                 self.skills.list_skills,
                 self.skills.read_skill,
             ]
-            if general.get("protocol") in ("general-v2", "general-v3"):
+            if general.get("protocol") in ("general-v2", "general-v3", "general-v4"):
                 functions.append(self.workspace_context)
+            if self.work:
+                functions.extend([self.work.read_work, self.work.update_work])
             if general.get("services"):
                 functions.append(self.web.http_request)
             file_specs = self.files.specs()
-            if general.get("protocol") == "general-v3":
+            if general.get("protocol") in ("general-v3", "general-v4"):
                 # Explicit mutation modes, not inferred effects or automatic retries.
                 # Legacy saved sessions retain their original tool identities.
                 file_specs = [spec for spec in file_specs if spec.name != "write_file"]
@@ -327,9 +368,11 @@ class GeneralAgent:
                 )
             specs = file_specs + list(make_registry(functions)._tools.values())
             if general.get("subagents", {}).get("enabled", False):
+                from .coordinator import Coordinator
                 from .delegation import Delegation
 
-                self.delegation = Delegation(self, general["subagents"], provider=provider)
+                delegation_type = Coordinator if self.work else Delegation
+                self.delegation = delegation_type(self, general["subagents"], provider=provider)
                 specs += self.delegation.specs()
             for name, configuration in sorted(general.get("mcp", {}).items()):
                 from .mcp import MCPConnection
@@ -365,6 +408,7 @@ class GeneralAgent:
                 "general-v1": INSTRUCTIONS,
                 "general-v2": INSTRUCTIONS_V2,
                 "general-v3": INSTRUCTIONS_V3,
+                "general-v4": INSTRUCTIONS_V4,
             }[general.get("protocol", "general-v1")]
             instructions = base_instructions + "\n" + general.get("instructions", "")
             if any(value is None for value in self.profile.get("budget", {}).values()):
@@ -389,7 +433,10 @@ class GeneralAgent:
                 provider=provider,
                 provider_options=options if provider is None else None,
                 tools=self.dialogue.tools(
-                    bounded_specs(specs, describe_results=general.get("protocol") == "general-v3")
+                    bounded_specs(
+                        specs,
+                        describe_results=general.get("protocol") in ("general-v3", "general-v4"),
+                    )
                 ),
                 session_dir=self.directory / "kernel",
                 instructions=instructions,
@@ -398,7 +445,7 @@ class GeneralAgent:
                 budget_limits=self.profile.get("budget"),
                 on_event=self._event,
                 completion_guard=self._ready_to_finish
-                if general.get("require_report") or self.delegation
+                if general.get("require_report") or self.delegation or self.work
                 else None,
             )
             if session_key is not None:
@@ -444,6 +491,15 @@ class GeneralAgent:
     def _event(self, event):
         self.store.event(event)
         self._notify(event)
+        if self.work and event.get("kind") == "bundle_installed":
+            epoch = event["epoch"]
+            self._progress_compiles = (
+                self._progress_compiles + 1 if epoch == self._progress_epoch else 1
+            )
+            self._progress_epoch = epoch
+            if self._progress_compiles >= 8 and not (self.delegation and self.delegation.is_busy()):
+                self._pause_reason = "Repeated compilation without a new observation; inspect the last actual error or missing input"
+                raise PauseRequested
         if self.pause.is_set() and event.get("kind") in {"action_selected", "model_call_started"}:
             raise PauseRequested
 
@@ -500,13 +556,28 @@ class GeneralAgent:
             "shell_commands": general.get("allow_commands", False),
             "require_report": general.get("require_report", False),
         }
-        if general.get("protocol") in ("general-v2", "general-v3"):
+        if general.get("protocol") in ("general-v2", "general-v3", "general-v4"):
             result["workspace"] = self.workspace_context()
+        if self.work:
+            result["search"] = self.web.search_capabilities()
+            result["durable_work"] = True
         if self.delegation:
             result["subagents"] = self.delegation.capabilities()
         return result
 
     def _ready_to_finish(self):
+        if self.work:
+            work = self.work.completion()
+            children = self.delegation.completion() if self.delegation else {"ready": True}
+            return {
+                "ready": work["ready"]
+                and children["ready"]
+                and (not self.profile["general"].get("require_report") or self._complete()),
+                "waiting": children.get("waiting", False),
+                "work": work,
+                "children": children,
+                "report_required": self.profile["general"].get("require_report", False),
+            }
         if self.delegation and self.delegation.is_busy():
             return False
         return not self.profile["general"].get("require_report") or self._complete()
@@ -524,6 +595,8 @@ class GeneralAgent:
             raise ValidationError("A task is already running")
         try:
             self.pause.clear()
+            self._pause_reason = None
+            self._progress_epoch, self._progress_compiles = -1, 0
             if self.delegation:
                 self.delegation.clear_pause()
             if not resume:
@@ -533,16 +606,39 @@ class GeneralAgent:
                     raise ValidationError("Task must be nonempty text")
                 self.task = {"key": uuid.uuid4().hex, "task": task}
                 atomic_json(self.directory / "task.json", self.task)
+                if self.work:
+                    self.work.begin(self.task["key"], task)
             self.store.event(
                 {"kind": "task_resumed" if resume else "task_started", "task_key": self.task["key"]}
             )
             try:
-                result = (self.agent.resume() if resume else self.agent.run(task)).to_dict()
+                slicing = {"slice_steps": 32, "repeated_error_limit": 3} if self.work else {}
+                result = (
+                    self.agent.resume(**slicing) if resume else self.agent.run(task, **slicing)
+                ).to_dict()
+                while self.work and result["status"] in {"yielded", "waiting"}:
+                    atomic_json(self.directory / "result.json", result)
+                    self.cached_status = self.agent.status()
+                    self.cached_history = self.agent.history
+                    self.last_result = result
+                    self.store.event(
+                        {
+                            "kind": "task_boundary",
+                            "status": result["status"],
+                            "task_key": self.task["key"],
+                        }
+                    )
+                    if self.pause.is_set():
+                        raise PauseRequested
+                    if result["status"] == "waiting" and self.delegation:
+                        self.delegation.wait_for_boundary(timeout=1)
+                    result = self.agent.resume(**slicing).to_dict()
             except PauseRequested:
                 result = {
-                    "status": "paused",
+                    "status": "stalled" if self._pause_reason else "paused",
                     "value": None,
-                    "reason": "Paused before the next external action",
+                    "reason": self._pause_reason or "Paused before the next external action",
+                    "budget": self.agent.status()["budget"],
                 }
             except StaleAnchor as exc:
                 # Keep the kernel's rejection intact; expose a resumable application outcome.
@@ -562,6 +658,12 @@ class GeneralAgent:
                 "artifacts": self.artifact_status()["artifacts"],
                 "task_key": self.task["key"],
             }
+            if self.work:
+                from .reliability import failure_info
+
+                result["failure"] = failure_info(result["status"], result.get("reason"))
+                result["work"] = self.work.read_work()
+                result["completion_checks"] = self._ready_to_finish()
             atomic_json(self.directory / "result.json", result)
             self.last_result = result
             self.store.event(

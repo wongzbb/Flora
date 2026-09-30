@@ -36,7 +36,7 @@ from flora.support.values import canonical_json, clone, digest
 
 @dataclass(frozen=True)
 class RuntimeConfig:
-    max_steps: int = 200
+    max_steps: int | None = 200
     max_candidates: int = 3
     max_diagnostics: int = 2
     max_diagnostic_calls: int = 3
@@ -49,12 +49,14 @@ class RuntimeConfig:
     max_contract_bytes: int = DEFAULT_CONTRACT_BYTES
     max_reports: int = 256
     max_reports_bytes: int = DEFAULT_REPORT_BYTES
-    max_compile_cycles: int = 30
+    max_compile_cycles: int | None = 30
     enable_diagnostics: bool = True
     enable_contracts: bool = True
 
     def __post_init__(self):
         for key, value in asdict(self).items():
+            if key in {"max_steps", "max_compile_cycles"} and value is None:
+                continue
             if key.startswith("enable_"):
                 if not isinstance(value, bool):
                     raise ValidationError(f"{key} must be boolean")
@@ -352,7 +354,10 @@ class Runtime:
     def _compile(self) -> None:
         if self.compiler is None:
             raise CompilerError("No compiler configured and no executable program remains")
-        if self.compile_cycles >= self.config.max_compile_cycles:
+        if (
+            self.config.max_compile_cycles is not None
+            and self.compile_cycles >= self.config.max_compile_cycles
+        ):
             raise BudgetExceeded("Compilation cycle limit exhausted")
         self.budget.check_time()
         self.compile_cycles += 1
@@ -780,7 +785,22 @@ class Runtime:
             clone(self.reports) + [{"kind": "resource_retention", **self.retention}],
         )
 
-    def run(self, task: str | None = None, *, bundle: dict | None = None) -> RunResult:
+    def run(
+        self,
+        task: str | None = None,
+        *,
+        bundle: dict | None = None,
+        slice_steps: int | None = None,
+        repeated_error_limit: int | None = None,
+    ) -> RunResult:
+        # A scheduling slice is operational, not a new task or a budget refund.
+        # It yields only at committed boundaries; all cumulative limits still apply.
+        if slice_steps is not None and (type(slice_steps) is not int or slice_steps < 1):
+            raise ValidationError("slice_steps must be a positive integer or null")
+        if repeated_error_limit is not None and (
+            type(repeated_error_limit) is not int or repeated_error_limit < 2
+        ):
+            raise ValidationError("repeated_error_limit must be at least two or null")
         if not self._run_lock.acquire(blocking=False):
             raise ValidationError("A runtime instance is already running")
         try:
@@ -800,8 +820,10 @@ class Runtime:
                     self._completed.get("epoch") == self.trace.epoch
                     and self._completed.get("trace_digest") == self.trace.digest
                 )
+                completion = self.completion_guard() if self.completion_guard is not None else True
                 guard_accepts = same_history and (
-                    self.completion_guard is None or self.completion_guard() is True
+                    completion is True
+                    or (isinstance(completion, dict) and completion.get("ready") is True)
                 )
                 if guard_accepts:
                     return self._result(
@@ -814,7 +836,13 @@ class Runtime:
                 )
             if bundle is not None:
                 self.install_bundle(bundle)
-            while self.steps < self.config.max_steps:
+            start_steps = self.steps
+            error_recoveries = {}
+            while self.config.max_steps is None or self.steps < self.config.max_steps:
+                if slice_steps is not None and self.steps - start_steps >= slice_steps:
+                    return self._result(
+                        "yielded", "Scheduling slice committed; resume the same task"
+                    )
                 self.budget.check_time()
                 if not any(
                     c.status == "ACTIVE" and c.kind == "normal" for c in self.candidates.values()
@@ -925,13 +953,25 @@ class Runtime:
                     continue
                 # Final-answer uncertainty is resolved by incumbent, never by fabricated labels.
                 if boundaries[self.incumbent].kind == "return":
-                    if self.completion_guard is not None and self.completion_guard() is not True:
+                    completion = (
+                        self.completion_guard() if self.completion_guard is not None else True
+                    )
+                    ready = completion is True or (
+                        isinstance(completion, dict) and completion.get("ready") is True
+                    )
+                    if not ready:
+                        if isinstance(completion, dict) and completion.get("waiting") is True:
+                            self._report(
+                                "completion_waiting", details=completion, correctness_feedback=False
+                            )
+                            return self._result("waiting", "Required workers are still running")
                         self.candidates[self.incumbent].status = "COMPLETION_REJECTED"
                         self._report(
                             "completion_rejected",
                             candidate=self.incumbent,
                             reason="environment_reports_work_remaining",
                             correctness_feedback=False,
+                            **({"details": completion} if isinstance(completion, dict) else {}),
                         )
                         self.steps += 1
                         continue
@@ -1001,6 +1041,49 @@ class Runtime:
                 selected = choose(rows, self.incumbent, diagnostic_allowed=allowed)
                 chosen = boundaries[selected]
                 signature = canonical_json(chosen.request)
+                if repeated_error_limit is not None:
+                    recent = self.trace.records[-repeated_error_limit:]
+                    if len(recent) == repeated_error_limit and all(
+                        r["status"] == "raised" for r in recent
+                    ):
+                        signatures = [
+                            digest({"tool": r["tool"], "args": r["args"], "error": r["error"]})
+                            for r in recent
+                        ]
+                        key = signatures[-1]
+                        marker = {"signature": key, "epoch": self.trace.epoch}
+                        request_matches = signature == canonical_json(
+                            {"tool": recent[-1]["tool"], "args": recent[-1]["args"]}
+                        )
+                        if (
+                            request_matches
+                            and len(set(signatures)) == 1
+                            and self.memory.get("__flora_error_recovery__") != marker
+                        ):
+                            self.memory["__flora_error_recovery__"] = marker
+                            for ident, boundary in boundaries.items():
+                                if (
+                                    boundary.kind == "effect"
+                                    and canonical_json(boundary.request) == signature
+                                ):
+                                    self.candidates[ident].status = "RECOVERY_REQUESTED"
+                            self._report(
+                                "repeated_effect_error",
+                                tool=recent[-1]["tool"],
+                                error=recent[-1]["error"],
+                                occurrences=repeated_error_limit,
+                                request_digest=key,
+                                effects_replayed=False,
+                            )
+                            if error_recoveries.get(key, 0):
+                                return self._result(
+                                    "stalled",
+                                    "Repeated identical observed tool errors after a recovery compilation; change the strategy or input",
+                                )
+                            error_recoveries[key] = 1
+                            self.steps += 1
+                            self._save()
+                            continue
                 matching = [
                     i
                     for i, b in boundaries.items()

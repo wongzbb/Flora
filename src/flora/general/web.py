@@ -79,8 +79,16 @@ class WebTools:
         self.store, self.client = store, client or HttpClient()
         self.search = dict(search or {"provider": "duckduckgo"})
         self.services = dict(services or {})
-        if set(self.search) - {"provider", "base_url", "api_key_env"}:
+        if set(self.search) - {"provider", "base_url", "api_key_env", "fallbacks"}:
             raise ValidationError("Unknown search configuration field")
+        fallbacks = self.search.get("fallbacks", [])
+        if not isinstance(fallbacks, list) or len(fallbacks) > 3:
+            raise ValidationError("search.fallbacks must contain at most three configured providers")
+        self.fallbacks = []
+        for config in fallbacks:
+            if not isinstance(config, dict) or "fallbacks" in config:
+                raise ValidationError("Search fallbacks must be flat provider configurations")
+            self.fallbacks.append(WebTools(store, self.client, config))
         if self.search.get("provider", "duckduckgo") not in {
             "duckduckgo",
             "brave",
@@ -162,6 +170,35 @@ class WebTools:
 
     def web_search(self, query: str, limit: int = 5) -> dict:
         """Search for pages; snippets are search observations, not verification of destination content."""
+        from .reliability import network_failure
+        failures = []
+        routes = [self, *self.fallbacks]
+        for index, configured in enumerate(routes):
+            try:
+                result = configured._search_once(query, limit)
+                if failures:
+                    result["provider_failures"] = failures
+                return result
+            except InterruptedEffect:
+                # In particular, a POST search may have unknown transport outcome.
+                # No replacement request or provider fallback is sent in that case.
+                raise
+            except ValidationError as exc:
+                code, alternate = network_failure(exc)
+                failures.append({"provider": configured.search.get("provider", "duckduckgo"), "code": code})
+                if not alternate or index == len(routes) - 1:
+                    if not self.fallbacks:
+                        raise
+                    raise ValidationError("search_unavailable: " + json.dumps(failures) +
+                                          "; no search result was observed; check configured sources or DNS/proxy") from None
+        raise ValidationError("No configured search provider is available")
+
+    def search_capabilities(self):
+        """Configured search routes only; this does not assert current availability."""
+        return {"providers": [s.search.get("provider", "duckduckgo") for s in [self, *self.fallbacks]],
+                "availability": "unprobed", "fallbacks_explicit": True}
+
+    def _search_once(self, query, limit):
         if (
             not isinstance(query, str)
             or not 1 <= len(query.strip()) <= 1000

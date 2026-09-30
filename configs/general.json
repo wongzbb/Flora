@@ -6,10 +6,10 @@
     "timeout": 120
   },
   "compiler": {"max_output_tokens": 12000, "max_repairs": 1},
-  "budget": {"max_model_calls": 30, "max_tool_calls": 100, "max_input_tokens": 300000, "max_output_tokens": 120000, "max_wall_seconds": 1800},
   "general": {
     "search": {"provider": "duckduckgo"},
     "network": {"timeout": 25, "max_bytes": 4194304, "max_redirects": 5},
+    "subagents": {"enabled": true, "max_children": 8, "max_parallel": 3},
     "require_report": false,
     "allow_commands": false,
     "storage_bytes": 268435456

@@ -48,6 +48,7 @@ COMMANDS = [
     "/log",
     "/sources",
     "/artifacts",
+    "/work",
     "/attach",
     "/new",
     "/exit",
@@ -422,6 +423,12 @@ class TerminalUI:
         self.note("Status: " + result["status"])
         if result.get("reason"):
             self.note(result["reason"])
+        if result.get("failure"):
+            self.note(result["failure"]["code"] + " · " + result["failure"]["next_action"])
+        checks = result.get("completion_checks", {})
+        for section in ("work", "children"):
+            for item in checks.get(section, {}).get("limitations", []):
+                self.note("Unresolved: " + item["note"])
         for item in result.get("artifacts", []):
             if item.get("current_task"):
                 self.note("Artifact: " + item["path"])

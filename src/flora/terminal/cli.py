@@ -109,6 +109,7 @@ def help_text(ui):
         "/log [CURSOR]         Actual prompts, model output and tool dialogue (paged)\n"
         "/sources              Saved sources (paged)\n"
         "/artifacts            Generated files and current hashes\n"
+        "/work                 Durable task goals, evidence and unresolved steps\n"
         "/attach PATH          Attach a workspace file to your next task\n"
         "/new                  Start a fresh conversation in this directory\n"
         "/exit                 Save and exit; Ctrl+D also exits"
@@ -246,6 +247,8 @@ def conversation(agent, ui, sessions, path, *, initial_task=None):
                     show_json(ui, run_turn(agent, ui, operation=wait_child))
             elif task == "/artifacts":
                 show_json(ui, agent.artifact_status())
+            elif task == "/work":
+                show_json(ui, agent.work.read_work() if agent.work else {"available": False, "note": "This saved conversation uses its original protocol"})
             elif command == "/sources":
                 show_json(ui, agent.store.list_sources(offset=int(argument) if argument else 0))
             elif command == "/attach":

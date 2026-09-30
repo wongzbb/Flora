@@ -11,7 +11,7 @@ import ssl
 import threading
 import time
 from dataclasses import dataclass
-from urllib.parse import quote, urljoin, urlsplit, urlunsplit
+from urllib.parse import quote, urlencode, urljoin, urlsplit, urlunsplit
 
 from flora.support.errors import InterruptedEffect, ValidationError
 
@@ -47,6 +47,9 @@ class NetworkPolicy:
     timeout: float = 25
     max_bytes: int = 4194304
     max_redirects: int = 5
+    proxy_url: str | None = None
+    dns_over_https: str | None = None
+    dns_bootstrap: tuple[str, ...] = ()
 
     def __post_init__(self):
         if type(self.allow_private) is not bool or not isinstance(
@@ -67,6 +70,51 @@ class NetworkPolicy:
             for h in self.allowed_hosts
         ):
             raise ValidationError("allowed_hosts contains exact host names only")
+        if self.proxy_url is not None:
+            p = urlsplit(self.proxy_url)
+            if (
+                p.scheme != "http"
+                or not p.hostname
+                or p.username
+                or p.password
+                or p.path not in {"", "/"}
+                or p.query
+                or p.fragment
+            ):
+                raise ValidationError(
+                    "proxy_url must be an explicit HTTP CONNECT proxy without embedded credentials"
+                )
+            try:
+                _ = p.port
+            except ValueError:
+                raise ValidationError("Invalid proxy port") from None
+        if self.dns_over_https is not None:
+            p = urlsplit(self.dns_over_https)
+            if (
+                p.scheme != "https"
+                or not p.hostname
+                or p.username
+                or p.password
+                or p.query
+                or p.fragment
+            ):
+                raise ValidationError("dns_over_https must be an explicit HTTPS JSON DNS endpoint")
+            if (
+                not isinstance(self.dns_bootstrap, (list, tuple))
+                or not 1 <= len(self.dns_bootstrap) <= 4
+            ):
+                raise ValidationError("DoH needs 1–4 explicitly configured public bootstrap IPs")
+            for value in self.dns_bootstrap:
+                try:
+                    ip = ipaddress.ip_address(value)
+                except ValueError:
+                    raise ValidationError(
+                        "DNS bootstrap entries must be public IP literals"
+                    ) from None
+                if not ip.is_global or ip.is_multicast:
+                    raise ValidationError("DNS bootstrap entries must be public IP literals")
+        elif self.dns_bootstrap:
+            raise ValidationError("dns_bootstrap requires dns_over_https")
 
     def resolve(self, url):
         if not isinstance(url, str) or len(url) > 8192 or any(ord(c) < 33 for c in url):
@@ -79,9 +127,16 @@ class NetworkPolicy:
             raise ValidationError("URL host is outside the configured allowlist")
         try:
             port = p.port or (443 if p.scheme == "https" else 80)
-            addresses = list(
-                dict.fromkeys(r[4][0] for r in _resolve_bounded(host, port, self.timeout))
-            )
+            try:
+                addresses = [str(ipaddress.ip_address(host))]
+            except ValueError:
+                addresses = (
+                    _resolve_doh(self, host)
+                    if self.dns_over_https
+                    else list(
+                        dict.fromkeys(r[4][0] for r in _resolve_bounded(host, port, self.timeout))
+                    )
+                )
         except (ValueError, OSError) as exc:
             raise ValidationError("URL cannot be resolved") from exc
         for address in addresses:
@@ -99,7 +154,7 @@ class NetworkPolicy:
                     "Private, reserved, or local network destinations are disabled"
                 )
         if not addresses:
-            raise ValidationError("URL has no address")
+            raise ValidationError("DNS returned no address records")
         return p, host, port, addresses[0]
 
 
@@ -116,6 +171,102 @@ class _PinnedHTTPS(_PinnedHTTP):
     def connect(self):
         super().connect()
         self.sock = ssl.create_default_context().wrap_socket(self.sock, server_hostname=self.host)
+
+
+class _TunnelHTTP(http.client.HTTPConnection):
+    """Connect only to an explicit proxy, then tunnel to the checked, pinned IP."""
+
+    def __init__(self, host, port, address, timeout, proxy, *, tls=False):
+        super().__init__(host, port, timeout=timeout)
+        self.proxy, self.tls = proxy, tls
+        self.set_tunnel(address, port)
+
+    def connect(self):
+        self.sock = socket.create_connection(self.proxy, self.timeout)
+        self._tunnel()
+        if self.tls:
+            self.sock = ssl.create_default_context().wrap_socket(
+                self.sock, server_hostname=self.host
+            )
+
+
+def _connection(policy, host, port, address, timeout, *, tls):
+    if policy.proxy_url:
+        p = urlsplit(policy.proxy_url)
+        # The user grants this exact transport endpoint, not arbitrary private targets.
+        rows = _resolve_bounded(p.hostname, p.port or 80, timeout)
+        proxy = (rows[0][4][0], p.port or 80)
+        return _TunnelHTTP(host, port, address, timeout, proxy, tls=tls)
+    return (_PinnedHTTPS if tls else _PinnedHTTP)(host, port, address, timeout)
+
+
+def _resolve_doh(policy, host):
+    """Explicitly configured JSON DoH, TLS host checked against its public bootstrap.
+
+    Wire shape follows the Google Public DNS JSON API. Resolver answers still pass
+    the SAME destination policy. No redirects, proxy-side DNS, or implicit resolver.
+    """
+    endpoint = urlsplit(policy.dns_over_https)
+    started = time.monotonic()
+    for query_type in ("A", "AAAA"):
+        left = policy.timeout - (time.monotonic() - started)
+        if left <= 0:
+            raise ValidationError("DNS over HTTPS deadline exceeded")
+        conn = _connection(
+            policy, endpoint.hostname, endpoint.port or 443, policy.dns_bootstrap[0], left, tls=True
+        )
+        try:
+            path = endpoint.path or "/resolve"
+            conn.request(
+                "GET",
+                path + "?" + urlencode({"name": host, "type": query_type}),
+                headers={"Accept": "application/dns-json", "Accept-Encoding": "identity"},
+            )
+            response = conn.getresponse()
+            if response.status != 200 or response.getheader("content-encoding", "identity") not in {
+                "",
+                "identity",
+            }:
+                raise ValidationError("DNS over HTTPS resolver is unavailable")
+            chunks, size = [], 0
+            while True:
+                left = policy.timeout - (time.monotonic() - started)
+                if left <= 0:
+                    raise ValidationError("DNS over HTTPS deadline exceeded")
+                if conn.sock:
+                    conn.sock.settimeout(left)
+                part = response.read1(min(8192, 65537 - size))
+                if not part:
+                    break
+                chunks.append(part)
+                size += len(part)
+                if size > 65536:
+                    raise ValidationError("DNS response exceeds byte limit")
+            raw = b"".join(chunks)
+            result = json.loads(raw)
+            if (
+                not isinstance(result, dict)
+                or result.get("Status") != 0
+                or result.get("TC") is True
+            ):
+                raise ValidationError("DNS resolver did not provide a complete successful answer")
+            expected_type = 1 if query_type == "A" else 28
+            addresses = list(
+                dict.fromkeys(
+                    str(ipaddress.ip_address(r["data"]))
+                    for r in result.get("Answer", [])
+                    if r.get("type") == expected_type
+                )
+            )
+            if addresses:
+                return addresses
+        except (OSError, http.client.HTTPException, ValueError, TypeError, KeyError):
+            raise ValidationError(
+                "DNS over HTTPS lookup failed; no destination request was sent"
+            ) from None
+        finally:
+            conn.close()
+    raise ValidationError("DNS resolver returned no address records")
 
 
 class HttpClient:
@@ -151,9 +302,7 @@ class HttpClient:
             remaining = self.policy.timeout - (time.monotonic() - started)
             if remaining <= 0:
                 raise ValidationError("HTTP deadline exceeded before dispatch")
-            conn = (_PinnedHTTPS if p.scheme == "https" else _PinnedHTTP)(
-                host, port, address, remaining
-            )
+            conn = _connection(self.policy, host, port, address, remaining, tls=p.scheme == "https")
             target = urlunsplit(
                 (
                     "",

@@ -206,9 +206,11 @@ class Agent:
             "instructions": instructions,
             "completion_guard_required": completion_guard is not None,
             "provider": {
-                "class": ("flora.providers.OpenAICompatibleProvider"
-                          if type(provider) is OpenAICompatibleProvider
-                          else f"{type(provider).__module__}.{type(provider).__qualname__}"),
+                "class": (
+                    "flora.providers.OpenAICompatibleProvider"
+                    if type(provider) is OpenAICompatibleProvider
+                    else f"{type(provider).__module__}.{type(provider).__qualname__}"
+                ),
                 "model": getattr(provider, "model", None),
                 "base_url": getattr(provider, "base_url", None),
                 "api_key_env": getattr(provider, "api_key_env", None),
@@ -315,8 +317,9 @@ class Agent:
             "budget": self.budget.to_dict(),
         }
 
-    def run(self, task, *, data=None) -> RunResult:
+    def run(self, task, *, data=None, slice_steps=None, repeated_error_limit=None) -> RunResult:
         """Run one new natural-language task against this session's actual world."""
+        self._validate_execution_policy(slice_steps, repeated_error_limit)
         if not isinstance(task, str) or not task.strip():
             raise ValidationError("task must be a nonempty string")
         if len(task.encode("utf-8")) > 256 * 1024:
@@ -355,7 +358,12 @@ class Agent:
             self._state["next_turn"] += 1
             try:
                 self._persist()
-                return self._execute(trace, restoring=False)
+                return self._execute(
+                    trace,
+                    restoring=False,
+                    slice_steps=slice_steps,
+                    repeated_error_limit=repeated_error_limit,
+                )
             finally:
                 self._store.release_trace(trace)
 
@@ -366,8 +374,9 @@ class Agent:
             raise AgentRunError(result)
         return result.value
 
-    def resume(self) -> RunResult:
+    def resume(self, *, slice_steps=None, repeated_error_limit=None) -> RunResult:
         """Continue the active turn; settled effects are consumed, never reissued."""
+        self._validate_execution_policy(slice_steps, repeated_error_limit)
         with self._store.locked():
             self._reload()
             if self._state["active"] is None:
@@ -375,7 +384,12 @@ class Agent:
             self._check_credentials()
             trace = self._store.trace(self._state["active"]["trace"])
             try:
-                return self._execute(trace, restoring=True)
+                return self._execute(
+                    trace,
+                    restoring=True,
+                    slice_steps=slice_steps,
+                    repeated_error_limit=repeated_error_limit,
+                )
             finally:
                 self._store.release_trace(trace)
 
@@ -389,7 +403,16 @@ class Agent:
             + task
         )
 
-    def _execute(self, trace, *, restoring):
+    @staticmethod
+    def _validate_execution_policy(slice_steps, repeated_error_limit):
+        if slice_steps is not None and (type(slice_steps) is not int or slice_steps < 1):
+            raise ValidationError("slice_steps must be a positive integer or null")
+        if repeated_error_limit is not None and (
+            type(repeated_error_limit) is not int or repeated_error_limit < 2
+        ):
+            raise ValidationError("repeated_error_limit must be at least two or null")
+
+    def _execute(self, trace, *, restoring, slice_steps=None, repeated_error_limit=None):
         active = self._state["active"]
         runtime = None
         try:
@@ -439,7 +462,11 @@ class Agent:
                     on_event=self.on_event,
                 )
                 runtime.reuse = ReuseLibrary.from_dict(self._state["reuse"])
-            result = runtime.run(self._task_text(active["task"]))
+            result = runtime.run(
+                self._task_text(active["task"]),
+                slice_steps=slice_steps,
+                repeated_error_limit=repeated_error_limit,
+            )
             self.budget = runtime.budget
             self.last_result = result
             if result.status == "completed":

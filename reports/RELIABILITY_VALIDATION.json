@@ -1,0 +1,253 @@
+{
+  "date": "2026-09-30",
+  "base_commit": "01e6a7a0103ee3b7fc174b4ec8bea2ee241f946d",
+  "branch": "general-agent",
+  "version": "0.1.0",
+  "platform": "linux",
+  "python": "3.12.14",
+  "regression": {
+    "run": 189,
+    "passed": 188,
+    "skipped": 1,
+    "seconds": 285.272
+  },
+  "lint": "passed",
+  "installed_cli": {
+    "provider": "deterministic loopback; not a real model",
+    "turns_passed": 7,
+    "requests": 7,
+    "independent_wheel": true
+  },
+  "real_api": {
+    "catalog_verified": false,
+    "connection": "refused (errno 111)",
+    "acceptance_passed": false,
+    "results": [
+      {
+        "model": "deepseek-v4-flash",
+        "case": "greet",
+        "trial": 1,
+        "status": "needs_program",
+        "failure": {
+          "code": "model_transport",
+          "next_action": "Check endpoint and model availability; a new compilation remains charged and may have unknown usage.",
+          "effects_replayed": false
+        },
+        "budget": {
+          "limits": {
+            "max_tool_calls": 40,
+            "max_model_calls": 12,
+            "max_input_tokens": 500000,
+            "max_output_tokens": 180000,
+            "max_wall_seconds": 600
+          },
+          "tool_calls": 0,
+          "model_calls": 3,
+          "input_tokens": 0,
+          "output_tokens": 36000,
+          "unknown_usage_calls": 3,
+          "reserved_output": 0,
+          "elapsed_seconds": 3.1140058789997056
+        },
+        "grade": {
+          "passed": false,
+          "review_required": false,
+          "runtime_completed": false,
+          "task_success_distinct": true,
+          "tool_calls": []
+        },
+        "fixture_unchanged": true,
+        "seconds": 3.225
+      },
+      {
+        "model": "deepseek-chat",
+        "case": "greet",
+        "trial": 1,
+        "status": "needs_program",
+        "failure": {
+          "code": "model_transport",
+          "next_action": "Check endpoint and model availability; a new compilation remains charged and may have unknown usage.",
+          "effects_replayed": false
+        },
+        "budget": {
+          "limits": {
+            "max_tool_calls": 40,
+            "max_model_calls": 12,
+            "max_input_tokens": 500000,
+            "max_output_tokens": 180000,
+            "max_wall_seconds": 600
+          },
+          "tool_calls": 0,
+          "model_calls": 3,
+          "input_tokens": 0,
+          "output_tokens": 36000,
+          "unknown_usage_calls": 3,
+          "reserved_output": 0,
+          "elapsed_seconds": 3.063603556000089
+        },
+        "grade": {
+          "passed": false,
+          "review_required": false,
+          "runtime_completed": false,
+          "task_success_distinct": true,
+          "tool_calls": []
+        },
+        "fixture_unchanged": true,
+        "seconds": 3.11
+      },
+      {
+        "model": "glm5.3",
+        "case": "greet",
+        "trial": 1,
+        "status": "needs_program",
+        "failure": {
+          "code": "model_transport",
+          "next_action": "Check endpoint and model availability; a new compilation remains charged and may have unknown usage.",
+          "effects_replayed": false
+        },
+        "budget": {
+          "limits": {
+            "max_tool_calls": 40,
+            "max_model_calls": 12,
+            "max_input_tokens": 500000,
+            "max_output_tokens": 180000,
+            "max_wall_seconds": 600
+          },
+          "tool_calls": 0,
+          "model_calls": 3,
+          "input_tokens": 0,
+          "output_tokens": 36000,
+          "unknown_usage_calls": 3,
+          "reserved_output": 0,
+          "elapsed_seconds": 3.0571412039998904
+        },
+        "grade": {
+          "passed": false,
+          "review_required": false,
+          "runtime_completed": false,
+          "task_success_distinct": true,
+          "tool_calls": []
+        },
+        "fixture_unchanged": true,
+        "seconds": 3.096
+      },
+      {
+        "model": "qwen-plus",
+        "case": "greet",
+        "trial": 1,
+        "status": "needs_program",
+        "failure": {
+          "code": "model_transport",
+          "next_action": "Check endpoint and model availability; a new compilation remains charged and may have unknown usage.",
+          "effects_replayed": false
+        },
+        "budget": {
+          "limits": {
+            "max_tool_calls": 40,
+            "max_model_calls": 12,
+            "max_input_tokens": 500000,
+            "max_output_tokens": 180000,
+            "max_wall_seconds": 600
+          },
+          "tool_calls": 0,
+          "model_calls": 3,
+          "input_tokens": 0,
+          "output_tokens": 36000,
+          "unknown_usage_calls": 3,
+          "reserved_output": 0,
+          "elapsed_seconds": 3.056219536001663
+        },
+        "grade": {
+          "passed": false,
+          "review_required": false,
+          "runtime_completed": false,
+          "task_success_distinct": true,
+          "tool_calls": []
+        },
+        "fixture_unchanged": true,
+        "seconds": 3.09
+      },
+      {
+        "model": "kimi-k2",
+        "case": "greet",
+        "trial": 1,
+        "status": "needs_program",
+        "failure": {
+          "code": "model_transport",
+          "next_action": "Check endpoint and model availability; a new compilation remains charged and may have unknown usage.",
+          "effects_replayed": false
+        },
+        "budget": {
+          "limits": {
+            "max_tool_calls": 40,
+            "max_model_calls": 12,
+            "max_input_tokens": 500000,
+            "max_output_tokens": 180000,
+            "max_wall_seconds": 600
+          },
+          "tool_calls": 0,
+          "model_calls": 3,
+          "input_tokens": 0,
+          "output_tokens": 36000,
+          "unknown_usage_calls": 3,
+          "reserved_output": 0,
+          "elapsed_seconds": 3.0343311430005997
+        },
+        "grade": {
+          "passed": false,
+          "review_required": false,
+          "runtime_completed": false,
+          "task_success_distinct": true,
+          "tool_calls": []
+        },
+        "fixture_unchanged": true,
+        "seconds": 3.062
+      },
+      {
+        "model": "gpt-4o",
+        "case": "greet",
+        "trial": 1,
+        "status": "needs_program",
+        "failure": {
+          "code": "model_transport",
+          "next_action": "Check endpoint and model availability; a new compilation remains charged and may have unknown usage.",
+          "effects_replayed": false
+        },
+        "budget": {
+          "limits": {
+            "max_tool_calls": 40,
+            "max_model_calls": 12,
+            "max_input_tokens": 500000,
+            "max_output_tokens": 180000,
+            "max_wall_seconds": 600
+          },
+          "tool_calls": 0,
+          "model_calls": 3,
+          "input_tokens": 0,
+          "output_tokens": 36000,
+          "unknown_usage_calls": 3,
+          "reserved_output": 0,
+          "elapsed_seconds": 3.040466959000696
+        },
+        "grade": {
+          "passed": false,
+          "review_required": false,
+          "runtime_completed": false,
+          "task_success_distinct": true,
+          "tool_calls": []
+        },
+        "fixture_unchanged": true,
+        "seconds": 3.063
+      }
+    ]
+  },
+  "manual": {
+    "chapters": 32,
+    "duplicate_ids": false,
+    "broken_internal_links": false
+  },
+  "scope_excluded": [
+    "cloud/multi-tenant infrastructure"
+  ],
+  "native_windows_supported": false
+}

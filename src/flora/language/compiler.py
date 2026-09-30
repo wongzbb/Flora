@@ -500,12 +500,12 @@ class LLMCompiler:
             or compilation_timeout <= 0
         ):
             raise ValidationError("compilation_timeout must be positive and finite or None")
-        if prompt_style not in ("full-v1", "compact-v1"):
-            raise ValidationError("prompt_style must be full-v1 or compact-v1")
-        if prompt_style == "compact-v1" and syntax == "ir-v1":
-            raise ValidationError("compact-v1 requires observe-v1 or block-list syntax")
-        if syntax in ("block-list-v1", "block-list-v2") and prompt_style != "compact-v1":
-            raise ValidationError("block-list syntax requires compact-v1 prompt_style")
+        if prompt_style not in ("full-v1", "compact-v1", "compact-v2"):
+            raise ValidationError("prompt_style must be full-v1, compact-v1 or compact-v2")
+        if prompt_style.startswith("compact-") and syntax == "ir-v1":
+            raise ValidationError("compact prompts require observe-v1 or block-list syntax")
+        if syntax in ("block-list-v1", "block-list-v2") and not prompt_style.startswith("compact-"):
+            raise ValidationError("block-list syntax requires a compact prompt_style")
         self.prompt_style = prompt_style
         self.syntax, self.compilation_timeout = syntax, compilation_timeout
         self._deadline = None
@@ -569,6 +569,46 @@ class LLMCompiler:
             "memory_omitted": False,
             "note": "Indexed views only. Omitted content is unknown to the compiler, not empty or fabricated.",
         }
+        if self.prompt_style == "compact-v2":
+            # Delivery-only projections: the journal and runtime read_receipt keep
+            # the full values and original indices. Never synthesize shortened VALUEs.
+            omitted_payloads = []
+            for item in view["receipts"]:
+                record = item["record"]
+                if (
+                    "value" in record
+                    and len(canonical_json(record["value"]).encode("utf-8")) > 16384
+                ):
+                    item["payload_view"] = {
+                        "omitted": True,
+                        "sha256": digest(record["value"]),
+                        "recover_with": "read_receipt",
+                        "trace_index": item["trace_index"],
+                    }
+                    del record["value"]
+                    omitted_payloads.append(item["trace_index"])
+            visibility["receipt_payloads_omitted"] = omitted_payloads
+            important = {
+                "local_execution",
+                "invalid_request",
+                "completion_rejected",
+                "repeated_effect_error",
+                "revision_checked",
+                "forecast_observation",
+                "empirical_guard",
+                "checkpoint_unavailable",
+                "consumer_check",
+                "reuse_checked",
+            }
+            reports = view["reports"]
+            indices = set(range(max(0, len(reports) - 16), len(reports)))
+            indices.update(
+                i
+                for i in range(max(0, len(reports) - 64), len(reports))
+                if reports[i].get("kind") in important
+            )
+            view["reports"] = [r for i, r in enumerate(reports) if i in indices]
+            visibility["reports_omitted"] = len(reports) - len(view["reports"])
         view["visibility"] = visibility
         view["limits"] = {
             "max_programs": self.max_programs,
@@ -619,10 +659,14 @@ class LLMCompiler:
             end = system.index("parse_json(string)", begin)
             system = system[:begin] + OBSERVE_GUIDANCE + "\n" + system[end:]
         content = canonical_json(view)
-        if self.prompt_style == "compact-v1":
-            from flora.language.prompts import compact_prompt
+        if self.prompt_style in {"compact-v1", "compact-v2"}:
+            from flora.language.prompts import compact_prompt, focused_prompt
 
-            system = compact_prompt(self.syntax)
+            system = (
+                focused_prompt(self.syntax)
+                if self.prompt_style == "compact-v2"
+                else compact_prompt(self.syntax)
+            )
             # Preserve every field and the complete task; put the user task last
             # so tool catalogue boilerplate cannot bury the actual request.
             view = {**{k: v for k, v in view.items() if k != "task"}, "task": view["task"]}

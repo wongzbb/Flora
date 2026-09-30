@@ -13,7 +13,13 @@ import json
 from typing import Any
 
 from flora.support.errors import BudgetExceeded, ValidationError
-from flora.support.values import MAX_DEPTH, MAX_ENCODED_BYTES, MAX_NODES, validate_json
+from flora.support.values import (
+    MAX_DEPTH,
+    MAX_ENCODED_BYTES,
+    MAX_NODES,
+    _TextBytesExceeded,
+    validate_json,
+)
 
 MIB = 1024 * 1024
 DEFAULT_JOURNAL_BYTES = 7 * MIB
@@ -48,17 +54,18 @@ def encoded_size(
     max_nodes: int = MAX_NODES,
     max_depth: int = MAX_DEPTH,
 ) -> int:
-    """Count without assembling an additional aggregate serialization string."""
+    """Exact canonical UTF-8 size with preflight text/node/depth allocation bounds."""
     validate_limit(limit, "byte limit")
-    validate_json(value, max_nodes=max_nodes, max_depth=max_depth)
-    encoder = json.JSONEncoder(
-        ensure_ascii=False, allow_nan=False, sort_keys=True, separators=(",", ":")
+    try:
+        validate_json(value, max_nodes=max_nodes, max_depth=max_depth, max_text_bytes=limit)
+    except _TextBytesExceeded as exc:
+        raise ResourceLimitExceeded(resource, limit, exc.required) from None
+    encoded = json.dumps(
+        value, ensure_ascii=False, allow_nan=False, sort_keys=True, separators=(",", ":")
     )
-    total = 0
-    for piece in encoder.iterencode(value):
-        total += len(piece.encode("utf-8"))
-        if total > limit:
-            raise ResourceLimitExceeded(resource, limit, total)
+    total = len(encoded.encode("utf-8"))
+    if total > limit:
+        raise ResourceLimitExceeded(resource, limit, total)
     return total
 
 

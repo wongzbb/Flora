@@ -21,9 +21,22 @@ MAX_NODES = 200_000
 MAX_ENCODED_BYTES = 16 * 1024 * 1024
 
 
-def validate_json(value: Any, *, max_depth: int = MAX_DEPTH, max_nodes: int = MAX_NODES) -> None:
+class _TextBytesExceeded(ValidationError):
+    def __init__(self, required):
+        self.required = required
+        super().__init__("JSON value exceeds the serialized byte limit")
+
+
+def validate_json(
+    value: Any,
+    *,
+    max_depth: int = MAX_DEPTH,
+    max_nodes: int = MAX_NODES,
+    max_text_bytes: int | None = None,
+) -> None:
     pending = [(value, 0, frozenset())]
     visited = 0
+    text_bytes = 0
     while pending:
         current, depth, ancestors = pending.pop()
         visited += 1
@@ -35,13 +48,21 @@ def validate_json(value: Any, *, max_depth: int = MAX_DEPTH, max_nodes: int = MA
         if kind in (type(None), bool, str):
             if kind is str:
                 try:
-                    current.encode("utf-8")
+                    if max_text_bytes is not None and len(current) > max_text_bytes - text_bytes:
+                        raise _TextBytesExceeded(text_bytes + len(current))
+                    text_bytes += len(current.encode("utf-8"))
+                    if max_text_bytes is not None and text_bytes > max_text_bytes:
+                        raise _TextBytesExceeded(text_bytes)
                 except UnicodeError as error:
                     raise ValidationError("JSON strings must contain valid Unicode") from error
             continue
         if kind is int:
             if current.bit_length() > MAX_INTEGER_BITS:
                 raise ValidationError("JSON integer exceeds the bit limit")
+            if max_text_bytes is not None:
+                text_bytes += len(str(current))
+                if text_bytes > max_text_bytes:
+                    raise _TextBytesExceeded(text_bytes)
             continue
         if kind is float:
             if not math.isfinite(current):
@@ -69,19 +90,17 @@ def validate_json(value: Any, *, max_depth: int = MAX_DEPTH, max_nodes: int = MA
 
 
 def _encode(value: Any, maximum: int) -> str:
-    validate_json(value)
+    # Bound aggregate raw text/numbers before the C encoder assembles output.
+    # Escaping is at most sixfold and container overhead is node-bounded. Exact
+    # encoded-byte enforcement remains below, with identical canonical bytes.
+    validate_json(value, max_text_bytes=maximum)
     try:
-        encoder = json.JSONEncoder(
-            ensure_ascii=False, allow_nan=False, sort_keys=True, separators=(",", ":")
+        encoded = json.dumps(
+            value, ensure_ascii=False, allow_nan=False, sort_keys=True, separators=(",", ":")
         )
-        pieces = []
-        total = 0
-        for piece in encoder.iterencode(value):
-            total += len(piece.encode("utf-8"))
-            if total > maximum:
-                raise ValidationError("JSON value exceeds the serialized byte limit")
-            pieces.append(piece)
-        return "".join(pieces)
+        if len(encoded.encode("utf-8")) > maximum:
+            raise ValidationError("JSON value exceeds the serialized byte limit")
+        return encoded
     except (ValueError, TypeError, RecursionError) as error:
         if isinstance(error, ValidationError):
             raise

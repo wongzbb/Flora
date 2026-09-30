@@ -1,0 +1,575 @@
+# SPDX-License-Identifier: Apache-2.0
+"""Task-scoped collaboration with durable handoffs and explicit result review.
+
+Workers keep independent Flora journals. Their conclusions never become parent
+receipts until the parent calls a collection tool; review verifies references and
+coverage, not semantic truth. Legacy delegation stays unchanged.
+"""
+
+from __future__ import annotations
+
+import json
+import uuid
+from copy import copy, deepcopy
+from datetime import UTC, datetime
+
+from flora.agent.api import Agent
+from flora.integrations.binding import make_registry
+from flora.integrations.providers import OpenAICompatibleProvider
+from flora.support.errors import ValidationError
+from flora.support.values import digest
+
+from .delegation import ChildPause, Delegation
+from .reliability import failure_info
+from .schemas import bounded_specs
+from .storage import atomic_json
+
+
+class ChildStall(KeyboardInterrupt):
+    pass
+
+
+class Coordinator(Delegation):
+    instructions = """
+Read-only Flora subagents share observation source IDs but keep independent
+programs, contracts, traces and usage. spawn_agent(task,name,context,depends_on,
+required) starts a precisely scoped task. Supply relevant observed source_ids or
+{path,sha256} files and concise guidance in context; children do not inherit your
+entire conversation. Existing IDs in depends_on must be from this task. Their
+actual completed outputs are handed to the child as explicitly unverified input.
+Do not split trivial tasks. Use parallel workers for separable work, and dependencies
+only when a worker genuinely needs another's result. No recursive delegation or
+child writes/shell/browser/service mutations. agent_status lists live state.
+wait_agents waits without new model calls and returns result windows. read_agent
+pages only the actual answer, limitations, source references and usage, not a huge
+internal trace. Follow next_offset until complete, then review_agent with the
+returned result_digest and disposition accepted/blocked/rejected. Inspect actual
+sources before relying on factual claims. Review verifies collection/reference
+integrity, NOT truth. Required children must be reviewed before final return.
+Blocked/rejected work needs an explicit limitation note; do not conceal it in the
+answer. resume_agent continues the SAME unfinished task and budget. Unknown effect
+outcomes require external evidence and are never automatically replayed. Completed
+workers do not consume the next user task's child quota. A changed task is a new
+child, never a disguised resume. read_work/update_work retain complex task goals
+and evidence; do not discard required goals to bypass completion checks.
+"""
+
+    def capabilities(self):
+        return {
+            "enabled": True,
+            "read_only": True,
+            "max_children_per_task": self.options.get("max_children", 8),
+            "max_parallel": self.options.get("max_parallel", 3),
+            "budget_per_child": dict(self.child_limits),
+            "recursive_delegation": False,
+            "handoff": "explicit-context-and-dependencies",
+            "review_required": True,
+            "tools": [s.name for s in self._tools()],
+        }
+
+    def _current(self):
+        return [r for r in self.records.values() if r.get("task_key") == self.owner.task["key"]]
+
+    def spawn_agent(
+        self,
+        task: str,
+        name: str = "Researcher",
+        context: dict | None = None,
+        depends_on: list[str] | None = None,
+        required: bool = True,
+    ) -> dict:
+        """Start a read-only task with explicit context {guidance?,source_ids?,files?}, dependencies and required flag. Returns agent_id; collect and review its actual result before finishing."""
+        if not isinstance(task, str) or not 1 <= len(task.strip()) <= 16000 or len(task) > 16000:
+            raise ValidationError("Child task must contain 1–16000 characters")
+        if (
+            not isinstance(name, str)
+            or not name.strip()
+            or len(name) > 64
+            or not name.isprintable()
+        ):
+            raise ValidationError("Child name must be 1–64 printable characters")
+        if type(required) is not bool:
+            raise ValidationError("required must be boolean")
+        context = {} if context is None else deepcopy(context)
+        if not isinstance(context, dict) or set(context) - {"guidance", "source_ids", "files"}:
+            raise ValidationError("context accepts guidance, source_ids and files")
+        if (
+            not isinstance(context.get("guidance", ""), str)
+            or len(context.get("guidance", "")) > 16000
+        ):
+            raise ValidationError("Context guidance must be bounded text")
+        sources, files = context.get("source_ids", []), context.get("files", [])
+        if not isinstance(sources, list) or not isinstance(files, list):
+            raise ValidationError("Context source_ids and files must be arrays")
+        context["evidence"] = self.owner.work.evidence([{"source_id": s} for s in sources] + files)
+        if len(json.dumps(context).encode()) > 65536:
+            raise ValidationError("Child context exceeds 64 KiB")
+        if depends_on is not None and not isinstance(depends_on, list):
+            raise ValidationError("depends_on must be an array of current-task IDs")
+        deps = [] if not depends_on else self._ids(depends_on)
+        if len(deps) > 8:
+            raise ValidationError("At most eight dependency IDs are supported")
+        with self.lock:
+            if self.closed or self.stop.is_set():
+                raise ValidationError("Subagents are paused or closed")
+            if any(self.records[x].get("task_key") != self.owner.task["key"] for x in deps):
+                raise ValidationError("Dependencies must belong to the current parent task")
+            # Identical handoffs return their durable identity; no duplicate worker or spend.
+            signature = digest({"task": task, "context": context, "dependencies": deps})
+            existing = next(
+                (r for r in self._current() if r.get("handoff_digest") == signature), None
+            )
+            if existing:
+                if required and not existing["required"]:
+                    existing["required"] = True
+                    self._save()
+                return {
+                    "agent_id": existing["id"],
+                    "status": existing["status"],
+                    "reused": True,
+                    "requires_resume": existing["status"] not in {"queued", "running", "completed"},
+                }
+            if len(self._current()) >= self.options.get("max_children", 8):
+                raise ValidationError(
+                    "Current task child quota reached; inspect or resume existing IDs"
+                )
+            ident = "a-" + uuid.uuid4().hex[:12]
+            (self.root / ident).mkdir(mode=0o700)
+            self.records[ident] = {
+                "id": ident,
+                "name": name,
+                "task": task,
+                "context": context,
+                "depends_on": deps,
+                "required": required,
+                "task_key": self.owner.task["key"],
+                "parent_task": self.owner.task["task"],
+                "handoff_digest": signature,
+                "status": "queued",
+                "created": datetime.now(UTC).isoformat(),
+                "budget": {},
+                "review": None,
+                "read_windows": [],
+            }
+            self._save()
+            self.futures[ident] = self.pool.submit(self._run, ident)
+        self.owner._child_event(
+            {
+                "kind": "subagent_spawned",
+                "agent_id": ident,
+                "name": name,
+                "status": "queued",
+                "depends_on": deps,
+            }
+        )
+        return {"agent_id": ident, "name": name, "status": "queued", "read_only": True}
+
+    def _event(self, ident, event):
+        if event.get("kind") == "bundle_installed":
+            with self.lock:
+                row = self.records[ident]
+                row["no_progress_compiles"] = (
+                    row.get("no_progress_compiles", 0) + 1
+                    if row.get("progress_epoch") == event["epoch"]
+                    else 1
+                )
+                row["progress_epoch"] = event["epoch"]
+                stalled = row["no_progress_compiles"] >= 8
+            if stalled:
+                raise ChildStall
+        super()._event(ident, event)
+
+    def _tools(self):
+        tools = [
+            s
+            for s in self.owner.files.specs()
+            if s.name in {"list_files", "read_file", "search_files"}
+        ]
+        tools += list(
+            make_registry(
+                [
+                    self.owner.documents.read_document,
+                    self.owner.documents.table_query,
+                    self.owner.web.web_fetch,
+                    self.owner.web.web_search,
+                    self.owner.store.read_source,
+                    self.owner.store.list_sources,
+                    self.owner.workspace_context,
+                    self.child_capabilities,
+                    self.owner.skills.list_skills,
+                    self.owner.skills.read_skill,
+                ]
+            )._tools.values()
+        )
+        if self.owner.profile["general"].get("services"):
+            tools += list(make_registry([self.http_read])._tools.values())
+        return bounded_specs(tools, describe_results=True)
+
+    def child_capabilities(self) -> dict:
+        """Read available research tools, configured search and GET/HEAD services. No mutation grants."""
+        return {
+            "read_only": True,
+            "search": self.owner.web.search_capabilities(),
+            "workspace": self.owner.workspace_context(),
+            "services": {
+                name: {"methods": [m for m in cfg.get("methods", ["GET"]) if m in {"GET", "HEAD"}]}
+                for name, cfg in self.owner.web.services.items()
+            },
+            "claims_verified": False,
+        }
+
+    def http_read(self, service: str, path: str, method: str = "GET") -> dict:
+        """Read an explicitly configured service using GET or HEAD only; no request body or mutations."""
+        if method not in {"GET", "HEAD"}:
+            raise ValidationError("Children can only use GET or HEAD")
+        return self.owner.web.http_request(service, path, method)
+
+    def _run(self, ident):
+        agent = dialogue = None
+        try:
+            row = deepcopy(self.records[ident])
+            dependencies = []
+            for dep in row["depends_on"]:
+                while self.records[dep]["status"] in {"queued", "running"}:
+                    if self.stop.wait(0.2):
+                        raise ChildPause
+                if self.records[dep]["status"] != "completed":
+                    self._update(
+                        ident,
+                        status="blocked",
+                        detail="Dependency did not complete",
+                        failure={"code": "dependency_incomplete", "agent_id": dep},
+                    )
+                    return
+                view = self._result_view(dep)
+                dependencies.append(
+                    {
+                        "agent_id": dep,
+                        "result_digest": digest(view),
+                        "result": view,
+                        "claims_verified": False,
+                    }
+                )
+            if self.stop.is_set():
+                raise ChildPause
+            self._update(ident, status="running", detail="Compiling assigned task")
+            options = dict(self.owner.profile.get("provider", {}))
+            model = options.pop("model", None)
+            compiler = {
+                "max_output_tokens": 12000,
+                "max_repairs": 1,
+                **self.owner.profile.get("compiler", {}),
+            }
+            compiler["max_output_tokens"] = min(compiler["max_output_tokens"], 12000)
+            from .observability import Dialogue, connect
+
+            dialogue = Dialogue(
+                self.owner.store,
+                self.owner._notify,
+                actor=ident,
+                secrets=(self.owner._session_key,),
+            )
+            provider = self.provider
+            if isinstance(provider, OpenAICompatibleProvider):
+                provider = copy(provider)
+                provider._disabled_features = set(provider._disabled_features)
+            from .agent import INSTRUCTIONS_V4
+
+            instructions = (
+                INSTRUCTIONS_V4
+                + self.child_instructions
+                + "\nRead-only worker: no task delegation, file writes or command execution."
+            )
+            agent = Agent(
+                model=model if provider is None else None,
+                provider=provider,
+                provider_options=options if provider is None else None,
+                tools=dialogue.tools(self._tools()),
+                session_dir=self.root / ident / "kernel",
+                instructions=instructions,
+                compiler_options=compiler,
+                config=self.owner.profile.get("runtime"),
+                budget_limits=self.child_limits,
+                on_event=lambda e: self._event(ident, e),
+            )
+            if self.owner._session_key is not None:
+                agent.provider.set_session_key(self.owner._session_key)
+            connect(agent, dialogue, self.owner.profile)
+            task = row["task"]
+            data = {
+                "handoff": row["context"],
+                "dependencies": dependencies,
+                "parent_task": row.get("parent_task", self.owner.task["task"]),
+                "claims_verified": False,
+            }
+            if agent.status()["requires_resume"]:
+                result = agent.resume(slice_steps=32, repeated_error_limit=3).to_dict()
+            elif agent.status()["completed_turns"]:
+                previous = agent.history["turns"][-1]
+                result = {
+                    "status": "completed",
+                    "value": previous["value"],
+                    "reason": previous.get("reason"),
+                    "budget": agent.status()["budget"],
+                }
+            else:
+                result = agent.run(
+                    task, data=data, slice_steps=32, repeated_error_limit=3
+                ).to_dict()
+            while result["status"] == "yielded":
+                atomic_json(self.root / ident / "result.json", result)
+                self._update(
+                    ident,
+                    status="running",
+                    detail="Continuing committed slice",
+                    budget=agent.status()["budget"],
+                )
+                if self.stop.is_set():
+                    raise ChildPause
+                result = agent.resume(slice_steps=32, repeated_error_limit=3).to_dict()
+            # Public answers never expose internal reports, prompts or huge traces.
+            atomic_json(self.root / ident / "result.json", result)
+            self._update(
+                ident,
+                status=result["status"],
+                detail=result.get("reason") or "Finished",
+                budget=agent.status()["budget"],
+                failure=failure_info(result["status"], result.get("reason")),
+            )
+        except ChildStall:
+            self._update(
+                ident,
+                status="stalled",
+                detail="Repeated compilation without a new observation",
+                failure=failure_info("stalled"),
+                budget=agent.status()["budget"] if agent else {},
+            )
+        except ChildPause:
+            self._update(
+                ident,
+                status="paused",
+                detail="Paused at a safe boundary",
+                budget=agent.status()["budget"] if agent else {},
+            )
+        except Exception as exc:
+            code = (
+                "invalid_configuration" if isinstance(exc, ValidationError) else "worker_exception"
+            )
+            self._update(
+                ident,
+                status="interrupted",
+                detail="Worker stopped; inspect its durable trace",
+                failure={
+                    "code": code,
+                    "exception_type": type(exc).__name__,
+                    "effects_replayed": False,
+                },
+                budget=agent.status()["budget"] if agent else {},
+            )
+        finally:
+            if agent:
+                agent.close()
+                agent.compiler.on_event = None
+                if agent.provider is not self.provider and hasattr(agent.provider, "on_event"):
+                    agent.provider.on_event = None
+                    agent.provider.set_session_key(None)
+            if dialogue:
+                dialogue.close()
+
+    def _result_view(self, ident):
+        from .agent import read_profile
+
+        path = self.root / ident / "result.json"
+        if not path.exists():
+            return None
+        result = read_profile(path, max_bytes=8 * 1024 * 1024)
+        return {
+            "status": result["status"],
+            "value": result.get("value"),
+            "reason": result.get("reason"),
+            "budget": result.get("budget", {}),
+            "failure": failure_info(result["status"], result.get("reason")),
+            "claims_verified": False,
+        }
+
+    def read_agent(self, agent_id: str, offset: int = 0, limit: int = 6000) -> dict:
+        """Read the actual child answer as paginated JSON. Follow next_offset; result_digest is required by review_agent. Reading is not acceptance or factual verification."""
+        self._ids([agent_id])
+        if (
+            type(offset) is not int
+            or offset < 0
+            or type(limit) is not int
+            or not 1 <= limit <= 24000
+        ):
+            raise ValidationError("Invalid child result window")
+        with self.lock:
+            row = self.records[agent_id]
+            view = self._result_view(agent_id)
+            if view is None:
+                return {
+                    "agent_id": agent_id,
+                    "status": row["status"],
+                    "result_available": False,
+                    "failure": row.get("failure"),
+                    "task_key": row.get("task_key"),
+                }
+            text = json.dumps(view, ensure_ascii=False, separators=(",", ":"))
+            if offset > len(text):
+                raise ValidationError("Offset exceeds child result length")
+            fingerprint = digest(view)
+            windows = row.get("read_windows", []) if row.get("read_digest") == fingerprint else []
+            merged = []
+            for start, end in sorted(windows + [[offset, min(offset + limit, len(text))]]):
+                if merged and start <= merged[-1][1]:
+                    merged[-1][1] = max(merged[-1][1], end)
+                else:
+                    merged.append([start, end])
+            if len(merged) > 128:
+                raise ValidationError("Too many fragmented windows; read sequentially")
+            row.update(read_windows=merged, read_digest=fingerprint)
+            self._save()
+            return {
+                "agent_id": agent_id,
+                "status": row["status"],
+                "task_key": row.get("task_key"),
+                "result_available": True,
+                "result_digest": fingerprint,
+                "text": text[offset : offset + limit],
+                "next_offset": offset + limit if offset + limit < len(text) else None,
+                "total_chars": len(text),
+                "claims_verified": False,
+            }
+
+    def review_agent(
+        self,
+        agent_id: str,
+        result_digest: str,
+        disposition: str,
+        note: str,
+        evidence: list[dict] | None = None,
+    ) -> dict:
+        """Review a fully collected current-task result. disposition is accepted/blocked/rejected. Supply its actual result_digest, a substantive note, and checked source/file evidence; this checks integrity, not truth."""
+        self._ids([agent_id])
+        if (
+            not isinstance(disposition, str)
+            or disposition not in {"accepted", "blocked", "rejected"}
+            or not isinstance(note, str)
+            or not 1 <= len(note.strip()) <= 4000
+        ):
+            raise ValidationError("Review requires a disposition and nonempty bounded note")
+        refs = self.owner.work.evidence([] if evidence is None else evidence)
+        with self.lock:
+            row = self.records[agent_id]
+            if row.get("task_key") != self.owner.task["key"]:
+                raise ValidationError("Cannot review a previous task's child as current work")
+            view = self._result_view(agent_id)
+            if row["status"] in {"queued", "running"}:
+                raise ValidationError("Child is still running")
+            if view is not None:
+                length = len(json.dumps(view, ensure_ascii=False, separators=(",", ":")))
+                if (
+                    result_digest != digest(view)
+                    or row.get("read_digest") != result_digest
+                    or row.get("read_windows") != [[0, length]]
+                ):
+                    raise ValidationError("Collect the complete current result before reviewing")
+            elif disposition == "accepted" or result_digest != "":
+                raise ValidationError(
+                    "A child without an answer can only be blocked/rejected with an empty result_digest"
+                )
+            if disposition == "accepted" and row["status"] != "completed":
+                raise ValidationError("An unfinished child cannot be accepted as completed")
+            review = {
+                "disposition": disposition,
+                "note": note,
+                "evidence": refs,
+                "result_digest": result_digest,
+                "claims_verified": False,
+            }
+            row["review"] = review
+            self._save()
+            return {"agent_id": agent_id, "review": deepcopy(review)}
+
+    def is_busy(self):
+        with self.lock:
+            return any(r["status"] in {"queued", "running"} for r in self._current())
+
+    def resume_agent(self, agent_id: str) -> dict:
+        """Explicitly resume the same current-task worker with its original trace and budget. Unknown outcomes require external evidence; completed workers return their saved answer."""
+        self._ids([agent_id])
+        with self.lock:
+            row = self.records[agent_id]
+            if row.get("task_key") != self.owner.task["key"]:
+                raise ValidationError(
+                    "Resume belongs to the original parent task; do not move workers across tasks"
+                )
+            if row["status"] == "interrupted_unknown":
+                raise ValidationError(
+                    "Resolve the unknown effect with external evidence before resuming this worker"
+                )
+            if row["status"] != "completed":
+                row.update(review=None, read_windows=[], read_digest=None, no_progress_compiles=0)
+                self._save()
+            return super().resume_agent(agent_id)
+
+    def completion(self):
+        with self.lock:
+            required = [r for r in self._current() if r.get("required", True)]
+            waiting = [r["id"] for r in required if r["status"] in {"queued", "running"}]
+            unreviewed = [r["id"] for r in required if not r.get("review")]
+            stale_evidence = []
+            # A changed result after an explicit resume invalidates any old acceptance.
+            for row in required:
+                review = row.get("review")
+                if review:
+                    try:
+                        self.owner.work.recheck_evidence(review.get("evidence", []))
+                    except (OSError, ValidationError):
+                        stale_evidence.append(row["id"])
+                if review and review["disposition"] == "accepted":
+                    view = self._result_view(row["id"])
+                    if (
+                        row["status"] != "completed"
+                        or view is None
+                        or digest(view) != review["result_digest"]
+                    ):
+                        unreviewed.append(row["id"])
+            limits = [
+                {"agent_id": r["id"], "note": r["review"]["note"]}
+                for r in required
+                if r.get("review") and r["review"]["disposition"] != "accepted"
+            ]
+            return {
+                "ready": not waiting and not unreviewed and not stale_evidence,
+                "waiting": bool(waiting),
+                "pending_workers": waiting,
+                "unreviewed_workers": unreviewed,
+                "stale_review_evidence": stale_evidence,
+                "limitations": limits,
+                "claims_verified": False,
+            }
+
+    def wait_for_boundary(self, timeout=1):
+        with self.lock:
+            futures = [
+                self.futures[r["id"]]
+                for r in self._current()
+                if r["id"] in self.futures and r["status"] in {"queued", "running"}
+            ]
+        if futures:
+            from concurrent.futures import FIRST_COMPLETED, wait
+
+            wait(futures, timeout=timeout, return_when=FIRST_COMPLETED)
+        else:
+            self.stop.wait(min(timeout, 0.1))
+
+    def specs(self):
+        methods = [
+            self.spawn_agent,
+            self.agent_status,
+            self.wait_agents,
+            self.read_agent,
+            self.resume_agent,
+            self.review_agent,
+        ]
+        return list(make_registry(methods)._tools.values())
