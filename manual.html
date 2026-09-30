@@ -2,7 +2,7 @@
 :root{--bg:#f6f8fc;--surface:#fff;--ink:#152235;--muted:#53657b;--line:#dce3ee;--accent:#3458db;--soft:#ecf0ff;--code:#142039;--codeInk:#e8efff;--sidebar:280px}
 [data-theme=dark]{--bg:#101623;--surface:#172031;--ink:#e6edf9;--muted:#afbbcf;--line:#303e55;--accent:#a4b6ff;--soft:#222e4e;--code:#0b1220;--codeInk:#e8efff}
 *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:32px}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.8 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans CJK SC","Microsoft YaHei",sans-serif}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}button,input{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sidebar);padding:24px 20px;background:var(--surface);border-right:1px solid var(--line);overflow-y:auto}.brand{font-size:23px;font-weight:800;letter-spacing:-.7px}.version{display:inline-block;margin-left:8px;padding:1px 7px;background:var(--soft);border-radius:6px;font-size:12px;color:var(--accent);vertical-align:middle}.tagline{color:var(--muted);font-size:12px;margin:6px 0 18px}.search{width:100%;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:9px 11px;color:var(--ink);font-size:13px}.search-status{font-size:11px;color:var(--muted);min-height:24px}.nav-group{margin-top:19px;font-size:11px;font-weight:750;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted)}.nav-link{display:block;color:var(--muted);padding:5px 9px;margin:2px -1px;border-radius:6px;font-size:13px;line-height:1.6}.nav-link:hover,.nav-link.active{background:var(--soft);color:var(--accent);text-decoration:none}.sidebar-tools{display:flex;gap:6px;flex-wrap:wrap;margin-top:22px}.sidebar-tools button,.mobile-nav{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:5px 10px;font-size:12px}main{margin-left:var(--sidebar);padding:42px 5vw 64px;max-width:calc(1180px + var(--sidebar))}.hero{padding:34px 38px 36px;border:1px solid var(--line);border-radius:18px;background:var(--surface);margin-bottom:36px}.eyebrow{color:var(--accent);font-size:12px;font-weight:750;letter-spacing:2px}.hero h1{font-size:38px;line-height:1.2;margin:14px 0 18px;letter-spacing:-1.3px}.hero p{max-width:780px;color:var(--muted);margin:12px 0}.pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}.pill{border:1px solid var(--line);border-radius:30px;padding:3px 11px;font-size:12px;color:var(--muted)}.chapter{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:30px 38px;margin:25px 0;scroll-margin-top:28px}.chapter.hidden{display:none}.chapter-label{color:var(--accent);font-size:11px;font-weight:750;letter-spacing:1.4px}.chapter h2{margin:7px 0 26px;font-size:29px;line-height:1.4;letter-spacing:-.5px}.chapter h3{margin:33px 0 12px;font-size:20px;line-height:1.5;padding-top:6px}.chapter h4{margin:25px 0 9px;font-size:17px}.chapter p{margin:13px 0}.chapter ul,.chapter ol{padding-left:25px;margin:13px 0}.chapter li{margin:6px 0}code{font:13px/1.7 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;word-break:break-word}p code,li code,td code,th code,h3 code{background:var(--soft);color:var(--accent);border-radius:4px;padding:2px 5px}.code-wrap{margin:18px 0;border-radius:9px;overflow:hidden;border:1px solid var(--line);background:var(--code)}.code-head{display:flex;justify-content:space-between;align-items:center;padding:5px 13px;font:11px/1.8 ui-monospace,monospace;color:#a5b7d8;border-bottom:1px solid #33435f}.copy{border:0;background:transparent;color:#c4d3ed;padding:3px 7px;font-size:11px}.copy:hover{color:#fff}pre{margin:0;padding:16px 18px;overflow:auto;color:var(--codeInk);line-height:1.7;tab-size:4}pre code{white-space:pre;word-break:normal}.table-wrap{overflow:auto;margin:20px 0;border:1px solid var(--line);border-radius:8px}table{width:100%;border-collapse:collapse;font-size:13px;line-height:1.75}th{text-align:left;background:var(--soft);font-weight:700}th,td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top}tr:last-child td{border-bottom:0}.note{border-left:4px solid var(--accent);background:var(--soft);padding:13px 17px;margin:20px 0;border-radius:0 8px 8px 0;font-size:14px}.chapter-footer{border-top:1px solid var(--line);margin-top:28px;padding-top:14px;font-size:12px;color:var(--muted)}.mobile-nav{display:none}.empty{display:none;padding:40px;text-align:center;color:var(--muted)}footer{font-size:12px;color:var(--muted);margin-top:35px}hr{border:0;border-top:1px solid var(--line);margin:25px 0}@media(max-width:950px){:root{--sidebar:236px}main{padding:26px 24px}.chapter,.hero{padding:24px}.hero h1{font-size:32px}.chapter h2{font-size:25px}}@media(max-width:700px){.sidebar{display:none;z-index:20;width:290px;box-shadow:0 0 30px #0003}.sidebar.open{display:block}main{margin-left:0;padding:62px 14px 30px}.mobile-nav{display:block;position:fixed;top:12px;left:14px;z-index:30;background:var(--surface)}.chapter,.hero{padding:20px 17px}.hero h1{font-size:29px}.chapter h2{font-size:24px}pre{padding:12px}body{font-size:15px}}@media print{.sidebar,.mobile-nav,.copy,.hero .pills,.chapter-footer,footer{display:none!important}main{margin:0;padding:0;max-width:none}.hero,.chapter{border:0;border-radius:0;padding:0;margin:0 0 24px}.hero{break-after:page}.chapter{break-before:page}.chapter.hidden{display:block!important}body{font:10.5pt/1.6 "Noto Sans CJK SC","Microsoft YaHei",sans-serif;color:#111;background:#fff}h2,h3,h4{break-after:avoid}pre{white-space:pre-wrap!important;background:#f2f4f8;color:#17243b;overflow:visible;font-size:8pt}.code-wrap{background:#f2f4f8;border-color:#ccc;break-inside:avoid}.code-head{color:#344;border-color:#ccc}pre code{white-space:pre-wrap;word-break:break-word}table{font-size:8.5pt}.note{break-inside:avoid}.chapter h2{font-size:22pt}.chapter h3{font-size:14pt}a{color:#2445a2}}
-</style></head><body><button id="menu" class="mobile-nav" type="button" aria-label="打开导航">目录 / 搜索</button><aside class="sidebar"><a class="brand" href="#top">Flora</a><span class="version">0.1.0</span><p class="tagline">芙洛拉 · 任务 · 可检查的执行</p><label for="search" class="tagline">搜索手册 · Ctrl / ⌘ K</label><input class="search" id="search" type="search" placeholder="例如：ask、工作目录、恢复"><div id="search-status" class="search-status" aria-live="polite"></div><nav aria-label="手册目录"><div class="nav-group">开始使用</div><a class="nav-link" href="#overview">从一个任务开始</a><a class="nav-link" href="#installation">安装与五分钟开始</a><div class="nav-group">通用 Agent</div><a class="nav-link" href="#general">Flora 通用 Agent</a><a class="nav-link" href="#terminal">终端、会话与子 agent</a><a class="nav-link" href="#documents">文档、表格与报告</a><a class="nav-link" href="#generalconfig">通用 Agent 配置</a><a class="nav-link" href="#integrations">MCP、浏览器与外部系统</a><a class="nav-link" href="#generalops">通用 Agent 运维与恢复</a><a class="nav-link" href="#generalapi">GeneralAgent API</a><div class="nav-group">开始使用</div><a class="nav-link" href="#python">Python 快速开始</a><div class="nav-group">使用指南</div><a class="nav-link" href="#workspace">处理工作目录中的文件</a><a class="nav-link" href="#sessions">会话、结果与恢复</a><a class="nav-link" href="#modelsetup">模型配置与常见接入</a><a class="nav-link" href="#coding">Flora Coding Agent</a><a class="nav-link" href="#troubleshooting">排错与限制</a><a class="nav-link" href="#operations">部署、预算与可观测性</a><div class="nav-group">开发者参考</div><a class="nav-link" href="#configuration">配置与命令行完整参考</a><a class="nav-link" href="#api">Python API 索引</a><a class="nav-link" href="#tools">工具注册与复杂业务接入</a><a class="nav-link" href="#models">模型编译器与 Provider</a><div class="nav-group">研究与内部实现</div><a class="nav-link" href="#architecture">执行架构与能力边界</a><a class="nav-link" href="#tutorials">两个离线工作流</a><a class="nav-link" href="#language">编写第一个 IR 程序</a><a class="nav-link" href="#runtime">运行时与候选生命周期</a><a class="nav-link" href="#contracts">消费者合约与规则综合</a><a class="nav-link" href="#reuse">程序复用与条件路由</a><a class="nav-link" href="#diagnostics">预测、诊断与双重控制</a><a class="nav-link" href="#persistence">事件存储、恢复与重放</a><a class="nav-link" href="#reference">IR 指令与表达式全集</a><a class="nav-link" href="#benchmarks">公平实验与消融</a><a class="nav-link" href="#glossary">术语、设计取舍与来源</a></nav><div class="sidebar-tools"><button id="theme" type="button">明暗主题</button><button id="expand" type="button">显示全部</button><button id="print" type="button">打印 / PDF</button></div></aside><main id="top"><header class="hero"><div class="eyebrow">USER &amp; DEVELOPER DOCUMENTATION · 中文</div><h1>给出任务、模型和工具。<br>直接开始执行。</h1><p>用命令行提交任务，或在 Python 中传入普通函数。程序生成、双重控制和可综合合约在内部运行；你不需要先学习内部语言。</p><div class="pills"><span class="pill">Python 3.11+</span><span class="pill">运行时仅标准库</span><span class="pill">CLI / Python 直接使用</span><span class="pill">无外部文档资源</span><span class="pill">测试源码独立保管</span></div><p>先读「安装与五分钟开始」或「Python 快速开始」，接着按需查工作目录、会话与模型配置。内部语言和研究机制完整保留在后半部分；真实模型任务需要你自己的模型服务。</p></header><div id="empty" class="empty">没有匹配章节。尝试更短的中文词或完整 API 名称。</div><section class="chapter" id="overview"><div class="chapter-label">01 / 开始使用</div><h2 id="overview-h1">从一个任务开始</h2>
+</style></head><body><button id="menu" class="mobile-nav" type="button" aria-label="打开导航">目录 / 搜索</button><aside class="sidebar"><a class="brand" href="#top">Flora</a><span class="version">0.1.0</span><p class="tagline">芙洛拉 · 任务 · 可检查的执行</p><label for="search" class="tagline">搜索手册 · Ctrl / ⌘ K</label><input class="search" id="search" type="search" placeholder="例如：ask、工作目录、恢复"><div id="search-status" class="search-status" aria-live="polite"></div><nav aria-label="手册目录"><div class="nav-group">开始使用</div><a class="nav-link" href="#overview">从一个任务开始</a><a class="nav-link" href="#installation">安装与五分钟开始</a><div class="nav-group">通用 Agent</div><a class="nav-link" href="#general">Flora 通用 Agent</a><a class="nav-link" href="#terminal">终端、会话与子 agent</a><a class="nav-link" href="#documents">文档、表格与报告</a><a class="nav-link" href="#generalconfig">通用 Agent 配置</a><a class="nav-link" href="#integrations">MCP、浏览器与外部系统</a><a class="nav-link" href="#generalops">通用 Agent 运维与恢复</a><a class="nav-link" href="#reliability">协作、持续工作与可靠性</a><a class="nav-link" href="#generalapi">GeneralAgent API</a><div class="nav-group">开始使用</div><a class="nav-link" href="#python">Python 快速开始</a><div class="nav-group">使用指南</div><a class="nav-link" href="#workspace">处理工作目录中的文件</a><a class="nav-link" href="#sessions">会话、结果与恢复</a><a class="nav-link" href="#modelsetup">模型配置与常见接入</a><a class="nav-link" href="#coding">Flora Coding Agent</a><a class="nav-link" href="#troubleshooting">排错与限制</a><a class="nav-link" href="#operations">部署、预算与可观测性</a><div class="nav-group">开发者参考</div><a class="nav-link" href="#configuration">配置与命令行完整参考</a><a class="nav-link" href="#api">Python API 索引</a><a class="nav-link" href="#tools">工具注册与复杂业务接入</a><a class="nav-link" href="#models">模型编译器与 Provider</a><div class="nav-group">研究与内部实现</div><a class="nav-link" href="#architecture">执行架构与能力边界</a><a class="nav-link" href="#tutorials">两个离线工作流</a><a class="nav-link" href="#language">编写第一个 IR 程序</a><a class="nav-link" href="#runtime">运行时与候选生命周期</a><a class="nav-link" href="#contracts">消费者合约与规则综合</a><a class="nav-link" href="#reuse">程序复用与条件路由</a><a class="nav-link" href="#diagnostics">预测、诊断与双重控制</a><a class="nav-link" href="#persistence">事件存储、恢复与重放</a><a class="nav-link" href="#reference">IR 指令与表达式全集</a><a class="nav-link" href="#benchmarks">公平实验与消融</a><a class="nav-link" href="#glossary">术语、设计取舍与来源</a></nav><div class="sidebar-tools"><button id="theme" type="button">明暗主题</button><button id="expand" type="button">显示全部</button><button id="print" type="button">打印 / PDF</button></div></aside><main id="top"><header class="hero"><div class="eyebrow">USER &amp; DEVELOPER DOCUMENTATION · 中文</div><h1>给出任务、模型和工具。<br>直接开始执行。</h1><p>用命令行提交任务，或在 Python 中传入普通函数。程序生成、双重控制和可综合合约在内部运行；你不需要先学习内部语言。</p><div class="pills"><span class="pill">Python 3.11+</span><span class="pill">内核仅标准库</span><span class="pill">CLI / Python 直接使用</span><span class="pill">无外部文档资源</span><span class="pill">独立子 agent 与持久化状态</span></div><p>先读「安装与五分钟开始」或「Python 快速开始」，接着按需查工作目录、会话与模型配置。内部语言和研究机制完整保留在后半部分；真实模型任务需要你自己的模型服务。</p></header><div id="empty" class="empty">没有匹配章节。尝试更短的中文词或完整 API 名称。</div><section class="chapter" id="overview"><div class="chapter-label">01 / 开始使用</div><h2 id="overview-h1">从一个任务开始</h2>
 <p>Flora（芙洛拉）让你把自然语言任务交给一个模型驱动的 agent。你提供模型，以及任务需要的普通 Python 函数或工作目录；它在内部生成程序、调用工具、读取结果并继续执行。日常使用不需要编写 IR、配置候选程序或实现工具适配器。</p>
 <h3 id="overview-h2">选择一个入口</h3>
 <div class="table-wrap"><table><thead><tr><th>你想做什么</th><th>从哪里开始</th></tr></thead><tbody>
@@ -141,7 +141,9 @@ flora --no-subagents
 flora --plain</code></pre></div>
 <p>通用新会话的主／子 agent 默认不限累计调用、tokens 和总时长，仍记录真实用量；<code>Budget: unlimited</code> 表示当前无累计硬上限。恢复会话遵循它已经保存的额度，可用 <code>/new</code> 新建默认不限的对话。</p>
 <p>JSON profile 用于 MCP、浏览器、搜索、可选预算和模型高级参数。终端仍会提示 Base URL、API Key、Model。<code>--allow-commands</code> 为主 agent 启用本地命令执行；子 agent 不继承这项权限。<code>--plain</code> 适用于低能力终端或日志记录。</p>
-<p>日常使用详见「终端、会话与子 agent」；工具细节见「文档、表格与报告」及「MCP、浏览器与外部系统」；程序化调用见「GeneralAgent API」。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/24-general-agent.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="terminal"><div class="chapter-label">04 / 通用 Agent</div><h2 id="terminal-h1">终端、会话与子 agent</h2>
+<p>日常使用详见「终端、会话与子 agent」；工具细节见「文档、表格与报告」及「MCP、浏览器与外部系统」；程序化调用见「GeneralAgent API」。</p>
+<h3 id="general-h8">协作与持续工作</h3>
+<p>详见「多 agent 协作、持续工作与可靠性」：显式上下文交接、当前任务配额、依赖等待、完整结果收集与复核、工作清单、调度切片、代理／DNS 与搜索备用路由。实际来源和文件引用只验证完整性，不证明结论正确。<code>/work</code> 可查看当前任务步骤和未解决事项。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/24-general-agent.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="terminal"><div class="chapter-label">04 / 通用 Agent</div><h2 id="terminal-h1">终端、会话与子 agent</h2>
 <h3 id="terminal-h2">命令行参考</h3>
 <div class="table-wrap"><table><thead><tr><th>命令或参数</th><th>行为</th></tr></thead><tbody>
 <tr><td><code>flora</code></td><td>引导连接模型，在当前目录新建自动命名的会话</td></tr>
@@ -177,6 +179,7 @@ flora --plain</code></pre></div>
 <tr><td><code>/help</code></td><td>快捷键和命令</td></tr>
 <tr><td><code>/status</code></td><td>主任务、会话路径、主 agent 预算及子 agent 独立账本</td></tr>
 <tr><td><code>/agents</code></td><td>子 agent 名字、ID、任务、状态</td></tr>
+<tr><td><code>/work</code></td><td>当前任务的持久步骤、证据引用和未解决事项</td></tr>
 <tr><td><code>/agent ID [OFFSET]</code></td><td>子任务结果的字符窗口；默认从 0 开始，每次最多 6000 字符，按 next_offset 继续</td></tr>
 <tr><td><code>/resume-agent ID</code></td><td>显式恢复指定子任务，完成过的子任务直接返回结果</td></tr>
 <tr><td><code>/resume</code></td><td>继续当前主任务的检查点</td></tr>
@@ -208,7 +211,7 @@ flora --plain</code></pre></div>
 <h3 id="terminal-h7">独立子 agent</h3>
 <p>主 agent 在任务适合拆分时，可以调用 <code>spawn_agent</code>。每个子 agent 有独立的模型上下文、Flora 编译器／运行时、候选程序、消费者合约、效果日志和预算。它们与同一个内核中的“候选程序”是不同概念；终端只把真实子任务显示在 Subagent 区域。</p>
 <p>主 agent 可先发起多个子任务，再通过 <code>wait_agents</code> 获取完成状态，通过 <code>read_agent</code> 分页读取真实结果。任务描述必须携带子 agent 所需上下文；子 agent 不会自动得到主 agent 的整个对话。所有子 agent 共用经过锁保护的来源账本，因此子任务返回的 src ID 可被主 agent 读取。</p>
-<p>默认子 agent 只读：文件列表、文本读取与搜索、文档读取、表格查询、网页获取与搜索、已保存来源读取。它们不能修改工作目录、运行命令、递归创建子 agent、执行浏览器操作或调用 MCP／HTTP 服务修改工具。主 agent 集中处理写入与交付，避免并行编辑冲突。</p>
+<p>默认子 agent 只读：文件列表、文本读取与搜索、文档读取、表格查询、网页获取与搜索、已保存来源读取、技能读取，以及显式配置服务的 GET／HEAD 请求。它们不能修改工作目录、运行命令、递归创建子 agent、执行浏览器操作或调用 MCP／HTTP 服务修改工具。主 agent 集中处理写入与交付，避免并行编辑冲突。</p>
 <p>子 agent 的结论不是自动验证过的事实。主 agent 需要检查来源与局限；各自的源数据仍要用实际回执支撑。普通任务可以完全由主 agent 执行，界面不会为了展示多 agent 而创建空角色。</p>
 <h3 id="terminal-h8">子 agent 配置与资源上限</h3>
 <div class="code-wrap"><div class="code-head"><span>json</span><button class="copy" type="button">复制代码</button></div><pre><code>{
@@ -220,7 +223,7 @@ flora --plain</code></pre></div>
     }
   }
 }</code></pre></div>
-<p><code>flora</code> 交互入口默认启用。Python API 与显式 session 脚本只有配置 enabled 才启用。max_parallel 允许 1–4；max_children 允许 1–32，是整个会话累计可创建的子任务数量，已完成任务仍占名额。超过配额需复用已有 ID 或新开对话，不能通过失败重启退款。</p>
+<p><code>flora</code> 交互入口默认启用。Python API 与显式 session 脚本只有配置 enabled 才启用。max_parallel 允许 1–4；max_children 允许 1–32，限制当前用户任务可创建的子任务数量，默认分别是 3 和 8。历史任务不占新任务名额。同一任务中完全相同的交接复用已有 ID；超过配额需检查或恢复当前 ID，不能通过失败重启退款。保存会话按原协议恢复其工具与配额语义。</p>
 <p>每个新建子 agent 默认不限制累计模型请求、工具调用、输入／输出 tokens 和会话时长。可通过 <code>general.subagents.budget</code> 分别配置所需上限，字段与主任务的 budget 相同；省略字段或 null 表示不限，0 表示零额度。每次模型输出上限仍取父配置与 12,000 中的较小值。未知用量沿用内核的保守预留计量规则。</p>
 <p>子任务预算与主任务分别记录，主任务 budget 数字不包含子任务消费。默认没有累计消费硬上限；子 agent 数量和并发保护不等于费用预算。输入 token 只能在服务返回计量后检查；显式配置的 token 限额不代表精确的货币账单硬上限。</p>
 <p>退出会请求子 agent 在边界暂停并等待已经开始的调用返回。恢复父会话时，上次留下的 queued/running 子任务标为 interrupted，不自动发起模型请求。<code>/resume-agent ID</code> 才继续，保持原预算和日志；若内核已提交完成但状态更新前进程结束，恢复从完成记录读取结果，不重跑该任务。</p>
@@ -230,7 +233,9 @@ flora --plain</code></pre></div>
 flora agent --session ./sessions/task --status
 flora agent --session ./sessions/task --resume --json</code></pre></div>
 <p>这种由调用者管理路径的 session 不自动出现在目录索引的 <code>--resume</code> 列表中；用原来的 <code>--session</code> 路径打开。自动索引会话的完整路径可在 <code>/status</code> 中查看，也可以使用该路径进行离线状态检查。</p>
-<p>高级宿主可通过 <code>GeneralAgent(..., session_key=key)</code> 提供进程内凭据，或者继续使用 <code>api_key_env</code>。该参数不会写进 profile 或会话指纹。具体接口见 GeneralAgent API 章节。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/30-terminal.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="documents"><div class="chapter-label">05 / 通用 Agent</div><h2 id="documents-h1">文档、表格与报告</h2>
+<p>高级宿主可通过 <code>GeneralAgent(..., session_key=key)</code> 提供进程内凭据，或者继续使用 <code>api_key_env</code>。该参数不会写进 profile 或会话指纹。具体接口见 GeneralAgent API 章节。</p>
+<h3 id="terminal-h10">协作与持续工作</h3>
+<p>详见「多 agent 协作、持续工作与可靠性」：显式上下文交接、当前任务配额、依赖等待、完整结果收集与复核、工作清单、调度切片、代理／DNS 与搜索备用路由。实际来源和文件引用只验证完整性，不证明结论正确。<code>/work</code> 可查看当前任务步骤和未解决事项。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/30-terminal.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="documents"><div class="chapter-label">05 / 通用 Agent</div><h2 id="documents-h1">文档、表格与报告</h2>
 <h3 id="documents-h2">准备工作目录</h3>
 <p>把任务需要的文件放入当前工作目录，或用 <code>--workspace</code> 指定目录；交互时用 <code>/attach 路径</code> 附到下一条任务。Flora 使用相对路径访问文件。<code>..</code>、绝对路径、符号链接、<code>.git</code>、<code>.flora</code> 和当前会话状态目录不可通过文件工具访问。</p>
 <p>工作目录应只包含允许 Agent 读取或修改的任务材料。开启命令执行后，命令具有宿主用户权限，文件工具的路径检查不会约束任意命令。</p>
@@ -329,7 +334,7 @@ flora agent --session ./sessions/task --resume --json</code></pre></div>
 }</code></pre></div>
 <p>这是超时与输出额度示例，不是所有模型都必须使用的设置。启动时仍输入地址、密钥、模型。已有会话保持原 profile 和已消费预算；不要修改其指纹来换参数。</p>
 <h3 id="generalconfig-h4">compiler 与 runtime</h3>
-<p>通用入口默认每次编译最多输出 12,000 tokens，最多进行一次格式修复；其它编译器和运行时字段沿用内核默认值。一次修复也是实际模型调用，占用同一份预算。</p>
+<p>通用入口默认每次编译最多输出 12,000 tokens，最多进行一次格式修复；默认使用 <code>block-list-v2</code> 源语言与 <code>compact-v2</code> 提示词，单次编译时间窗口为 180 秒。<code>runtime.max_steps</code> 与 <code>runtime.max_compile_cycles</code> 默认 null，调度仍每 32 个步骤保存并继续；其它资源检查继续生效。一次修复也是实际模型调用，占用同一份预算。</p>
 <p>每次编译另有最多两次传输恢复机会，格式修复共享这两次机会。因此默认一次编译最多发起四次模型请求，且显式设置的预算可以更早阻止后续请求。每次 POST 都独立预留输出额度、记录调用和已知／未知用量；provider 内没有隐藏的网络重试。暂时性错误的等待通常为 1、2 秒，数字 Retry-After 最多等待 30 秒。工具操作不进入这个重试循环。</p>
 <p>需要更多推理输出的服务可显式增加 <code>compiler.max_output_tokens</code>，如果还显式设置了累计 <code>budget.max_output_tokens</code>，需保证它足以容纳下一次完整预留。不要通过关闭语法校验来接受截断程序或不完整 JSON。</p>
 <p><code>runtime</code> 可以设置内核已有的诊断、合约、步骤数和资源上限。通用应用没有关闭双重控制或合约功能来伪造更高成功率。完整默认配置与字段见「配置与命令行完整参考」。</p>
@@ -386,7 +391,7 @@ flora agent --session ./sessions/task --resume --json</code></pre></div>
 }</code></pre></div>
 <p><code>allowed_hosts</code> 是精确域名列表，不支持通配符。空列表允许任意通过公网地址检查的 HTTP(S) 主机。重定向仍必须满足相同白名单。</p>
 <p>超时允许 1–120 秒；响应/请求体限制允许 1 KiB–16 MiB；重定向上限允许 0–10。跨来源跳转会移除 Authorization/Cookie。修改型 HTTP 方法不自动跟随重定向，也不自动重试。</p>
-<p>此客户端直接连接已验证 IP，不自动继承 <code>HTTP_PROXY</code> / <code>HTTPS_PROXY</code>。需要代理的部署应提供明确的网络出口，或使用经过授权的 MCP 接入；不要把跳过地址检查当成透明代理支持。</p>
+<p>此客户端直接连接已验证 IP，不自动继承 <code>HTTP_PROXY</code> / <code>HTTPS_PROXY</code>。需要代理时明确设置 <code>proxy_url</code>；本地 DNS 不可用时可配置 <code>dns_over_https</code> 与公网 <code>dns_bootstrap</code>。代理仍连接经过目标地址检查的固定 IP，不跳过私有地址限制。完整配置和搜索备用路由见可靠性指南。</p>
 <h3 id="generalconfig-h8">搜索配置</h3>
 <div class="code-wrap"><div class="code-head"><span>json</span><button class="copy" type="button">复制代码</button></div><pre><code>{&quot;general&quot;: {&quot;search&quot;: {&quot;provider&quot;: &quot;brave&quot;, &quot;api_key_env&quot;: &quot;BRAVE_API_KEY&quot;}}}</code></pre></div>
 <div class="code-wrap"><div class="code-head"><span>json</span><button class="copy" type="button">复制代码</button></div><pre><code>{&quot;general&quot;: {&quot;search&quot;: {&quot;provider&quot;: &quot;tavily&quot;, &quot;api_key_env&quot;: &quot;TAVILY_API_KEY&quot;}}}</code></pre></div>
@@ -403,7 +408,10 @@ flora --config /absolute/path/profile.json</code></pre></div>
 <div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora agent TASK --workspace DIR --session DIR --config profile.json --json
 flora agent --session DIR --resume --json
 flora agent --session DIR --status</code></pre></div>
-<p>脚本入口从 profile 指定的环境变量读取密钥。<code>--status</code> 不连接模型。日常自动会话和脚本管理会话的区别见「终端、会话与子 agent」。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/26-general-configuration.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="integrations"><div class="chapter-label">07 / 通用 Agent</div><h2 id="integrations-h1">MCP、浏览器与外部系统</h2>
+<p>脚本入口从 profile 指定的环境变量读取密钥。<code>--status</code> 不连接模型。日常自动会话和脚本管理会话的区别见「终端、会话与子 agent」。</p>
+<h3 id="generalconfig-h10">协作与持续工作</h3>
+<p>详见「多 agent 协作、持续工作与可靠性」：显式上下文交接、当前任务配额、依赖等待、完整结果收集与复核、工作清单、调度切片、代理／DNS 与搜索备用路由。实际来源和文件引用只验证完整性，不证明结论正确。<code>/work</code> 可查看当前任务步骤和未解决事项。</p>
+<p>当前默认通用协议为 <code>general-v4</code>，源语言为 <code>block-list-v2</code>，编译提示词为 <code>compact-v2</code>。<code>runtime.max_steps</code> 和 <code>runtime.max_compile_cycles</code> 默认为 null；显式正整数仍表示累计上限。恢复会话使用保存的完整配置，权限和预算不会被隐式改变。网络的 <code>proxy_url</code>、<code>dns_over_https</code>、<code>dns_bootstrap</code> 以及搜索的 <code>fallbacks</code> 都必须明确配置；具体示例见可靠性指南。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/26-general-configuration.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="integrations"><div class="chapter-label">07 / 通用 Agent</div><h2 id="integrations-h1">MCP、浏览器与外部系统</h2>
 <h3 id="integrations-h2">MCP：接入业务工具</h3>
 <p>Flora 使用官方 MCP Python SDK 的 1.x 接口，依赖约束为 <code>mcp&gt;=1.30,&lt;2</code>。服务程序由你安装和配置，Flora 不自动下载或执行陌生服务。每个服务都需要明确的工具白名单。</p>
 <p>stdio 示例：</p>
@@ -503,6 +511,7 @@ flora agent --session DIR --status</code></pre></div>
 <tr><td><code>subagents/</code></td><td>子任务登记表、独立内核日志和结果</td></tr>
 <tr><td><code>general.json</code></td><td>工作目录、非敏感配置、skill 内容指纹</td></tr>
 <tr><td><code>task.json</code></td><td>当前应用任务标识与原始任务文本</td></tr>
+<tr><td><code>work.json</code></td><td>当前任务步骤、修订号、证据与明确限制</td></tr>
 <tr><td><code>result.json</code></td><td>最近一次运行结果与成果记录</td></tr>
 <tr><td><code>observations.sqlite3</code></td><td>来源、原始内容、成果索引、界面事件与独立的后台交互日志</td></tr>
 <tr><td><code>kernel/session.json</code></td><td>内核会话、历史、累计预算与配置指纹</td></tr>
@@ -519,7 +528,9 @@ flora agent --session DIR --status</code></pre></div>
 <tr><td><code>budget_exhausted</code></td><td>显式设置或已保存的额度不足；resume 不会重置消费；新建通用会话默认不限累计预算</td></tr>
 <tr><td><code>interrupted_unknown</code></td><td>已派发操作的最终结果不能确定；先核对真实外部状态</td></tr>
 <tr><td><code>incomplete</code></td><td>运行步骤等边界使任务尚未完成；查看 reason 和轨迹</td></tr>
+<tr><td><code>stalled</code></td><td>连续编译没有新观察，或同一已知错误经修复后仍循环；保留现场，查看工作清单和实际错误</td></tr>
 </tbody></table></div>
+<p><code>yielded</code> 与 <code>waiting</code> 是当前通用协议内部的持续运行边界：分别表示已保存调度切片、等待现有必需子任务。应用会自动继续同一任务，不清空预算，不重新执行已完成效果。必需子任务的复核和工作证据仍需通过完成检查。</p>
 <p>CLI 单次任务完成返回 0，未完成返回 2；配置/输入错误沿用顶层 CLI 的错误码。交互终端显示实际任务状态和错误提示，不把工具已派发当作任务已完成。</p>
 <h3 id="generalops-h4">未知结果不能当作失败重试</h3>
 <p>例如，服务器已经创建订单，但返回连接中断。此时“没有收到结果”不等于“没有创建”。Flora 会把这种动作记为未知并阻止后续效果，不自动再创建一次。</p>
@@ -560,7 +571,7 @@ flora agent --session DIR --status</code></pre></div>
 <p><code>/status</code> 显示读取超时、响应整体时间限制和恢复次数；<code>/log</code> 显示每次实际请求、错误与等待。SSE keep-alive 会被正常消费，整体响应时间与字节上限仍然有效。普通 JSON 响应也兼容；模型发现接口 <code>/models</code> 失败不等于 <code>/chat/completions</code> 必然不可用，可以手填模型 ID。</p>
 <p>模型请求只生成程序，尚未执行工具，因此可单独恢复。已经执行的工具不会随模型重试而再派发。即使响应丢失也可能产生模型费用；每个请求都计入 model_calls，用量未知时按完整输出预留计费并增加 unknown_usage_calls。<code>/resume</code> 不会清空这些记录，也不能修复错误的地址、过期密钥或持续故障的服务。</p>
 <h4 id="generalops-h12">搜索被限流或挑战</h4>
-<p>配置自己的 Brave/Tavily/SearXNG。网页工具直接连接目标 IP；要求代理的环境需先配置受控网络出口。模型 API 可达不代表所有公网域名都能由网页客户端解析。</p>
+<p>配置自己的 Brave/Tavily/SearXNG，或为主搜索配置明确的 <code>fallbacks</code>。要求代理的环境设置 <code>general.network.proxy_url</code>；需要替代系统 DNS 时配置 HTTPS JSON DNS 与公网引导地址。不会读取环境代理、关闭地址检查或伪造搜索成功。模型 API 可达不代表所有公网域名都能由网页客户端解析。</p>
 <h4 id="generalops-h13">PDF 没有文字</h4>
 <p>检查是否是扫描件。内置解析器不做 OCR。使用经过授权的 OCR 服务或先在外部提取文字，再作为附件输入。</p>
 <h4 id="generalops-h14">文件修改失败</h4>
@@ -572,7 +583,112 @@ flora agent --session DIR --status</code></pre></div>
 <h4 id="generalops-h17">浏览器启动失败</h4>
 <p>确认 Playwright Python 包和对应 Chromium 版本已安装、系统库齐全、宿主允许浏览器子进程运行。先在目标环境运行一个简单 Playwright 页面测试，再启动 Flora 浏览器工具。当前环境的适配器测试不能替代目标机器上的浏览器运行检查。</p>
 <h3 id="generalops-h18">验证边界</h3>
-<p>确定性回归、协议夹具、真实模型任务和真实公网/浏览器交互是不同类别。查看 <code>general-agent</code> 分支的 <code>reports/TERMINAL_VALIDATION.md</code> 和 <code>reports/GENERAL_VALIDATION.md</code> 获取执行环境、逐类结果与未验证项。通过几项任务不等于在所有模型、所有网站上具有统一成功率，也不等于完成了生产安全审计或并发压力测试。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/28-general-operations.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="generalapi"><div class="chapter-label">09 / 通用 Agent</div><h2 id="generalapi-h1">GeneralAgent API</h2>
+<p>确定性回归、协议夹具、真实模型任务和真实公网/浏览器交互是不同类别。查看 <code>general-agent</code> 分支的 <code>reports/RELIABILITY_VALIDATION.md</code> 及其它验证记录，获取执行环境、逐类结果与未验证项。通过几项任务不等于在所有模型、所有网站上具有统一成功率，也不等于完成了生产安全审计或并发压力测试。</p>
+<h3 id="generalops-h19">协作与持续工作</h3>
+<p>详见「多 agent 协作、持续工作与可靠性」：显式上下文交接、当前任务配额、依赖等待、完整结果收集与复核、工作清单、调度切片、代理／DNS 与搜索备用路由。实际来源和文件引用只验证完整性，不证明结论正确。<code>/work</code> 可查看当前任务步骤和未解决事项。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/28-general-operations.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="reliability"><div class="chapter-label">09 / 通用 Agent</div><h2 id="reliability-h1">多 agent 协作、持续工作与可靠性</h2>
+<p>Flora 的子 agent 不是内核里的候选程序。子 agent 是独立执行者，各自编译完整程序、选择诊断动作、记录实际效果并综合局部合约；候选程序则是在同一真实轨迹上比较的不同方案。不能把几个未经检查的模型答案当作已经验证的事实。</p>
+<h3 id="reliability-h2">日常使用</h3>
+<p>直接运行 <code>flora</code>，输入任务即可。启动目录是工作目录；模型连接信息通过交互输入，密钥不会回显。简单问题可以由一个纯返回程序回答，不必创建工作清单或子 agent。复杂任务才需要拆分、交接、复核和持续工作。</p>
+<div class="code-wrap"><div class="code-head"><span>text</span><button class="copy" type="button">复制代码</button></div><pre><code>比较两个文档中的统计口径。请分别阅读，检查来源，明确分歧，生成 report.md。</code></pre></div>
+<p>运行过程中会显示主 agent 和实际子 agent 的模型输出、工具调用及结果。<code>/agents</code> 查看子任务；<code>/agent ID [OFFSET]</code> 阅读真实结果；<code>/log</code> 查看完整后台对话；<code>/work</code> 查看当前任务的工作状态。默认不设置累计调用、token 或时长预算，但一次请求、输出、纯计算、存储与并发仍有资源边界。</p>
+<h3 id="reliability-h3">子任务生命周期</h3>
+<ol>
+<li>主 agent 提供具体任务、必要上下文和所依赖的已有子任务 ID。</li>
+<li>子 agent 读取被交接的来源／文件，使用只读工具执行。依赖尚未完成时等待；依赖失败则明确阻塞，不凭空推断结果。</li>
+<li>主 agent 收集全部结果页，检查实际来源，再提交接受、阻塞或拒绝的复核记录。</li>
+<li>所有必需子任务都有复核记录，必需工作步骤已完成或明确报告阻塞后，才能最终返回。</li>
+</ol>
+<p>复核只验证“结果已收齐、摘要与当前结果相符、引用确实存在”，不把研究结论判定为真。事实性结论仍需要查看实际证据；不要仅凭两个子 agent 说法一致就宣称正确。</p>
+<h4 id="reliability-h4">spawn_agent</h4>
+<div class="code-wrap"><div class="code-head"><span>json</span><button class="copy" type="button">复制代码</button></div><pre><code>{
+  &quot;task&quot;: &quot;读取 left.json，返回 count 字段和实际文件路径&quot;,
+  &quot;name&quot;: &quot;Left reader&quot;,
+  &quot;context&quot;: {
+    &quot;guidance&quot;: &quot;只分析当前工作目录提供的数据，不使用外部猜测&quot;,
+    &quot;source_ids&quot;: [],
+    &quot;files&quot;: []
+  },
+  &quot;depends_on&quot;: [],
+  &quot;required&quot;: true
+}</code></pre></div>
+<p><code>context</code> 只接受 <code>guidance</code>、<code>source_ids</code>、<code>files</code>。来源必须已经在共享观察库里存在；文件引用是 <code>{path,sha256}</code>，哈希必须和实际文件一致。交接包含父任务目标，子 agent 不会隐式继承整个聊天记录。依赖 ID 必须属于当前父任务，不能引用未来任务，也不能把上一个用户问题的子结果冒充当前任务结果。</p>
+<p>默认每个用户任务最多创建八个子 agent，最多三个并发。完全相同的当前任务交接会返回原来的 ID，不再创建副本。已完成的历史任务不占下一个用户问题的名额。子任务预算是独立账本；默认累计上限为 null，具体用量会保留。显式设置的上限在恢复时也不会重置。</p>
+<h4 id="reliability-h5">读取与复核</h4>
+<p><code>wait_agents(agent_ids, timeout)</code> 最多等待 60 秒，并返回所选子任务的实际状态与结果窗口。等待不调用模型。<code>read_agent(agent_id, offset, limit)</code> 每页最多 24,000 字符；返回 <code>next_offset</code> 时必须继续读取。返回文本是实际答案、原因、用量和限制，不包含完整内部程序日志。</p>
+<p><code>result_digest</code> 对应当前结果。<code>review_agent</code> 必须使用这个实际摘要，且先收齐所有页面：</p>
+<div class="code-wrap"><div class="code-head"><span>json</span><button class="copy" type="button">复制代码</button></div><pre><code>{
+  &quot;agent_id&quot;: &quot;由 spawn_agent 返回的实际 ID&quot;,
+  &quot;result_digest&quot;: &quot;由 read_agent 返回的实际摘要&quot;,
+  &quot;disposition&quot;: &quot;accepted&quot;,
+  &quot;note&quot;: &quot;已读取完整结果，并检查所引用的原始资料；剩余不确定性在最终答复中说明&quot;,
+  &quot;evidence&quot;: [{&quot;source_id&quot;: &quot;由实际读取工具返回的来源 ID&quot;}]
+}</code></pre></div>
+<p><code>disposition</code> 为 <code>accepted</code>、<code>blocked</code> 或 <code>rejected</code>。未完成的子任务不能被接受为完成；没有结果的子任务只能阻塞或拒绝，摘要为空字符串，必须写明原因。复核中的 <code>evidence</code> 支持 <code>{source_id}</code> 或 <code>{path,sha256}</code>，不接受自行编造的 URL 作为已观察来源。最终返回前会重新检查引用，文件发生变化时需要重新复核。复核不是语义正确性的证明。必需子任务被阻塞／拒绝时，其原因会在结果和终端里显示，不能悄悄丢弃。</p>
+<p><code>resume_agent</code> 恢复原来的未完成任务、程序、轨迹与预算。它不表示改派一个新任务。已完成的子任务只返回缓存结果；未知效果必须先用外部证据解决，不能用恢复操作重发动作。</p>
+<h3 id="reliability-h6">持久化工作清单</h3>
+<p><code>read_work()</code> 返回当前任务的工作清单、修订号、证据和限制。<code>update_work(steps, expected_revision)</code> 用实际修订号更新；每一步都需要以下字段：</p>
+<div class="code-wrap"><div class="code-head"><span>json</span><button class="copy" type="button">复制代码</button></div><pre><code>{
+  &quot;id&quot;: &quot;compare&quot;,
+  &quot;goal&quot;: &quot;比较原始文档的统计口径&quot;,
+  &quot;status&quot;: &quot;pending&quot;,
+  &quot;required&quot;: true,
+  &quot;evidence&quot;: [],
+  &quot;note&quot;: &quot;&quot;
+}</code></pre></div>
+<p>状态是 <code>pending</code>、<code>running</code>、<code>completed</code>、<code>blocked</code>。既有必需步骤不能被删除或改为非必需；阻塞步骤必须说明缺少什么。完成步骤里的文件哈希在最终返回前重新检查，文件发生变化时该证据失效。修订号过期会拒绝更新，需要重新读取。</p>
+<p>这里检查的是工作状态和证据引用，不是任务答案的真伪。一个没有工具需求的推理步骤可以完成而不包含文件来源；这种完成声明也不会被包装成已经验证的外部事实。观察库与工作清单分别保留完整内容，编译提示词里省略的内容仍可以通过工具读取。</p>
+<h3 id="reliability-h7">长任务、等待与恢复</h3>
+<p>默认通用任务的运行步数与编译轮数不设置累计上限。每 32 个调度步骤，在已经提交的边界保存并继续执行；候选程序、真实轨迹、合约样本和累计预算保持连续。一次调度切片不是一个新任务，也不会为了切片本身重新向模型索取程序。</p>
+<p>主 agent 提前返回但必需子 agent 仍在运行时，会保留这个返回边界等待现有工作，不连续请求模型来轮询。子任务完成后，需要收集和复核，不能只因为线程结束就当作证据齐全。</p>
+<p>Ctrl+C 请求在下一安全边界暂停，正在进行的请求仍需要返回或超时。退出再运行 <code>flora --resume</code>，选择工作目录对应的记录；输入 <code>/resume</code> 继续未完成任务。保存的工具权限、模型、协议与预算保持固定。<code>/new</code> 创建新的对话，不删除旧记录。</p>
+<p>在同一真实轨迹 epoch 上连续八轮安装程序、却没有新观察时，主／子 agent 会保存为 <code>stalled</code> 并指出没有进展。连续三次相同请求得到相同已知错误后，如果下一动作还准备重复同一个请求，会先保留错误信息并要求修复消费者／策略；若修复程序仍重复失败，则保存为空转。预期的三次错误之后正常返回或改用不同请求，不会触发这个检测。这个检测只识别一种常见空转，不是普遍的进度或正确性判定器。需要检查实际错误、改变策略或补充信息，而不是用重复恢复来掩盖问题。</p>
+<h3 id="reliability-h8">网络与搜索恢复</h3>
+<p>默认解析目标地址并固定实际连接的 IP。私网、保留地址、回环和重定向到这些地址的访问仍会被拒绝。某些代理的 fake-IP DNS 会返回 <code>198.18.0.0/15</code>；这不是空搜索结果，而是本地连接路径与访问策略不兼容。不要设置 <code>allow_private:true</code> 来泛化开放访问。</p>
+<p>可显式配置 HTTP CONNECT 代理和 HTTPS JSON DNS 解析器，连接依然固定到检查过的目标 IP，HTTPS 依然验证原站点域名。代理只授权该传输端点，不授权任意私网网页。DNS 解析器返回私有地址仍会被拒绝。</p>
+<div class="code-wrap"><div class="code-head"><span>json</span><button class="copy" type="button">复制代码</button></div><pre><code>{
+  &quot;general&quot;: {
+    &quot;network&quot;: {
+      &quot;proxy_url&quot;: &quot;http://127.0.0.1:7890&quot;,
+      &quot;dns_over_https&quot;: &quot;https://dns.google/resolve&quot;,
+      &quot;dns_bootstrap&quot;: [&quot;8.8.8.8&quot;],
+      &quot;timeout&quot;: 25
+    }
+  }
+}</code></pre></div>
+<p>地址仅为配置示例：必须选择你能访问且信任的 DNS 服务和实际代理端口。DNS API 使用 HTTPS JSON <code>name</code>／<code>type</code> 请求和 <code>Status</code>／<code>Answer</code> 响应；协议参考 <a href="https://developers.google.com/speed/public-dns/docs/doh/json">Google Public DNS JSON API</a>。不自动启用外部 DNS、代理或新的搜索服务。</p>
+<p>搜索备用源也需显式配置，最多三个：</p>
+<div class="code-wrap"><div class="code-head"><span>json</span><button class="copy" type="button">复制代码</button></div><pre><code>{
+  &quot;general&quot;: {
+    &quot;search&quot;: {
+      &quot;provider&quot;: &quot;duckduckgo&quot;,
+      &quot;fallbacks&quot;: [
+        {&quot;provider&quot;: &quot;brave&quot;, &quot;api_key_env&quot;: &quot;BRAVE_API_KEY&quot;},
+        {&quot;provider&quot;: &quot;searxng&quot;, &quot;base_url&quot;: &quot;https://your-search.example&quot;}
+      ]
+    }
+  }
+}</code></pre></div>
+<p>主搜索服务遭遇限流、挑战或已知读取失败时可以改用已配置来源，返回此前路由的失败分类。成功但没有结果的搜索不自动换源来制造结果。私网／合成 DNS 策略拒绝不会触发备用源绕过；POST 搜索结果未知时也不会自动另发一遍。主 agent 和只读子 agent 使用同样的观察与网络策略。</p>
+<h3 id="reliability-h9">编译与上下文</h3>
+<p>编译器始终要求完整、严格 JSON 程序，并执行 IR、工具参数、轨迹锚点与迁移校验。简短提示词仍描述完整候选程序、诊断预测、假设 witness、局部合约和 revision，不以逐工具 ReAct 循环替换内核。</p>
+<p>大于 16 KiB 的 receipt value 可以在模型提示词中省略，明确提供实际值的摘要和原始索引。省略不改变真实 journal，也不制造一个缩短后的假 value。程序可用 <code>read_receipt</code> 获取该索引的真实记录，或通过来源工具分页阅读保存内容。报告视图优先保留近期消费者故障、合约检查与完成拒绝信息；省略数量明确披露。没展示给模型的内容不能当作已知。</p>
+<p>格式修复只针对尚未执行的模型提案，使用实际校验错误；流式中断的部分程序不会执行。使用服务真正支持的 <code>max_tokens_parameter</code>、JSON／推理配置与超时。程序语义错误仍可能需要模型重新设计消费者，不保证某个模型永远能一次编译正确。</p>
+<h3 id="reliability-h10">状态与下一步</h3>
+<div class="table-wrap"><table><thead><tr><th>分类</th><th>行为</th></tr></thead><tbody>
+<tr><td><code>model_transport</code></td><td>检查模型端点和可用模型；实际请求和未知用量保留</td></tr>
+<tr><td><code>program_validation</code></td><td>按错误修正程序，复用成功 receipt，不重新做已完成效果</td></tr>
+<tr><td><code>stale_program_anchor</code></td><td>重新以实际 epoch／digest 编译，不能修改提案锚点装作通过</td></tr>
+<tr><td><code>explicit_limit</code></td><td>用户设置的累计上限耗尽，恢复不会退还预算</td></tr>
+<tr><td><code>no_progress</code></td><td>保存空转状态，需要新信息或不同策略</td></tr>
+<tr><td><code>workers_pending</code></td><td>等现有子任务，不创建替代副本来隐藏失败</td></tr>
+<tr><td><code>effect_outcome_unknown</code></td><td>用外部证据解决 journal，绝不自动重发动作</td></tr>
+</tbody></table></div>
+<p><code>/status</code> 显示当前状态、用量与原因；<code>/log</code> 显示真实模型／工具交互；<code>/work</code> 显示未完成工作。实际效果未知与普通已观察错误必须区分：超时不证明外部动作没有发生。</p>
+<h3 id="reliability-h11">验证方法与核心边界</h3>
+<p>默认回归不调用收费模型，使用确定性 provider 与真实本地 journal，覆盖分页收集、任务作用域、依赖传递、阻塞、配额、恢复、文件证据失效、运行切片和网络策略。真实 API 的多模型测试入口位于代码分支 <code>tests/live_reliability_probe.py</code>，密钥通过隐藏输入提供，输出放在仓库之外。</p>
+<div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>PYTHONPATH=src python tests/live_reliability_probe.py --base-url https://your-provider.example/v1 --models MODEL_A,MODEL_B --rounds 2 --output /tmp/flora-evaluation</code></pre></div>
+<p>它改变每轮数据，验证实际文件和结果，而不把 <code>completed</code> 当作任务成功；研究类结果需要人工复核。难题、多 agent、工具错误和真实网络环境都应进入评估。接口拒绝连接的记录是测试阻塞，不能计为模型功能通过。</p>
+<p>双重控制仍依据可检查的预测排他性和实际消费者边界选择信息动作；假设 witness 不能变成真实 PASS 样本。可综合合约仍从保留的实际上下文推导 PASS／FAIL／UNKNOWN，并对当前输入重新检查；过去的兼容性不证明未来环境正确。任务清单、结果复核、代理路由和格式修复都是外围可靠性机制，不能替代这两项机制。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/31-reliability.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="generalapi"><div class="chapter-label">10 / 通用 Agent</div><h2 id="generalapi-h1">GeneralAgent API</h2>
 <p>新建 GeneralAgent 的主／子任务累计预算默认不限；真实调用、tokens、未知用量与经过时间持续记录。profile.budget 和 general.subagents.budget 可显式设置个别限额，null 表示不限，0 表示零额度。已保存会话按原配置恢复；底层 Agent 和 Coding Agent 默认值保持各自定义。</p>
 <h3 id="generalapi-h2">构造 GeneralAgent</h3>
 <div class="code-wrap"><div class="code-head"><span>python network</span><button class="copy" type="button">复制代码</button></div><pre><code>from pathlib import Path
@@ -662,9 +778,14 @@ with GeneralAgent(session_dir=&quot;sessions/research&quot;) as agent:
 <tr><td><code>terminal/cli.py</code>、<code>terminal/ui.py</code></td><td>交互命令行、任务执行视图</td></tr>
 <tr><td><code>terminal/sessions.py</code>、<code>terminal/connection.py</code></td><td>目录会话索引与凭据引导</td></tr>
 <tr><td><code>general/delegation.py</code></td><td>独立只读子 agent 的并行、预算与恢复</td></tr>
+<tr><td><code>general/coordinator.py</code></td><td>任务配额、显式交接与依赖、完整结果收集、复核和持续执行</td></tr>
+<tr><td><code>general/work.py</code></td><td>持久工作步骤、修订检查与来源／文件证据检查</td></tr>
+<tr><td><code>general/reliability.py</code></td><td>按实际失败类型提供恢复建议</td></tr>
 <tr><td><code>general/cli.py</code></td><td>显式 session 的脚本入口</td></tr>
 </tbody></table></div>
-<p>新增业务工具可以直接复用 <code>flora.Agent</code> 的普通函数或 ToolSpec 接口，并沿用同一内核；如果扩展 GeneralAgent 工具集，应同时更新会话身份、声明的 Schema、生命周期、超时和未知结果语义。不要只往界面加按钮而绕过效果日志。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/29-general-api.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="python"><div class="chapter-label">10 / 开始使用</div><h2 id="python-h1">Python 快速开始</h2>
+<p>新增业务工具可以直接复用 <code>flora.Agent</code> 的普通函数或 ToolSpec 接口，并沿用同一内核；如果扩展 GeneralAgent 工具集，应同时更新会话身份、声明的 Schema、生命周期、超时和未知结果语义。不要只往界面加按钮而绕过效果日志。</p>
+<h3 id="generalapi-h7">协作与持续工作</h3>
+<p>详见「多 agent 协作、持续工作与可靠性」：显式上下文交接、当前任务配额、依赖等待、完整结果收集与复核、工作清单、调度切片、代理／DNS 与搜索备用路由。实际来源和文件引用只验证完整性，不证明结论正确。<code>/work</code> 可查看当前任务步骤和未解决事项。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/29-general-api.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="python"><div class="chapter-label">11 / 开始使用</div><h2 id="python-h1">Python 快速开始</h2>
 <p>业务应用通常只需要 <code>Agent</code>、<code>invoke</code> 和普通 Python 函数。本章所有 <code>python network</code> 示例都会调用你配置的模型。先设置 <code>FLORA_MODEL</code> 与模型凭据；也可以在 <code>Agent(model=&quot;实际模型ID&quot;)</code> 中显式传入模型。</p>
 <h3 id="python-h2">最少代码：一次调用</h3>
 <div class="code-wrap"><div class="code-head"><span>python network</span><button class="copy" type="button">复制代码</button></div><pre><code>from flora import invoke
@@ -773,7 +894,7 @@ assert registry.call({&quot;tool&quot;: &quot;find_inventory&quot;, &quot;args&q
 <p>支持推断 <code>str</code>、<code>int</code>、<code>float</code>、<code>bool</code>、<code>list[T]</code>、<code>dict[str, T]</code>、<code>Optional[T]</code>、基础类型 union 和 <code>Literal</code>。缺少类型或暂不支持的类型注解不会触发任意代码求值，对应参数接受 JSON；需要更强约束时用 <code>@tool(input_schema=...)</code> 显式给出支持的 schema。</p>
 <p>是否必填取决于 Python 默认值。<code>x: str | None</code> 允许 null，但没有 <code>= None</code> 时仍是必填。默认值由真实函数应用，不会复制进公开工具 schema，以免意外暴露宿主默认凭据或其他敏感值。</p>
 <p>必填的位置专用参数与 <code>*args</code> 不适合 JSON 关键字调用，自动注册会拒绝。可选位置专用参数只能使用它自己的默认值。<code>**kwargs</code> 需要显式对象 schema。工具重名、无效名称以及 schema 与签名不匹配会在接入时被拒绝。</p>
-<p>同步和 <code>async def</code> 工具均可通过注册表使用。Agent 本身仍是同步接口；异步应用应将整次调用放入工作线程。同步工具须自行设置其网络或数据库超时；装饰器的 <code>timeout_seconds</code> 仅适用于 async 工具，不能抢占卡死的同步函数。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/18-python-quickstart.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="workspace"><div class="chapter-label">11 / 使用指南</div><h2 id="workspace-h1">处理工作目录中的文件</h2>
+<p>同步和 <code>async def</code> 工具均可通过注册表使用。Agent 本身仍是同步接口；异步应用应将整次调用放入工作线程。同步工具须自行设置其网络或数据库超时；装饰器的 <code>timeout_seconds</code> 仅适用于 async 工具，不能抢占卡死的同步函数。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/18-python-quickstart.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="workspace"><div class="chapter-label">12 / 使用指南</div><h2 id="workspace-h1">处理工作目录中的文件</h2>
 <p><code>workspace</code> 提供已经写好的文件工具，适合阅读项目、整理文档、修改代码等本地任务。只在你主动指定工作目录时注册；普通业务函数任务与 benchmark 接入不会默认增加文件或终端权限。</p>
 <h3 id="workspace-h2">从一个现有目录开始</h3>
 <div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora ask &quot;读取 README.md，检查错别字与启动说明，修改后给出摘要。&quot; \
@@ -834,7 +955,7 @@ with tempfile.TemporaryDirectory() as directory:
     assert observed[&quot;sha256&quot;] is not None</code></pre></div>
 <p>应用中再使用 <code>Agent(tools=tools, ...)</code> 即可。不要同时传入同名文件工具和 <code>workspace=</code>，否则会出现重复能力名称。手工构造工具包时，持久会话目录若位于工作目录内部，应通过 <code>protected_paths</code> 明确保护；高层 <code>workspace=</code> 路径会自动处理这一步。</p>
 <h3 id="workspace-h8">用于公平研究时</h3>
-<p>与 JAZ 在同一个环境比较时，只传入该环境原本公开的工具或 AgentEnvBridge，并保持任务、模型、预算与反馈协议一致。不要因新增的便捷 API 而额外打开 workspace 或命令能力。文件工具包用于用户主动选择的本地项目场景，不是增强 benchmark 权限的默认步骤。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/19-workspace.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="sessions"><div class="chapter-label">12 / 使用指南</div><h2 id="sessions-h1">会话、结果与恢复</h2>
+<p>与 JAZ 在同一个环境比较时，只传入该环境原本公开的工具或 AgentEnvBridge，并保持任务、模型、预算与反馈协议一致。不要因新增的便捷 API 而额外打开 workspace 或命令能力。文件工具包用于用户主动选择的本地项目场景，不是增强 benchmark 权限的默认步骤。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/19-workspace.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="sessions"><div class="chapter-label">13 / 使用指南</div><h2 id="sessions-h1">会话、结果与恢复</h2>
 <p>一次任务可以包含多次模型思考和多次工具调用。一个会话可以包含多轮任务。区分两者很重要：后续任务不是对未知工具结果的自动重试，重新打开会话也不是把外部环境回滚到旧状态。</p>
 <h3 id="sessions-h2">内存会话</h3>
 <p>不设置 <code>session_dir</code> 时，一个 Agent 在当前进程内保留会话历史与共享预算。退出进程或关闭实例后，不会得到自动恢复文件。<code>invoke</code> 使用一次性临时会话，适合单次任务；需要多轮上下文时保持同一个 Agent 对象。</p>
@@ -899,7 +1020,7 @@ with Agent(budget_limits=limits) as agent:
 <p>两个任务共享上面的总额度。模型格式修复、根据工具结果重新思考、诊断动作均会消耗实际资源。恢复时预算不清零；持久预算的时间记录包含此前已保存的运行耗时，但不会把程序关闭期间的现实等待时间全部计作新的工作耗时。</p>
 <p>模型请求前预留最大输出 token；未知 usage 保守消耗预留值。输入 token 依服务返回的 usage 记账，没有供应商 tokenizer 时不能承诺每次请求前精确裁掉所有可能超出的输入 token。字节限额与模型上下文 token 限额是两种约束。</p>
 <h3 id="sessions-h9">资源关闭</h3>
-<p>推荐 <code>with Agent(...) as agent:</code>，也可在结束后显式调用 <code>close()</code>。关闭会话会释放框架持有的连接与锁，不会自动关闭你在自定义函数中创建的每一个业务客户端；这些资源仍由工具宿主管理。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/20-sessions.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="modelsetup"><div class="chapter-label">13 / 使用指南</div><h2 id="modelsetup-h1">模型配置与常见接入</h2>
+<p>推荐 <code>with Agent(...) as agent:</code>，也可在结束后显式调用 <code>close()</code>。关闭会话会释放框架持有的连接与锁，不会自动关闭你在自定义函数中创建的每一个业务客户端；这些资源仍由工具宿主管理。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/20-sessions.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="modelsetup"><div class="chapter-label">14 / 使用指南</div><h2 id="modelsetup-h1">模型配置与常见接入</h2>
 <p>Flora 自身不提供模型。你需要可访问的 Chat Completions 兼容服务，或用 Python 自定义 provider 接入已有后端。模型负责理解任务、生成内部程序，并在获得真实工具结果后按需再次思考；执行、预算和持久化由运行时管理。</p>
 <h3 id="modelsetup-h2">CLI 配置的优先级</h3>
 <p>从高到低为：命令行显式参数、<code>--config</code> 中显式配置的字段、<code>FLORA_*</code> 环境变量、<code>setup</code> 保存的设置、默认 endpoint 与凭据变量名称。模型 ID 必须由前面某种方式提供。</p>
@@ -988,7 +1109,7 @@ with Agent(
 <tr><td>模型返回无法编译</td><td>模型是否具备足够指令遵循和程序生成能力；查看受限修复报告</td></tr>
 <tr><td>输出预算预留不足</td><td>每次输出上限与会话总剩余额度是否匹配</td></tr>
 </tbody></table></div>
-<p>错误信息不回显原始 HTTP 错误正文或密钥。网络失败没有隐含自动重试；格式错误最多一次受预算约束的修复。发布包验证可用本地 HTTP fixture 检查协议与完整执行链，但这种测试不能证明某个真实模型的任务表现，实际验证记录见代码分支的 reports/VALIDATION.md。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/21-model-setup.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="coding"><div class="chapter-label">14 / 使用指南</div><h2 id="coding-h1">Flora Coding Agent</h2>
+<p>错误信息不回显原始 HTTP 错误正文或密钥。网络失败没有隐含自动重试；格式错误最多一次受预算约束的修复。发布包验证可用本地 HTTP fixture 检查协议与完整执行链，但这种测试不能证明某个真实模型的任务表现，实际验证记录见代码分支的 reports/VALIDATION.md。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/21-model-setup.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="coding"><div class="chapter-label">15 / 使用指南</div><h2 id="coding-h1">Flora Coding Agent</h2>
 <p>给 Flora 一个代码仓库、一个自然语言任务和一条测试命令。它会在独立的 Git worktree 中读取代码、修改文件、运行测试并生成补丁。你不需要编写内部程序。</p>
 <h3 id="coding-h2">完成第一个编码任务</h3>
 <p>准备 Python 3.11+、Git 和 POSIX 环境；Windows 使用 WSL。先按安装章节从 <code>coding-agent</code> 分支安装 Flora 并配置模型。目标仓库必须已经有提交，且没有未提交的修改或未忽略的新文件。</p>
@@ -1113,7 +1234,7 @@ with CodingAgent(
 <p>结束使用时，先确认修改已经保存或应用。可用 <code>git -C ./my-project worktree list</code> 查看检出；不要直接删除还需要的会话。清理脏 worktree 需要 Git 的强制删除选项，Flora 不会自动替你执行这类丢弃修改的操作。</p>
 <h3 id="coding-h12">已验证的范围</h3>
 <p>公开仓库编码验收基于固定的 more-itertools 提交，包含 6 项植入回归和 2 项新 API 要求。8 项任务首次完整通过 3 项；每个失败任务最多一次显式恢复后，完整通过 4 项。6 项补丁通过外部检查，但其中有任务仍因模型输出或预算问题无法完成，不能按 6 项完整成功解释。</p>
-<p><a href="https://github.com/wongzbb/Flora/blob/coding-agent/reports/REPOSITORY_EVALUATION.md">完整验收报告</a>包含任务设计、逐项失败原因、用量与限制。这是开发验收集，不是官方 benchmark，也没有证明双重控制或合约带来统计性能增益。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/23-coding-agent.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="troubleshooting"><div class="chapter-label">15 / 使用指南</div><h2 id="troubleshooting-h1">排错与限制</h2>
+<p><a href="https://github.com/wongzbb/Flora/blob/coding-agent/reports/REPOSITORY_EVALUATION.md">完整验收报告</a>包含任务设计、逐项失败原因、用量与限制。这是开发验收集，不是官方 benchmark，也没有证明双重控制或合约带来统计性能增益。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/23-coding-agent.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="troubleshooting"><div class="chapter-label">16 / 使用指南</div><h2 id="troubleshooting-h1">排错与限制</h2>
 <p>定位故障时先确定它位于哪一层：安装与导入、静态 IR、纯 VM、工具效果、模型传输、预算、历史锚点或合约关系。不要把所有错误归为“模型不够聪明”。</p>
 <h3 id="troubleshooting-h2">先检查直接使用入口</h3>
 <div class="table-wrap"><table><thead><tr><th>现象</th><th>处理</th></tr></thead><tbody>
@@ -1172,7 +1293,7 @@ with CodingAgent(
 <li>官方 AppWorld / StuLife 数据与已经取得的性能优势。</li>
 <li>所有供应商协议、完整 JSON Schema、任意对象的跨进程序列化。</li>
 </ul>
-<p>这些边界不影响已实现机制的运行；它们决定如何诚实解释执行结果，以及未来扩展需要新增哪些明确接口。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/15-troubleshooting.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="operations"><div class="chapter-label">16 / 使用指南</div><h2 id="operations-h1">部署、预算与可观测性</h2>
+<p>这些边界不影响已实现机制的运行；它们决定如何诚实解释执行结果，以及未来扩展需要新增哪些明确接口。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/15-troubleshooting.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="operations"><div class="chapter-label">17 / 使用指南</div><h2 id="operations-h1">部署、预算与可观测性</h2>
 <p>Flora 的核心是同步、单真实轨迹执行内核。多个任务可以由宿主服务分配到独立 runtime；同一个 Runtime 实例一次只允许一个 run。宿主工具是可信 Python 代码，解释器约束不能替代业务权限和进程隔离。</p>
 <h3 id="operations-h2">最小部署形态</h3>
 <p>本地验证使用一个 Python 进程、内存工具和 <code>MemoryTrace</code>。需要保留真实运行状态时，为每个任务使用独立 SQLite trace，并保留工具适配器版本、运行配置、模型 ID 和运行结果。</p>
@@ -1214,7 +1335,7 @@ print(budget.to_dict())</code></pre></div>
 <p>不要直接编辑生产 trace 数据库来修复状态。使用明确 resolution 记录已核实的结果；无法迁移的旧程序可以作为参考输入重新编译，但真实事件历史不能被抹除。</p>
 <h3 id="operations-h8">交付验证怎样理解</h3>
 <p>交付报告记录实际运行的测试、环境与结果。离线 provider 测试使用本地受控 HTTP 服务，不构成对所有供应商兼容性的证明。离线工作流运行真实 IR、效果执行器和事件记录，但不是隐藏 benchmark 任务。</p>
-<p>生产部署前的关键检查应围绕具体工具：权限是否正确、远端 timeout 是否设置、写入是否有幂等策略、审计能否核实中断效果、敏感返回能否持久化。无需给没有写权限的纯演示增加形式化审批流程。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/13-operations.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="configuration"><div class="chapter-label">17 / 开发者参考</div><h2 id="configuration-h1">配置与命令行</h2>
+<p>生产部署前的关键检查应围绕具体工具：权限是否正确、远端 timeout 是否设置、写入是否有幂等策略、审计能否核实中断效果、敏感返回能否持久化。无需给没有写权限的纯演示增加形式化审批流程。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/13-operations.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="configuration"><div class="chapter-label">18 / 开发者参考</div><h2 id="configuration-h1">配置与命令行</h2>
 <p>CLI 是 Python API 的薄入口。所有执行仍经过相同校验、预算、事件记录与效果边界。可以用 <code>flora</code> 或 <code>python -m flora</code>；后者便于确认使用当前虚拟环境的解释器。</p>
 <h3 id="configuration-h2">直接使用命令</h3>
 <div class="code-wrap"><div class="code-head"><span>bash</span><button class="copy" type="button">复制代码</button></div><pre><code>flora setup --model YOUR_MODEL_ID
@@ -1366,7 +1487,7 @@ python -m flora contracts contracts.json --program program.json --relation DEFIN
 <p><code>--outcome</code> 是已核实的状态信封文件，而不是字符串内联 JSON。例如 returned 需要 status 与 value。只允许解决已有 pending 或 interrupted_unknown；不会再次调用原工具，也不会把任务回滚。reason 必须说明真实核实依据，不能填写期待结果来继续运行。</p>
 <h3 id="configuration-h15">退出码</h3>
 <p>CLI 解析或执行错误返回 2，并把简短 JSON 错误写到 stderr。正常完成与纯分析命令通常返回 0。run/demo 的 budget_exhausted、needs_program、incomplete、interrupted_unknown 返回 2。</p>
-<p>replay 即使输出 diverged 或 exhausted 也可以返回 0，因为分析操作本身成功；自动化脚本必须同时检查 JSON status，不能仅依赖进程退出码判断任务成功。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/11-configuration.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="api"><div class="chapter-label">18 / 开发者参考</div><h2 id="api-h1">Python API 索引</h2>
+<p>replay 即使输出 diverged 或 exhausted 也可以返回 0，因为分析操作本身成功；自动化脚本必须同时检查 JSON status，不能仅依赖进程退出码判断任务成功。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/11-configuration.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="api"><div class="chapter-label">19 / 开发者参考</div><h2 id="api-h1">Python API 索引</h2>
 <p>常用入口从包根导入：<code>Agent</code>、<code>invoke</code>、<code>AgentRunError</code>、<code>tool</code> 和 <code>make_registry</code>。内部组件使用 <code>flora.&lt;module&gt;</code>。本章列出主要接口，完整输入格式见对应专题。</p>
 <h3 id="api-h2">直接使用 API</h3>
 <div class="table-wrap"><table><thead><tr><th>接口</th><th>参数与结果</th></tr></thead><tbody>
@@ -1493,7 +1614,7 @@ assert runtime.trace.epoch == 0</code></pre></div>
 <p><code>resources.ResourceLimitExceeded</code> 是 BudgetExceeded 子类，保留 resource、limit 与可得的 required 字节数。<code>encoded_size()</code> 计算规范 JSON 字节，<code>retain_newest()</code> 只适用于可替换的可选记录，禁止用它裁剪真实 journal。<code>ContractStore.trim_bytes(max_bytes)</code> 整条移除最旧见证并返回保留统计。</p>
 <h3 id="api-h15">严格 JSON 与异常</h3>
 <p><code>values.canonical_json(value)</code> 产生排序、无多余空格的严格 JSON；<code>digest(value)</code> 为其 SHA256；<code>clone(value)</code> 复制并校验；<code>bounded_clone(value, max_bytes)</code> 增加指定字节界限。</p>
-<p>异常基类为 <code>FloraError</code>。常用子类：<code>ValidationError</code>、<code>MachineStateError</code>、<code>BudgetExceeded</code>、<code>StaleAnchor</code>、<code>InterruptedEffect</code>、<code>CompilerError</code>、<code>TraceIntegrityError</code>；provider 的 <code>ProviderError</code> 是 CompilerError 子类。不要捕获所有异常后无条件重新提交工具。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/12-api.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="tools"><div class="chapter-label">19 / 开发者参考</div><h2 id="tools-h1">接入工具与业务系统</h2>
+<p>异常基类为 <code>FloraError</code>。常用子类：<code>ValidationError</code>、<code>MachineStateError</code>、<code>BudgetExceeded</code>、<code>StaleAnchor</code>、<code>InterruptedEffect</code>、<code>CompilerError</code>、<code>TraceIntegrityError</code>；provider 的 <code>ProviderError</code> 是 CompilerError 子类。不要捕获所有异常后无条件重新提交工具。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/12-api.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="tools"><div class="chapter-label">20 / 开发者参考</div><h2 id="tools-h1">接入工具与业务系统</h2>
 <p>工具是模型生成程序与宿主系统之间唯一受控的效果入口。IR 不能自行注册工具、导入模块或调用 Python 对象方法。普通使用时把函数交给 Agent 即可自动注册；本章介绍需要精确 schema、异步超时或不透明对象时的底层 <code>ToolSpec</code>。模型只看到名称、说明与参数 schema。</p>
 <h3 id="tools-h2">注册一个同步工具</h3>
 <div class="code-wrap"><div class="code-head"><span>python</span><button class="copy" type="button">复制代码</button></div><pre><code>from flora.tools import ToolRegistry, ToolSpec
@@ -1594,7 +1715,7 @@ assert store.stats()[&quot;persistence&quot;] == &quot;process_local&quot;</code
 <p>句柄数限制不等于对象占用内存上限。一个数据库连接或大对象可能持有大量宿主资源，适配器仍需负责关闭、释放与账户配额。</p>
 <p>同 token 只表示对象身份；它可能已被上一次工具调用修改。因此，不能把 token 相等推导为状态相等。合约谓词对句柄内容、元数据和涉及它的相等检查返回 UNKNOWN；SAME_BOUNDARY 与 SOURCE_FIDELITY 比较结果涉及句柄时也返回 UNKNOWN。普通 JSON 外壳中与句柄无关的已知字段仍可检查。</p>
 <h4 id="tools-h10">重启之后</h4>
-<p>SQLite 保存的是 carrier 引用，不保存宿主对象。进程或 store 丢失后，不能从日志重建原对象。需要通过原任务实际开放的工具重新取得对象，并产生新的真实事件，或者停止运行；本包不会自动重获、自动重试或偷偷恢复对象状态。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/04-tools.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="models"><div class="chapter-label">20 / 开发者参考</div><h2 id="models-h1">连接固定语言模型</h2>
+<p>SQLite 保存的是 carrier 引用，不保存宿主对象。进程或 store 丢失后，不能从日志重建原对象。需要通过原任务实际开放的工具重新取得对象，并产生新的真实事件，或者停止运行；本包不会自动重获、自动重试或偷偷恢复对象状态。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/04-tools.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="models"><div class="chapter-label">21 / 开发者参考</div><h2 id="models-h1">连接固定语言模型</h2>
 <p>模型在系统中承担“编译剩余任务”的角色，输出一个严格 JSON bundle。模型没有直接执行工具的接口。编译器将 bundle 交给 IR、工具名单、输入参数和历史锚点校验，只有通过后运行时才安装候选。</p>
 <h3 id="models-h2">使用兼容 HTTP 服务</h3>
 <div class="code-wrap"><div class="code-head"><span>python</span><button class="copy" type="button">复制代码</button></div><pre><code>from flora.budget import Budget, BudgetLimits
@@ -1682,10 +1803,10 @@ class MyProvider:
 <tr><td>compiler</td><td><code>max_context_bytes</code></td><td>256 KiB</td></tr>
 <tr><td>compiler</td><td><code>max_visible_receipts</code></td><td>64</td></tr>
 <tr><td>compiler</td><td><code>before_call</code>、<code>on_usage</code></td><td>无；生产使用应接入共享预算</td></tr>
-</tbody></table></div><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/05-models.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="architecture"><div class="chapter-label">21 / 研究与内部实现</div><h2 id="architecture-h1">执行架构与能力边界</h2>
+</tbody></table></div><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/05-models.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="architecture"><div class="chapter-label">22 / 研究与内部实现</div><h2 id="architecture-h1">执行架构与能力边界</h2>
 <p>Flora 是一个独立的 Python agent 运行时。固定语言模型生成受限制的程序；运行时在内部比较候选计算，只执行一条真实的外部轨迹；消费者检查为程序修改提供局部证据。它没有借用 JAZ 的解释器，没有 <code>realize</code> 包装层，也不训练模型权重。</p>
-<h3 id="architecture-h2">本版本交付什么</h3>
-<p>本版本包含独立 IR 与解释器、候选调度、显式工具效果、消费者合约、有限谓词规则综合、预测诊断、模型编译器、持久化事件记录、CLI、可运行离线示例和完整文档。核心运行依赖仅为 Python 标准库。模型接口使用可配置的 Chat Completions 风格 HTTP 请求；不绑定某个模型供应商。</p>
+<h3 id="architecture-h2">实现范围</h3>
+<p>实现包含独立 IR 与解释器、候选调度、显式工具效果、消费者合约、有限谓词规则综合、预测诊断、模型编译器、持久化事件记录、CLI、可运行离线示例和完整文档。核心运行依赖仅为 Python 标准库。模型接口使用可配置的 Chat Completions 风格 HTTP 请求；不绑定某个模型供应商。</p>
 <p>这里的“未决”是程序状态，不是一个鼓励模型多想一会儿的提示词。几个候选能够在同一组实际输入上运行到下一次外部请求；在工具调用之前，解释器会停下来。不同候选提出相同请求时，可以共享这个真实事件；提出不同请求时，只选择一个动作，其余候选不能继续假装身处旧世界。</p>
 <h3 id="architecture-h3">一个完整工作周期</h3>
 <ol>
@@ -1708,8 +1829,8 @@ class MyProvider:
 <p><code>Agent</code> 与 <code>invoke</code> 管理工具注册、模型编译、会话、预算和结果；CLI 复用同一个入口。普通用户提交自然语言任务，内部语言属于模型与运行时之间的机器接口。诊断和合约默认仍参与执行，并未因为简化入口而被移除。</p>
 <p>实际工具结果要求新的语言理解时，程序可以通过 <code>replan</code> 请求再次编译剩余任务。状态来自已实际运行的寄存器和真实观察；这一步消耗同一预算，不产生额外世界分支。默认正常候选的 replan 才驱动实际下一步编译，假想分支不能冒充模型已经理解了未知返回。</p>
 <p>阅读后续章节可以手工构造小型 IR 来检查具体语义，但这不是使用 Agent 的前置要求。低层 API 保留给运行时扩展、受控实验和故障诊断。</p>
-<h3 id="architecture-h6">版本承诺</h3>
-<p>Flora 是可运行、可检查的研究工程实现。测试通过说明指定检查在交付环境下通过，不等于分布式 exactly-once、任意第三方工具安全、形式化任务正确性或生产认证。真实模型任务性能需要在指定模型、任务和预算下另行测量。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/22-architecture.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="tutorials"><div class="chapter-label">22 / 研究与内部实现</div><h2 id="tutorials-h1">两个离线工作流</h2>
+<h3 id="architecture-h6">验证范围</h3>
+<p>Flora 是可运行、可检查的研究工程实现。测试通过说明指定检查在交付环境下通过，不等于分布式 exactly-once、任意第三方工具安全、形式化任务正确性或生产认证。真实模型任务性能需要在指定模型、任务和预算下另行测量。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/22-architecture.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="tutorials"><div class="chapter-label">23 / 研究与内部实现</div><h2 id="tutorials-h1">两个离线工作流</h2>
 <p>本章所有 Python 示例都可以在已安装包的环境中直接运行，不请求语言模型。它们用人工编写的 IR 作为编译结果，专门验证执行语义。把确定性程序换成 LLMCompiler 后，使用的是同一个运行时。</p>
 <h3 id="tutorials-h2">教程一：日程诊断</h3>
 <p>任务是把事件 A 调整到事件 B 当前开始时间之后 30 分钟。旧观察支持 B=14:00，后来的消息支持 B=15:00。正常候选分别准备把 A 调到 14:30 或 15:30；诊断程序先读 B，再按实际返回计算 A。</p>
@@ -1804,7 +1925,7 @@ result = runtime.run(
 )
 assert result.value == [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]
 assert len(runtime.contracts.records) &gt; 0</code></pre></div>
-<p>自定义环境只需替换 registry；真实模型模式再提供 compiler。普通工具、预算和事件记录路径不会因编译器类型改变。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/02-tutorials.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="language"><div class="chapter-label">23 / 研究与内部实现</div><h2 id="language-h1">编写第一个 IR 程序</h2>
+<p>自定义环境只需替换 registry；真实模型模式再提供 compiler。普通工具、预算和事件记录路径不会因编译器类型改变。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/02-tutorials.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="language"><div class="chapter-label">24 / 研究与内部实现</div><h2 id="language-h1">编写第一个 IR 程序</h2>
 <p>本章供内部语言维护与研究实验使用；日常调用 Agent 无需手写本章格式。Flora 的语言是有版本的 JSON IR。它没有 Python <code>eval</code>、<code>exec</code>、导入、反射或隐式文件访问。JSON 是机器接口：生产环境中通常由模型编译器生成，开发者可以手工编写小程序来验证工具和运行语义。</p>
 <h3 id="language-h2">最小程序</h3>
 <p>下面的程序不调用工具，直接返回一个普通对象。</p>
@@ -1909,7 +2030,7 @@ assert second.value == {&quot;start&quot;: 900}</code></pre></div>
 <p><code>branch</code> 根据纯布尔条件选择块；<code>jump</code> 带着新的参数进入块。循环由回跳构成，并受每次纯运行的 fuel 限制。<code>call</code> 是内部程序调用，它用显式调用栈返回 <code>resume</code>，不产生真实工具事件。</p>
 <p><code>alternative</code> 在内部产生多个机器状态。它本身不复制环境，也不调用工具。运行时限制活跃候选数；候选达到效果边界之后，仍然只能提交一个真实动作。</p>
 <h3 id="language-h7">从手写到模型生成</h3>
-<p>手写 IR 适用于最小集成、故障定位和确定性工具流程。模型编译器接收相同的语言定义并输出相同的 JSON 结构。无论作者是人还是模型，都经过同一 <code>parse_program</code>、工具名单与运行时边界检查，不存在“模型代码可跳过校验”的路径。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/03-language.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="runtime"><div class="chapter-label">24 / 研究与内部实现</div><h2 id="runtime-h1">运行时与候选生命周期</h2>
+<p>手写 IR 适用于最小集成、故障定位和确定性工具流程。模型编译器接收相同的语言定义并输出相同的 JSON 结构。无论作者是人还是模型，都经过同一 <code>parse_program</code>、工具名单与运行时边界检查，不存在“模型代码可跳过校验”的路径。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/03-language.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="runtime"><div class="chapter-label">25 / 研究与内部实现</div><h2 id="runtime-h1">运行时与候选生命周期</h2>
 <p>运行时是连接纯程序、真实工具和证据记录的协调层。解释器只能提出请求；运行时判断是否在正确的历史位置提交，并保证程序不会因为内部比较而偷偷执行外部动作。</p>
 <h3 id="runtime-h2">候选与默认程序</h3>
 <p>一个编译 bundle 包含正常候选、默认候选和可选诊断。默认候选负责在没有有效诊断时推进任务。候选由固定模型提出，并不代表真实世界的概率分布。候选之间也可能共享同一个错误。</p>
@@ -1937,7 +2058,7 @@ assert second.value == {&quot;start&quot;: 900}</code></pre></div>
 <p><code>read_receipt</code> 与 <code>read_memory</code> 只读取宿主明确传入的视图。解释器不会枚举文件系统、浏览网络或读取模型供应商环境变量。需要这些行为，必须在任务权限内注册显式工具。</p>
 <h3 id="runtime-h8">正常结束与失败结束</h3>
 <p>一个 IR <code>return</code> 表示程序自己返回，不自动表示任务成功。成功指标来自任务原本提供的评估方式。运行结果应同时检查：运行是否完成、是否有未决外部效果、返回值是什么、消耗了多少预算，以及任务环境是否给出了成功反馈。</p>
-<p>普通工具异常可以成为程序处理的数据；预算耗尽、取消和无法确认效果状态的中断不能用普通“错误分支”绕过去重试。遇到状态未知应先核实已发生的真实动作。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/06-runtime.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="contracts"><div class="chapter-label">25 / 研究与内部实现</div><h2 id="contracts-h1">消费者合约与规则综合</h2>
+<p>普通工具异常可以成为程序处理的数据；预算耗尽、取消和无法确认效果状态的中断不能用普通“错误分支”绕过去重试。遇到状态未知应先核实已发生的真实动作。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/06-runtime.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="contracts"><div class="chapter-label">26 / 研究与内部实现</div><h2 id="contracts-h1">消费者合约与规则综合</h2>
 <p>消费者合约把“这段程序可以怎样复用”变成可执行的局部关系。它不是由模型自行签发的保证，也不把工具成功返回直接视为任务成功。</p>
 <h3 id="contracts-h2">三种已实现关系</h3>
 <div class="table-wrap"><table><thead><tr><th>关系</th><th>PASS 的含义</th><th>FAIL 的含义</th></tr></thead><tbody>
@@ -2110,7 +2231,7 @@ assert runtime.candidates[&quot;reader&quot;].machine.registers == {&quot;item&q
 assert len(runtime.reuse.variants) == 1</code></pre></div>
 <p>本教程用单步上限制造一个可检查的暂停点；它没有删除原始事件日志，也不声称已经降低整个系统的持久化体积。被压缩的是新消费者的程序状态。完整历史保留与否需要单独的数据保留策略，不得为了展示压缩而删掉用于审计的真实事件。</p>
 <p><code>PRESERVE</code> 要求保留上下文全部通过 SAME_BOUNDARY，且不能只挑最近一个成功案例。<code>EXTEND</code> 对旧程序可以正常运行的区域检查 SAME_BOUNDARY；对旧程序已有具体纯故障的区域改查 DEFINED_PREFIX，使修改能够修复失败输入。它没有证明所有未知新输入都正确。<code>CHANGE</code> 允许显式行为变化，但留下失败兼容见证，并把任务收益标为 <code>UNMEASURED</code>。三种方式都重新迁移当前真实状态并执行当前局部检查；历史样本通过不能替代当前检查。</p>
-<p>模型可在 bundle 的可选 <code>revisions</code> 数组提出同样的修改。要激活该修改，正常候选中的目标 ID 和程序必须与修订一致，输入来自经过检查的迁移；不能通过 bundle 里另填一份输入绕过保留关系。如果没有对应的新正常候选，则只记录修订提案。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/07-contracts.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="reuse"><div class="chapter-label">26 / 研究与内部实现</div><h2 id="reuse-h1">程序复用与条件路由</h2>
+<p>模型可在 bundle 的可选 <code>revisions</code> 数组提出同样的修改。要激活该修改，正常候选中的目标 ID 和程序必须与修订一致，输入来自经过检查的迁移；不能通过 bundle 里另填一份输入绕过保留关系。如果没有对应的新正常候选，则只记录修订提案。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/07-contracts.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="reuse"><div class="chapter-label">27 / 研究与内部实现</div><h2 id="reuse-h1">程序复用与条件路由</h2>
 <p>可复用组件不是一段脱离上下文的好代码。它必须说明：替换的是哪个消费者位置、旧状态如何迁移、什么条件下值得尝试，以及当前真实输入上的局部关系是否通过。</p>
 <p><code>ReuseLibrary</code> 实现这一流程。经验 guard 命中只是启动检查；迁移和当前消费者检查通过后，才会返回新的机器状态。整个过程不调用外部工具。</p>
 <h3 id="reuse-h2">一条复用项包含什么</h3>
@@ -2191,7 +2312,7 @@ assert any(r[&quot;kind&quot;] == &quot;reuse_checked&quot; and r[&quot;accepted
 <h3 id="reuse-h7">持久化与容量</h3>
 <p><code>ReuseLibrary(max_variants=64)</code> 最多接受 64 个变体。达到数量上限时淘汰最旧项，并累计 <code>dropped_variants</code>；存储另有 1 MiB 编码上限，接近上限时整条淘汰最旧项；单项本身无法装入时拒绝新登记。任务检查点本身还有更严格的整体大小限制。</p>
 <p><code>to_dict()</code> 和 <code>from_dict()</code> 保存、校验复用库。恢复会检查程序、迁移、scope、谓词、ID 冲突和容量；已保存的 guard 不能作为当前输入 PASS 的缓存。</p>
-<p>普通字段中的新值可以在同一个 scope 中再次检查。涉及不透明对象的状态关系、不匹配调用栈或没有对应观察的续行，仍必须保持未知或拒绝复用。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/17-reuse.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="diagnostics"><div class="chapter-label">27 / 研究与内部实现</div><h2 id="diagnostics-h1">预测、诊断与双重控制</h2>
+<p>普通字段中的新值可以在同一个 scope 中再次检查。涉及不透明对象的状态关系、不匹配调用栈或没有对应观察的续行，仍必须保持未知或拒绝复用。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/17-reuse.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="diagnostics"><div class="chapter-label">28 / 研究与内部实现</div><h2 id="diagnostics-h1">预测、诊断与双重控制</h2>
 <p>双重控制在这里指一个真实行动既推进任务，又为以后采用哪段程序提供信息。它不是两个 LLM 角色互相对话，也不是给模型加一个“信息增益”打分提示。</p>
 <h3 id="diagnostics-h2">诊断是带续行的程序</h3>
 <p>编译 bundle 中一个诊断包含以下字段：</p>
@@ -2252,7 +2373,7 @@ assert choose(frontiers, &quot;first&quot;, diagnostic_allowed=False) == &quot;f
 <p>实际返回超出全部预测时，保留这些失败或未知结果，并继续运行诊断自己的真实续行。不要把返回强制投到最接近的假想值。</p>
 <h3 id="diagnostics-h8">假想数据的隔离</h3>
 <p>假想 VM 状态保留 <code>mode=&quot;hypothetical&quot;</code>，效果执行器拒绝这种模式提交外部动作。诊断报告带有 <code>hypothetical: true</code> 和 <code>contract_evidence: false</code>。将假想计算输出作为观察写入真实 trace 是违反执行边界的行为。</p>
-<p>假想值能够说明“如果收到这个值，代码会怎样分支”，不能说明该值在环境中可达，也不能说明它有多大概率出现。这也是本版本分数被称为结构辨别指标的原因。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/08-diagnostics.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="persistence"><div class="chapter-label">28 / 研究与内部实现</div><h2 id="persistence-h1">事件存储、恢复与重放</h2>
+<p>假想值能够说明“如果收到这个值，代码会怎样分支”，不能说明该值在环境中可达，也不能说明它有多大概率出现。这也是本版本分数被称为结构辨别指标的原因。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/08-diagnostics.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="persistence"><div class="chapter-label">29 / 研究与内部实现</div><h2 id="persistence-h1">事件存储、恢复与重放</h2>
 <p>真实工具调用和程序内部计算必须分开保存。事件日志回答“宿主实际提交了什么、得到了什么”；机器检查点回答“程序准备从哪里继续”。两者的存在不提供环境回滚能力。</p>
 <h3 id="persistence-h2">内存与 SQLite</h3>
 <div class="code-wrap"><div class="code-head"><span>python</span><button class="copy" type="button">复制代码</button></div><pre><code>from flora.trace import MemoryTrace, SQLiteTrace
@@ -2372,7 +2493,7 @@ config = RuntimeConfig(
     max_reports_bytes=256 * 1024,
 )
 assert trace.export()[&quot;limits&quot;][&quot;max_journal_bytes&quot;] == 6 * 1024 * 1024</code></pre></div>
-<p>CLI 使用 trace 的默认存储上限；自定义 trace 上限通过 Python API 设置，不往仅有四个顶层对象的 CLI 配置中添加未支持的 storage 部分。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/09-persistence.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="reference"><div class="chapter-label">29 / 研究与内部实现</div><h2 id="reference-h1">IR 指令与表达式全集</h2>
+<p>CLI 使用 trace 的默认存储上限；自定义 trace 上限通过 Python API 设置，不往仅有四个顶层对象的 CLI 配置中添加未支持的 storage 部分。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/09-persistence.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="reference"><div class="chapter-label">30 / 研究与内部实现</div><h2 id="reference-h1">IR 指令与表达式全集</h2>
 <p>本章描述 IR version 1。JSON schema 文件可帮助编辑器提供提示；最终授权与语义校验以 <code>ir.parse_program()</code> 和运行时检查为准。通过 schema 不代表程序能完成任务。</p>
 <h3 id="reference-h2">静态结构限制</h3>
 <div class="table-wrap"><table><thead><tr><th>项</th><th>限制</th></tr></thead><tbody>
@@ -2457,7 +2578,7 @@ assert trace.export()[&quot;limits&quot;][&quot;max_journal_bytes&quot;] == 6 * 
 <p><code>new_machine(program, inputs=None, mode=&quot;observed&quot;)</code> 建立机器状态。<code>inputs</code> key 必须准确匹配入口参数。<code>mode</code> 只能为 observed、hypothetical 或 replay；模式不会在 <code>resume()</code> 时自动升级为 observed。</p>
 <p><code>run_until_boundary(machine, receipts=(), memory=None, fuel=50000, max_value_bytes=1048576)</code> 返回新状态，不修改传入机器。<code>Boundary.kind</code> 可以为 effect、return、fault、unknown、alternative、replan；按种类读取 <code>request</code>、<code>value</code>、<code>details</code> 或 <code>alternatives</code>。</p>
 <p><code>resume(machine, outcome)</code> 仅接受暂停于效果边界的机器。成功信封必须恰好包含 status 和 value；普通异常信封包含 status 及 error 的 type、message。<code>interrupted_unknown</code> 使机器进入未知状态，不通过用户代码隐藏重试。</p>
-<p><code>Machine.to_dict()</code> 与 <code>Machine.from_dict()</code> 用于完整机器序列化。恢复时验证块、寄存器、指令位置、续行帧和暂停请求是否一致，不能随便修改 pending 请求后继续执行。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/10-ir-reference.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="benchmarks"><div class="chapter-label">30 / 研究与内部实现</div><h2 id="benchmarks-h1">公平实验与消融</h2>
+<p><code>Machine.to_dict()</code> 与 <code>Machine.from_dict()</code> 用于完整机器序列化。恢复时验证块、寄存器、指令位置、续行帧和暂停请求是否一致，不能随便修改 pending 请求后继续执行。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/10-ir-reference.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="benchmarks"><div class="chapter-label">31 / 研究与内部实现</div><h2 id="benchmarks-h1">公平实验与消融</h2>
 <p>Flora 改变的是内部程序执行与修订机制，不是任务能观察到什么。研究对比必须先固定信息与预算边界，再讨论成功率。</p>
 <h3 id="benchmarks-h2">与基线保持一致的条件</h3>
 <div class="table-wrap"><table><thead><tr><th>条件</th><th>要求</th></tr></thead><tbody>
@@ -2590,7 +2711,7 @@ assert runtime.trace.epoch == 2
 assert env.done</code></pre></div>
 <p>带有必需 positional-only 参数的 callable 不能直接通过本桥接的 keyword JSON 传输，建立 bridge 时会拒绝。动态树只允许 1–32 个公开标识符，且终点必须可调用。动态树传输主要面向同步 keyword endpoint，不承诺任意对象方法和 async 叶节点都兼容。桥接器不会执行类型注解来猜出新工具约束。这些都是明确的传输限制，不能靠假设所有原工具都可适配而忽略。</p>
 <h3 id="benchmarks-h13">直接使用接口不改变实验能力</h3>
-<p>Flora 的 Agent 与普通函数注册只是接入层。与 JAZ 对齐实验时，使用原环境公开工具、任务和完成协议，不启用额外 workspace 或命令工具。高层 API 不默认开放文件系统；模型重新规划照常计入共享模型预算。进程本地 HTTP fixture 用于验证传输与执行链，不能作为真实模型基准成绩。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/14-benchmarks.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="glossary"><div class="chapter-label">31 / 研究与内部实现</div><h2 id="glossary-h1">术语、设计取舍与来源</h2>
+<p>Flora 的 Agent 与普通函数注册只是接入层。与 JAZ 对齐实验时，使用原环境公开工具、任务和完成协议，不启用额外 workspace 或命令工具。高层 API 不默认开放文件系统；模型重新规划照常计入共享模型预算。进程本地 HTTP fixture 用于验证传输与执行链，不能作为真实模型基准成绩。</p><div class="chapter-footer">Flora 0.1.0 · 源文档：docs/14-benchmarks.md · <a href="#top">返回顶部</a></div></section><section class="chapter" id="glossary"><div class="chapter-label">32 / 研究与内部实现</div><h2 id="glossary-h1">术语、设计取舍与来源</h2>
 <h3 id="glossary-h2">术语表</h3>
 <div class="table-wrap"><table><thead><tr><th>术语</th><th>在本项目中的具体含义</th></tr></thead><tbody>
 <tr><td>未决程序</td><td>仍保留多个候选内部实现的程序</td></tr>

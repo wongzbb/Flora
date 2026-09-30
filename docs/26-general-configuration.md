@@ -53,7 +53,7 @@ flora agent "任务文本" --workspace ./workspace --session ./sessions/task --c
 
 ## compiler 与 runtime
 
-通用入口默认每次编译最多输出 12,000 tokens，最多进行一次格式修复；其它编译器和运行时字段沿用内核默认值。一次修复也是实际模型调用，占用同一份预算。
+通用入口默认每次编译最多输出 12,000 tokens，最多进行一次格式修复；默认使用 `block-list-v2` 源语言与 `compact-v2` 提示词，单次编译时间窗口为 180 秒。`runtime.max_steps` 与 `runtime.max_compile_cycles` 默认 null，调度仍每 32 个步骤保存并继续；其它资源检查继续生效。一次修复也是实际模型调用，占用同一份预算。
 
 每次编译另有最多两次传输恢复机会，格式修复共享这两次机会。因此默认一次编译最多发起四次模型请求，且显式设置的预算可以更早阻止后续请求。每次 POST 都独立预留输出额度、记录调用和已知／未知用量；provider 内没有隐藏的网络重试。暂时性错误的等待通常为 1、2 秒，数字 Retry-After 最多等待 30 秒。工具操作不进入这个重试循环。
 
@@ -135,7 +135,7 @@ flora agent "任务文本" --workspace ./workspace --session ./sessions/task --c
 
 超时允许 1–120 秒；响应/请求体限制允许 1 KiB–16 MiB；重定向上限允许 0–10。跨来源跳转会移除 Authorization/Cookie。修改型 HTTP 方法不自动跟随重定向，也不自动重试。
 
-此客户端直接连接已验证 IP，不自动继承 `HTTP_PROXY` / `HTTPS_PROXY`。需要代理的部署应提供明确的网络出口，或使用经过授权的 MCP 接入；不要把跳过地址检查当成透明代理支持。
+此客户端直接连接已验证 IP，不自动继承 `HTTP_PROXY` / `HTTPS_PROXY`。需要代理时明确设置 `proxy_url`；本地 DNS 不可用时可配置 `dns_over_https` 与公网 `dns_bootstrap`。代理仍连接经过目标地址检查的固定 IP，不跳过私有地址限制。完整配置和搜索备用路由见可靠性指南。
 
 ## 搜索配置
 
@@ -174,3 +174,11 @@ flora agent --session DIR --status
 ```
 
 脚本入口从 profile 指定的环境变量读取密钥。`--status` 不连接模型。日常自动会话和脚本管理会话的区别见「终端、会话与子 agent」。
+
+
+## 协作与持续工作
+
+详见「多 agent 协作、持续工作与可靠性」：显式上下文交接、当前任务配额、依赖等待、完整结果收集与复核、工作清单、调度切片、代理／DNS 与搜索备用路由。实际来源和文件引用只验证完整性，不证明结论正确。`/work` 可查看当前任务步骤和未解决事项。
+
+
+当前默认通用协议为 `general-v4`，源语言为 `block-list-v2`，编译提示词为 `compact-v2`。`runtime.max_steps` 和 `runtime.max_compile_cycles` 默认为 null；显式正整数仍表示累计上限。恢复会话使用保存的完整配置，权限和预算不会被隐式改变。网络的 `proxy_url`、`dns_over_https`、`dns_bootstrap` 以及搜索的 `fallbacks` 都必须明确配置；具体示例见可靠性指南。

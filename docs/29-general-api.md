@@ -125,6 +125,14 @@ from flora.general.agent import saved_status
 | `terminal/cli.py`、`terminal/ui.py` | 交互命令行、任务执行视图 |
 | `terminal/sessions.py`、`terminal/connection.py` | 目录会话索引与凭据引导 |
 | `general/delegation.py` | 独立只读子 agent 的并行、预算与恢复 |
+| `general/coordinator.py` | 任务配额、显式交接与依赖、完整结果收集、复核和持续执行 |
+| `general/work.py` | 持久工作步骤、修订检查与来源／文件证据检查 |
+| `general/reliability.py` | 按实际失败类型提供恢复建议 |
 | `general/cli.py` | 显式 session 的脚本入口 |
 
 新增业务工具可以直接复用 `flora.Agent` 的普通函数或 ToolSpec 接口，并沿用同一内核；如果扩展 GeneralAgent 工具集，应同时更新会话身份、声明的 Schema、生命周期、超时和未知结果语义。不要只往界面加按钮而绕过效果日志。
+
+
+## 协作与持续工作
+
+详见「多 agent 协作、持续工作与可靠性」：显式上下文交接、当前任务配额、依赖等待、完整结果收集与复核、工作清单、调度切片、代理／DNS 与搜索备用路由。实际来源和文件引用只验证完整性，不证明结论正确。`/work` 可查看当前任务步骤和未解决事项。

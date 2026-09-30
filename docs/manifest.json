@@ -50,6 +50,12 @@
       "file": "28-general-operations.md"
     },
     {
+      "id": "reliability",
+      "group": "通用 Agent",
+      "title": "协作、持续工作与可靠性",
+      "file": "31-reliability.md"
+    },
+    {
       "id": "generalapi",
       "group": "通用 Agent",
       "title": "GeneralAgent API",

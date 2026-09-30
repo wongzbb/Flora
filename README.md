@@ -19,3 +19,5 @@ python scripts/build_docs.py
 - `manual.html`：可下载的完整操作手册。
 
 应用安装和代码示例在 general-agent 分支的源码目录中运行；此分支仅用于维护和阅读文档。
+
+- [多 agent 协作、持续工作与可靠性](docs/31-reliability.md)
