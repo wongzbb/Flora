@@ -2,7 +2,7 @@
 
 **Act to get things done—and to find things out.**
 
-Flora is a terminal-first general-purpose agent for web research, document and spreadsheet processing, external tool integration, and delivering files and reports. Its pixel-art character, floral logo, and purple/mint palette follow the project's visual identity.
+Flora is a terminal-first general-purpose agent for web research, document and spreadsheet processing, external tool integration, and delivering files and reports.
 
 Run `flora` in any working directory, enter your Base URL, API Key, and Model, and get started. The current directory becomes the workspace, and a session ID is generated automatically. API keys are entered without being displayed and are used only within the current process.
 
