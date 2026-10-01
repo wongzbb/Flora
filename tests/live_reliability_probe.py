@@ -144,6 +144,13 @@ def configuration_view(profile):
         and (v is None or type(v) in (int, float))
     }
     version = profile.get("general", {}).get("tool_schema_version")
+    for name, allowed in (
+        ("syntax", {"ir-v1", "observe-v1", "block-list-v1", "block-list-v2"}),
+        ("prompt_style", {"full-v1", "compact-v1", "compact-v2"}),
+    ):
+        value = profile.get("compiler", {}).get(name)
+        if isinstance(value, str) and value in allowed:
+            compiler[name] = value
     return {
         "provider": view,
         "compiler": compiler,
@@ -299,6 +306,22 @@ def mechanism_observations(events):
         e.get("kind") == "reuse_checked" and e.get("accepted") is False for e in records
     )
     values["omitted_reports"] = sum(e.get("kind") == "report_omitted" for e in records)
+    revisions = [e for e in records if e.get("kind") == "revision_checked"]
+    values["revision_modes"] = {
+        mode: {
+            "checked": sum(e.get("mode") == mode for e in revisions),
+            "accepted": sum(e.get("mode") == mode and e.get("accepted") is True for e in revisions),
+        }
+        for mode in ("PRESERVE", "EXTEND", "CHANGE")
+    }
+    values["history_and_current_pass_revisions"] = sum(
+        e.get("mode") in {"PRESERVE", "EXTEND"}
+        and e.get("accepted") is True
+        and bool(e.get("results"))
+        and all(r.get("verdict") == "PASS" for r in e["results"])
+        and (e.get("current_check") or {}).get("verdict") == "PASS"
+        for e in revisions
+    )
     values["semantic_or_causal_validation"] = False
     return values
 

@@ -732,9 +732,10 @@ class LLMCompiler:
             view = {**{k: v for k, v in view.items() if k != "task"}, "task": view["task"]}
             content = json.dumps(view, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
         if "compiler_recovery" in view:
-            from flora.language.recovery import RECOVERY_GUIDANCE
+            from flora.language.recovery import RECOVERY_GUIDANCE, revision_example
 
             system += "\n\n" + RECOVERY_GUIDANCE
+            system += "\n\n" + revision_example()
         return [
             {"role": "system", "content": system},
             {"role": "user", "content": content},

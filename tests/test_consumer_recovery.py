@@ -178,9 +178,9 @@ class RecoveryHarnessTests(unittest.TestCase):
             argv = [
                 "probe",
                 "--base-url",
-                "https://offline.invalid/v1",
+                "https://api.deepseek.com",
                 "--model",
-                "fixture",
+                "deepseek-flash",
                 "--profile",
                 str(Path(__file__).parents[1] / "configs/deepseek-fast.json"),
                 "--output",

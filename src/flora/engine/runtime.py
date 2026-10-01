@@ -364,8 +364,17 @@ class Runtime:
             raise BudgetExceeded("Compilation cycle limit exhausted")
         self.budget.check_time()
         self.compile_cycles += 1
+        from flora.language.revision_view import revision_state
+
         previous = [
-            {"id": c.id, "program": c.machine.program, "status": c.status}
+            {
+                "id": c.id,
+                "program": c.machine.program,
+                "status": c.status,
+                "revision_state": revision_state(
+                    c, self.contexts, epoch=self.trace.epoch, trace_digest=self.trace.digest
+                ),
+            }
             for c in self.candidates.values()
         ]
         report = list(self.reports)
