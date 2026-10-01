@@ -6,7 +6,7 @@ This is an intermediate checkpoint, not final acceptance. Runtime code: `d583a6a
 
 | Batch | Passed / attempted | First-pass | p50 / p95 seconds |
 |---|---:|---:|---:|
-| flora-live-crossmodel-20261005 | 6/9 | 6 | 54.165 / 235.6 |
+| flora-live-crossmodel-20261005 | 7/11 | 7 | 180.998 / 541.505 |
 | flora-live-flash-baseline-20261001 | 2/4 | 2 | 41.0995 / 56.341 |
 | flora-live-flash-direct-20261001 | 0/2 | 0 | 8.7475 / 16.231 |
 | flora-live-flash-final-20261004 | 7/8 | 6 | 44.206 / 131.045 |
@@ -17,7 +17,7 @@ This is an intermediate checkpoint, not final acceptance. Runtime code: `d583a6a
 | flora-live-pro-heldout-20261002 | 3/4 | 3 | 110.8345 / 452.402 |
 | flora-live-pro-low-20261001 | 1/2 | 1 | 177.109 / 244.937 |
 
-The crossmodel-20261005 batch is still running; its row count is a snapshot, not a final denominator. Individual failures remain in the JSON report. Per-case seeds, grades, operational configuration and mechanism counts are retained. Earlier dirty development batches lack exact source snapshots; do not treat them as reproducible clean-SHA comparisons. The new harness records source identity before requests.
+The crossmodel-20261005 batch finished with 7 passes, 4 failures and 1 unrun trial. Trial 11 received HTTP 402; the global batch stop prevented trial 12 and cancelled the queued release_audit batch before it started. No further authenticated requests were sent. Individual failures remain in the JSON report. Per-case seeds, grades, operational configuration and mechanism counts are retained. Earlier dirty development batches lack exact source snapshots; do not treat them as reproducible clean-SHA comparisons. The new harness records source identity before requests.
 
 ## Findings and changes
 
@@ -35,7 +35,7 @@ Both models completed an edit, paused after its successful mutation, closed/reop
 
 Natural live batches so far show consumer checks and actual source-dependent continuations, but no recorded diagnostic evaluation/insertion or contract revision. That does not demonstrate causal benefit or spontaneous synthesis. The observed bundles have not introduced multiple normal candidates, so the scheduler has had no demonstrated opportunity to choose between distinct candidate actions. This is a model-generation/coverage gap, not evidence that an eligible diagnostic was rejected. Ordinary observation followed by a pure branch is often sufficient for these fixtures. Offline mechanism tests retain diagnostic scheduling, differing continuations, revision checks and refusal of unsupported reuse; they are not substitutes for live-model evidence. New telemetry records actual diagnostic insertion, accepted revisions and rejected reuse separately.
 
-The new release_audit combination covers two workers, conflicting/untrusted notices, a missing primary followed by its declared fallback, insufficient evidence retained as unknown, parent source checks and publication readback. Its oracle binds the failure/fallback order to the correct worker. The live combination is pending. A reusable --reopen-after-write mode can exercise saved-session continuation without injecting task answers.
+The new release_audit combination covers two workers, conflicting/untrusted notices, a missing primary followed by its declared fallback, insufficient evidence retained as unknown, parent source checks and publication readback. Its oracle binds the failure/fallback order to the correct worker. The queued live combination was cancelled by the HTTP 402 access stop before execution. A reusable --reopen-after-write mode can exercise saved-session continuation without injecting task answers.
 
 ## Verification and limits
 
@@ -47,6 +47,18 @@ This is synthetic-family coverage. It does not establish arbitrary-task reliabil
 
 Recorded aggregate parent + worker budgets, once per case. Unknown-usage calls and reserved output prevent exact billed token/currency claims. No verified currency bill available. A separate minimal connectivity completion used 9 input and 1 output token.
 
-Aggregate recorded counters: `{"model_calls": 126, "tool_calls": 162, "input_tokens": 1283762, "output_tokens": 787824, "unknown_usage_calls": 2}`. These are budget records, not a verified monetary bill. Resume attempts are not double-counted. Latencies include bounded repair/recovery; the median and nearest-rank p95 are descriptive, not a controlled speed comparison.
+Aggregate recorded counters: `{"model_calls": 140, "tool_calls": 185, "input_tokens": 1453871, "output_tokens": 941647, "unknown_usage_calls": 3}`. These are budget records, not a verified monetary bill. Resume attempts are not double-counted. Latencies include bounded repair/recovery; the median and nearest-rank p95 are descriptive, not a controlled speed comparison.
 
 Replay from the recorded code using `python -m tests.live_reliability_probe`, the user-confirmed base URL, explicit model IDs, the recorded seed/cases/rounds, and the non-sensitive deepseek-low profile. Keep evaluation output outside the repository. Never pass credentials on the command line; use the environment variable name. See the JSON for evidence directories and per-case values.
+
+## Access stop and follow-up code
+
+The live acceptance remains incomplete. HTTP 402 is an account/payment-class rejection; no claim is made about its exact account-side cause. The failure is recorded in case 11, deepseek-v4-pro/dependency_route/trial 1. The requested cost allowance does not override this service rejection. Further paid calls remain stopped until access is restored and the stop is explicitly cleared.
+
+Follow-up code 4e29789 includes schema version 3: complete worker windows carry an unverified structured result, partial windows still require collection, and table results disclose actual source cell types before filtering. Comparison and review semantics are unchanged; legacy version 1/2 sessions retain their descriptions and result shape. Independent review found no blocker. These changes have NOT yet passed live acceptance.
+
+The mechanism investigation found that new user turns do not preserve previous candidates as revision targets; testing revisions must stay in the unfinished turn. Models also lacked a concise view of current and retained register structures. A bounded revision_state projection now exposes real locations/names/types, never values or nested data keys, and remains subject to normal context omission. A clearly labeled host-authored syntax example teaches how to propose migration; the model still chooses and writes the real program. Offline tests demonstrate historical/current EXTEND PASS without repeating the effect, and correctly reject PRESERVE for a fault-to-return change.
+
+A separate legacy-consumer repair probe is prepared, explicitly labeled host-seeded initial program plus real model repair. It is neither end-to-end model generation nor spontaneous revision evidence, and was NOT executed after the HTTP 402 stop. No live diagnostic insertion, accepted model migration, or causal benefit is claimed. The successful task outcomes and offline gate tests must remain separate.
+
+Follow-up verification: the full source suite passed 308 tests (one platform skip), followed by 43 passing focused checks for final operational-metadata changes. Ruff passed. The 4e29789 wheel built successfully; its full installed-package suite is running in a new virtual environment. This pending installed check is not claimed as passed.

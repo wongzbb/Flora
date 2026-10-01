@@ -1,8 +1,8 @@
 {
   "checkpoint_code_sha": "d583a6a01fdd8bd561e8950c0fc50bbd466836f0",
-  "recorded_at": "2026-10-01T09:25:02.197139+00:00",
+  "recorded_at": "2026-10-01T09:47:10.765641+00:00",
   "acceptance": "incomplete; failures retained; not a universal reliability claim",
-  "crossmodel_20261005_in_progress": true,
+  "crossmodel_20261005_in_progress": false,
   "batches": [
     {
       "name": "flora-live-crossmodel-20261005",
@@ -119,22 +119,22 @@
           "tests/test_trace_performance.py": "030de1e815d54596133ac545892cf7d3c42f28beb12712f801eba854708a343d"
         }
       },
-      "planned_rows_recorded": 9,
-      "attempted": 9,
-      "passed": 6,
-      "first_pass": 6,
-      "not_run": 0,
+      "planned_rows_recorded": 12,
+      "attempted": 11,
+      "passed": 7,
+      "first_pass": 7,
+      "not_run": 1,
       "usage": {
-        "model_calls": 25,
-        "tool_calls": 39,
-        "input_tokens": 229487,
-        "output_tokens": 180375,
-        "unknown_usage_calls": 0
+        "model_calls": 39,
+        "tool_calls": 62,
+        "input_tokens": 399596,
+        "output_tokens": 334198,
+        "unknown_usage_calls": 1
       },
       "latency_seconds": {
-        "p50": 54.165,
-        "p95_nearest_rank": 235.6,
-        "max": 235.6
+        "p50": 180.998,
+        "p95_nearest_rank": 541.505,
+        "max": 541.505
       },
       "cases": [
         {
@@ -143,6 +143,7 @@
           "trial": 1,
           "fixture_seed": 359339805650858,
           "status": "completed",
+          "failure": null,
           "grade": {
             "passed": false,
             "review_required": false,
@@ -194,6 +195,7 @@
           "trial": 1,
           "fixture_seed": 359339805650858,
           "status": "completed",
+          "failure": null,
           "grade": {
             "passed": false,
             "review_required": false,
@@ -246,6 +248,7 @@
           "trial": 2,
           "fixture_seed": 126764423305527,
           "status": "completed",
+          "failure": null,
           "grade": {
             "passed": true,
             "review_required": false,
@@ -296,6 +299,7 @@
           "trial": 2,
           "fixture_seed": 528843486478785,
           "status": "completed",
+          "failure": null,
           "grade": {
             "passed": true,
             "review_required": false,
@@ -348,6 +352,7 @@
           "trial": 2,
           "fixture_seed": 290914929996477,
           "status": "completed",
+          "failure": null,
           "grade": {
             "passed": false,
             "review_required": false,
@@ -407,6 +412,7 @@
           "trial": 2,
           "fixture_seed": 126764423305527,
           "status": "completed",
+          "failure": null,
           "grade": {
             "passed": true,
             "review_required": false,
@@ -457,6 +463,7 @@
           "trial": 1,
           "fixture_seed": 174126185398698,
           "status": "completed",
+          "failure": null,
           "grade": {
             "passed": true,
             "review_required": false,
@@ -507,6 +514,7 @@
           "trial": 1,
           "fixture_seed": 439797697076086,
           "status": "completed",
+          "failure": null,
           "grade": {
             "passed": true,
             "review_required": false,
@@ -569,6 +577,7 @@
           "trial": 1,
           "fixture_seed": 174126185398698,
           "status": "completed",
+          "failure": null,
           "grade": {
             "passed": true,
             "review_required": false,
@@ -612,6 +621,147 @@
             "multiple_candidate_bundles": 0,
             "semantic_or_causal_validation": false
           }
+        },
+        {
+          "model": "deepseek-v4-pro",
+          "case": "dependency_route",
+          "trial": 2,
+          "fixture_seed": 290914929996477,
+          "status": "completed",
+          "failure": null,
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "read_file",
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "read_file",
+              "review_agent",
+              "review_agent"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 528.244,
+          "configuration": {
+            "provider": {
+              "timeout": 60,
+              "total_timeout": 300,
+              "progress_timeout": 60,
+              "first_program_timeout": 240,
+              "max_json_whitespace": 2048,
+              "stream": true,
+              "stream_fallback": true,
+              "allow_insecure_http": false,
+              "reasoning_effort": "low",
+              "thinking": "enabled",
+              "response_format": "json_object"
+            },
+            "compiler": {
+              "max_output_tokens": 24000,
+              "max_repairs": 1,
+              "compilation_timeout": 300
+            },
+            "tool_schema_version": 2
+          },
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 12,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-v4-pro",
+          "case": "dependency_route",
+          "trial": 1,
+          "fixture_seed": 439797697076086,
+          "status": "needs_program",
+          "failure": {
+            "code": "model_transport",
+            "next_action": "Check endpoint and model availability; a new compilation remains charged and may have unknown usage.",
+            "effects_replayed": false,
+            "http_status": 402
+          },
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": false,
+            "answer_correct": false,
+            "evidence_integrity": false,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file",
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "review_agent",
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "read_file"
+            ]
+          },
+          "first_pass": false,
+          "seconds": 541.505,
+          "configuration": {
+            "provider": {
+              "timeout": 60,
+              "total_timeout": 300,
+              "progress_timeout": 60,
+              "first_program_timeout": 240,
+              "max_json_whitespace": 2048,
+              "stream": true,
+              "stream_fallback": true,
+              "allow_insecure_http": false,
+              "reasoning_effort": "low",
+              "thinking": "enabled",
+              "response_format": "json_object"
+            },
+            "compiler": {
+              "max_output_tokens": 24000,
+              "max_repairs": 1,
+              "compilation_timeout": 300
+            },
+            "tool_schema_version": 2
+          },
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 11,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "pagination",
+          "trial": 2,
+          "fixture_seed": 528843486478785,
+          "status": "not_run",
+          "failure": null,
+          "grade": {
+            "passed": null,
+            "runtime_completed": false,
+            "review_required": false
+          },
+          "first_pass": null,
+          "seconds": 0,
+          "configuration": null,
+          "mechanism_observations": null
         }
       ]
     },
@@ -2007,11 +2157,11 @@
   ],
   "usage_accounting": "Recorded aggregate parent + worker budgets, once per case. Unknown-usage calls and reserved output prevent exact billed token/currency claims. No verified currency bill available. A separate minimal connectivity completion used 9 input and 1 output token.",
   "grand_recorded_usage": {
-    "model_calls": 126,
-    "tool_calls": 162,
-    "input_tokens": 1283762,
-    "output_tokens": 787824,
-    "unknown_usage_calls": 2
+    "model_calls": 140,
+    "tool_calls": 185,
+    "input_tokens": 1453871,
+    "output_tokens": 941647,
+    "unknown_usage_calls": 3
   },
   "verification": {
     "source": {
@@ -2034,5 +2184,36 @@
     },
     "ruff": "passed",
     "pip_check": "passed"
+  },
+  "live_blocker": {
+    "http_status": 402,
+    "model": "deepseek-v4-pro",
+    "case": "dependency_route",
+    "trial": 1,
+    "case_index": 11,
+    "effects_replayed": false,
+    "subsequent_requests": "stopped",
+    "queued_release_audit": "cancelled before start",
+    "revision_subsystem_probe": "prepared but not run",
+    "retry_requires": "account access restored and explicit clearance of the access-denial stop"
+  },
+  "followup_code_sha": "4e29789",
+  "followup_changes": [
+    "Versioned complete worker result and observed table cell types; legacy sessions retain identity",
+    "Bounded real revision-state shapes plus explicit host-authored syntax example; no new semantic gate",
+    "Offline historical/current EXTEND PASS and PRESERVE rejection; live verification blocked"
+  ],
+  "followup_verification": {
+    "code_sha": "4e29789",
+    "full_source": {
+      "tests_run": 308,
+      "skipped": 1,
+      "passed": true,
+      "seconds": 200.61,
+      "note": "Followed by 43 passing targeted tests for final operational-metadata changes"
+    },
+    "installed_wheel": "built; fresh-environment full suite running",
+    "independent_reviews": "interface and revision-state changes reviewed; no blocking findings",
+    "ruff": "passed"
   }
 }
