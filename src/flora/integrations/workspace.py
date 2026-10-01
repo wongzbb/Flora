@@ -29,7 +29,7 @@ import uuid
 from pathlib import Path
 
 from flora.integrations.tools import ToolSpec
-from flora.support.errors import ValidationError
+from flora.support.errors import InterruptedEffect, ValidationError
 
 _PROTECTED = frozenset({".git", ".flora", ".openharness"})
 _WRITE_PREFIXES = (".flora-write-", ".openharness-write-")
@@ -57,6 +57,20 @@ def _schema(properties, required=()):
         "required": list(required),
         "additionalProperties": False,
     }
+
+
+@contextlib.contextmanager
+def _publication_guard():
+    """Do not report post-publication bookkeeping failures as safe action failures."""
+    state = {"published": False}
+    try:
+        yield state
+    except Exception as exc:
+        if state["published"]:
+            raise InterruptedEffect(
+                "File was published but finalization failed; inspect the actual file before continuing"
+            ) from exc
+        raise
 
 
 class WorkspaceTools:
@@ -452,7 +466,9 @@ class WorkspaceTools:
             raise ValidationError(
                 "expected_sha256 must be the full lowercase SHA-256 from read_file"
             )
-        with self._directory(parts[:-1], write_lock=True) as parent:
+        with _publication_guard() as publication, self._directory(
+            parts[:-1], write_lock=True
+        ) as parent:
             before_hash, mode = None, 0o600
             if not create:
                 previous, info = self._read(parent, parts[-1], self.max_file_bytes)
@@ -515,6 +531,7 @@ class WorkspaceTools:
                         if (latest_info.st_dev, latest_info.st_ino) != (info.st_dev, info.st_ino):
                             raise ValidationError("File identity changed before publish")
                         os.replace(temporary, parts[-1], src_dir_fd=parent, dst_dir_fd=parent)
+                    publication["published"] = True
                     os.fsync(parent)
                 except FileExistsError as exc:
                     raise ValidationError("create=True requires a nonexistent destination") from exc

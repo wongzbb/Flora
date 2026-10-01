@@ -102,16 +102,28 @@ def retain_newest(
         kept.append(record)
         total += added
     kept.reverse()
-    # Independent aggregate node/depth limits still apply. Drop complete oldest
-    # witnesses when repeating large structured inputs reaches that bound first.
-    while kept:
+    # Independent aggregate node/depth limits still apply. Validity is monotone
+    # over suffixes: removing records cannot increase bytes/nodes or introduce a
+    # depth/type/cycle violation. Find the first valid suffix without repeatedly
+    # traversing almost the same oversized list for each oldest-record eviction.
+    if kept:
         try:
-            encoded_size(kept, limit=max_bytes, resource=resource)
-            break
+            total = encoded_size(kept, limit=max_bytes, resource=resource)
         except (ResourceLimitExceeded, ValidationError):
-            del kept[0]
+            lower, upper = 1, len(kept)
+            total = 2  # the empty suffix is always valid
+            while lower < upper:
+                middle = (lower + upper) // 2
+                try:
+                    size = encoded_size(kept[middle:], limit=max_bytes, resource=resource)
+                except (ResourceLimitExceeded, ValidationError):
+                    lower = middle + 1
+                else:
+                    upper = middle
+                    total = size  # cache the size of the known-valid upper bound
+            kept = kept[upper:]
     return kept, {
         "dropped_records": len(records) - len(kept),
         "retained_records": len(kept),
-        "retained_bytes": encoded_size(kept, limit=max_bytes, resource=resource),
+        "retained_bytes": total,
     }

@@ -15,7 +15,7 @@ import zipfile
 from decimal import ROUND_HALF_EVEN, Decimal, InvalidOperation, localcontext
 from pathlib import Path, PurePosixPath
 
-from flora.integrations.workspace import WorkspaceTools
+from flora.integrations.workspace import WorkspaceTools, _publication_guard
 from flora.support.errors import InterruptedEffect, ValidationError
 
 from ._document_process import run_worker
@@ -104,7 +104,9 @@ class DocumentWorkspace(WorkspaceTools):
         if not isinstance(data, bytes) or len(data) > MAX_DOCUMENT:
             raise ValidationError("Binary artifact exceeds the 8 MiB limit")
         parts = self._parts(path)
-        with self._directory(parts[:-1], write_lock=True) as parent:
+        with _publication_guard() as publication, self._directory(
+            parts[:-1], write_lock=True
+        ) as parent:
             temporary = ".flora-write-" + uuid.uuid4().hex
             fd = os.open(
                 temporary,
@@ -124,6 +126,7 @@ class DocumentWorkspace(WorkspaceTools):
                     dst_dir_fd=parent,
                     follow_symlinks=False,
                 )
+                publication["published"] = True
                 os.fsync(parent)
             except FileExistsError:
                 raise ValidationError("Artifact already exists; select a new path") from None
@@ -537,7 +540,12 @@ class DocumentTools:
         result = self.files.write_file(
             path, text, expected_sha256=expected_sha256, create=expected_sha256 is None
         )
-        self.store.record_artifact(result["path"], result["sha256"], source_ids, self.task_key())
+        try:
+            self.store.record_artifact(result["path"], result["sha256"], source_ids, self.task_key())
+        except Exception as exc:
+            raise InterruptedEffect(
+                "Report was published but its artifact receipt could not be persisted; do not retry"
+            ) from exc
         return {
             **result,
             "source_ids": source_ids,
@@ -593,12 +601,17 @@ class DocumentTools:
             SimpleDocTemplate(stream).build(parts)
         else:
             raise ValidationError("Export extension must be .docx, .pdf or .xlsx")
-        result = self.files.create_bytes(output_path, stream.getvalue())
         sources = []
         for item in self.store.artifacts():
             if item["path"] == source_path and item["sha256"] == hashlib.sha256(raw).hexdigest():
                 sources = item["sources"]
-        self.store.record_artifact(
-            result["path"], result["sha256"], sources, self.task_key(), kind="export"
-        )
+        result = self.files.create_bytes(output_path, stream.getvalue())
+        try:
+            self.store.record_artifact(
+                result["path"], result["sha256"], sources, self.task_key(), kind="export"
+            )
+        except Exception as exc:
+            raise InterruptedEffect(
+                "Document was exported but its artifact receipt could not be persisted; do not retry"
+            ) from exc
         return result

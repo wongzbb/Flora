@@ -97,3 +97,9 @@ python -m unittest discover -s tests -q
 ```
 
 The regression suite uses deterministic providers and real local journals. Explicit `tests/live_*_probe.py` scripts call real model APIs with hidden key input and verify actual files, outputs, collaboration and diagnostic behavior. `live_reliability_probe.py` supports several model IDs and repeated holdout fixtures. Keep results outside the repository. Research findings require human review; runtime completion alone is never scored as task success.
+
+The latest [offline reliability hardening report](reports/RELIABILITY_HARDENING.md) separates
+fault regressions, task oracles and live-model evidence. The opt-in reliability
+probe adds eight seeded stress families, aggregate parent/worker accounting and
+explicit DeepSeek/GLM selection. Run `python -m tests.live_reliability_probe --help`
+for secure environment-based authentication and paired evaluation options.

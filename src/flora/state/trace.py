@@ -37,92 +37,95 @@ def _part_size(value, limit, resource):
     )
 
 
+def _apply_entry(records: list[dict], entry: dict, previous: str, seq: int) -> str:
+    """Verify one entry, then atomically update the privately owned reduction."""
+    if type(entry) is not dict or set(entry) != {
+        "seq",
+        "op",
+        "payload",
+        "previous_hash",
+        "hash",
+    }:
+        raise TraceIntegrityError("Invalid journal entry fields")
+    body = {k: v for k, v in entry.items() if k != "hash"}
+    if (
+        type(entry["seq"]) is not int
+        or entry["seq"] != seq
+        or entry["previous_hash"] != previous
+        or digest(body) != entry["hash"]
+    ):
+        raise TraceIntegrityError(f"Journal hash chain invalid at sequence {seq}")
+    p = entry["payload"]
+    if type(p) is not dict:
+        raise TraceIntegrityError("Journal payload must be an object")
+    if type(entry["op"]) is not str:
+        raise TraceIntegrityError("Journal operation must be a string")
+    if entry["op"] == "begin":
+        if set(p) != {"event_id", "tool", "args"}:
+            raise TraceIntegrityError("Invalid begin fields")
+        if (
+            type(p.get("event_id")) is not int
+            or p["event_id"] != len(records)
+            or any(x["status"] in {"pending", "interrupted_unknown"} for x in records)
+        ):
+            raise TraceIntegrityError("Invalid or overlapping pending event")
+        if (
+            not isinstance(p.get("tool"), str)
+            or not p["tool"]
+            or not isinstance(p.get("args"), dict)
+        ):
+            raise TraceIntegrityError("Invalid request record")
+        records.append(
+            {
+                "event_id": p["event_id"],
+                "tool": p["tool"],
+                "args": p["args"],
+                "status": "pending",
+                "anchor_epoch": len(records),
+                "anchor_digest": previous,
+                "previous_hash": previous,
+                "begin_hash": entry["hash"],
+            }
+        )
+    elif entry["op"] in {"settle", "resolve"}:
+        expected_fields = {"event_id", "outcome"} | (
+            {"reason"} if entry["op"] == "resolve" else set()
+        )
+        if set(p) != expected_fields:
+            raise TraceIntegrityError("Invalid settlement fields")
+        idx = p.get("event_id")
+        if not isinstance(idx, int) or isinstance(idx, bool) or not 0 <= idx < len(records):
+            raise TraceIntegrityError("Settlement event does not exist")
+        valid_prior = {"pending"} if entry["op"] == "settle" else {"pending", "interrupted_unknown"}
+        if records[idx]["status"] not in valid_prior:
+            raise TraceIntegrityError("Event already settled")
+        outcome = p.get("outcome", {})
+        try:
+            _validate_outcome(outcome)
+        except ValidationError as exc:
+            raise TraceIntegrityError("Invalid persisted effect outcome") from exc
+        if entry["op"] == "resolve" and (
+            outcome["status"] == "interrupted_unknown"
+            or not isinstance(p.get("reason"), str)
+            or not p["reason"].strip()
+        ):
+            raise TraceIntegrityError("Manual resolution requires provenance")
+        record = {**records[idx], **clone(outcome), "settlement_hash": entry["hash"]}
+        if entry["op"] == "resolve":
+            record["resolution_reason"] = p["reason"]
+        records[idx] = record
+    else:
+        raise TraceIntegrityError("Unknown journal operation")
+    return entry["hash"]
+
+
 def _reduce(entries: list[dict]) -> tuple[list[dict], str]:
     if type(entries) is not list:
         raise TraceIntegrityError("Journal entries must be a list")
     records: list[dict] = []
     previous = GENESIS
     for seq, entry in enumerate(entries):
-        if type(entry) is not dict or set(entry) != {
-            "seq",
-            "op",
-            "payload",
-            "previous_hash",
-            "hash",
-        }:
-            raise TraceIntegrityError("Invalid journal entry fields")
-        body = {k: v for k, v in entry.items() if k != "hash"}
-        if (
-            type(entry["seq"]) is not int
-            or entry["seq"] != seq
-            or entry["previous_hash"] != previous
-            or digest(body) != entry["hash"]
-        ):
-            raise TraceIntegrityError(f"Journal hash chain invalid at sequence {seq}")
-        p = entry["payload"]
-        if type(p) is not dict:
-            raise TraceIntegrityError("Journal payload must be an object")
-        if type(entry["op"]) is not str:
-            raise TraceIntegrityError("Journal operation must be a string")
-        if entry["op"] == "begin":
-            if set(p) != {"event_id", "tool", "args"}:
-                raise TraceIntegrityError("Invalid begin fields")
-            if (
-                type(p.get("event_id")) is not int
-                or p["event_id"] != len(records)
-                or any(x["status"] in {"pending", "interrupted_unknown"} for x in records)
-            ):
-                raise TraceIntegrityError("Invalid or overlapping pending event")
-            if (
-                not isinstance(p.get("tool"), str)
-                or not p["tool"]
-                or not isinstance(p.get("args"), dict)
-            ):
-                raise TraceIntegrityError("Invalid request record")
-            records.append(
-                {
-                    "event_id": p["event_id"],
-                    "tool": p["tool"],
-                    "args": p["args"],
-                    "status": "pending",
-                    "anchor_epoch": len(records),
-                    "anchor_digest": previous,
-                    "previous_hash": previous,
-                    "begin_hash": entry["hash"],
-                }
-            )
-        elif entry["op"] in {"settle", "resolve"}:
-            expected_fields = {"event_id", "outcome"} | (
-                {"reason"} if entry["op"] == "resolve" else set()
-            )
-            if set(p) != expected_fields:
-                raise TraceIntegrityError("Invalid settlement fields")
-            idx = p.get("event_id")
-            if not isinstance(idx, int) or isinstance(idx, bool) or not 0 <= idx < len(records):
-                raise TraceIntegrityError("Settlement event does not exist")
-            valid_prior = (
-                {"pending"} if entry["op"] == "settle" else {"pending", "interrupted_unknown"}
-            )
-            if records[idx]["status"] not in valid_prior:
-                raise TraceIntegrityError("Event already settled")
-            outcome = p.get("outcome", {})
-            try:
-                _validate_outcome(outcome)
-            except ValidationError as exc:
-                raise TraceIntegrityError("Invalid persisted effect outcome") from exc
-            records[idx].update(clone(outcome))
-            records[idx]["settlement_hash"] = entry["hash"]
-            if entry["op"] == "resolve":
-                if (
-                    outcome["status"] == "interrupted_unknown"
-                    or not isinstance(p.get("reason"), str)
-                    or not p["reason"].strip()
-                ):
-                    raise TraceIntegrityError("Manual resolution requires provenance")
-                records[idx]["resolution_reason"] = p["reason"]
-        else:
-            raise TraceIntegrityError("Unknown journal operation")
-        previous = entry["hash"]
+        previous = _apply_entry(records, entry, previous, seq)
     return records, previous
 
 
@@ -161,25 +164,38 @@ class MemoryTrace:
                 "Journal and checkpoint limits must leave 4096 bytes within the 16 MiB JSON limit"
             )
         self._entries: list[dict] = []
+        # One verified reduction, bounded by the journal's storage limits. These
+        # values never escape without cloning; public inputs are cloned as well.
+        self._records: list[dict] = []
+        self._digest = GENESIS
         self._checkpoint: dict | None = None
         self._lock = threading.RLock()
 
+    def _refresh(self) -> None:
+        """Memory state is exclusively owned; durable stores verify changes here."""
+
     def journal(self) -> list[dict]:
         with self._lock:
+            self._refresh()
             return clone(self._entries)
 
     @property
     def records(self) -> list[dict]:
         with self._lock:
-            return _reduce(self.journal())[0]
+            self._refresh()
+            return clone(self._records)
 
     @property
     def epoch(self) -> int:
-        return len(self.records)
+        with self._lock:
+            self._refresh()
+            return len(self._records)
 
     @property
     def digest(self) -> str:
-        return _reduce(self.journal())[1]
+        with self._lock:
+            self._refresh()
+            return self._digest
 
     def _entry(self, op: str, payload: dict) -> dict:
         body = {
@@ -196,7 +212,12 @@ class MemoryTrace:
     def _append(self, op: str, payload: dict) -> None:
         entry = self._entry(op, payload)
         self._check_entry_capacity(entry)
+        self._digest = _apply_entry(self._records, entry, self._digest, len(self._entries))
         self._entries.append(entry)
+
+    def _admission_overhead(self) -> int:
+        """Extra persisted bytes absent from the canonical in-memory prefix."""
+        return 0
 
     def reserve_effect(self, tool: str, args: dict, *, max_output_bytes: int) -> None:
         """Check worst-case admission capacity before the host action is called.
@@ -207,7 +228,7 @@ class MemoryTrace:
         """
         validate_limit(max_output_bytes, "max_output_bytes", minimum=1)
         with self._lock:
-            self.journal()  # refresh a durable store before sizing the actual prefix
+            self._refresh()  # size the actual durable prefix without copying it
             begin = self._entry("begin", {"event_id": self.epoch, "tool": tool, "args": args})
             body = {
                 "seq": len(self._entries) + 1,
@@ -244,6 +265,7 @@ class MemoryTrace:
                 encoded_size([*self._entries, begin, settle], resource="real journal")
                 - 4
                 + max(max_output_bytes, 16_384)
+                + self._admission_overhead()
             )
             if required > self.max_journal_bytes:
                 raise ResourceLimitExceeded(
@@ -253,27 +275,29 @@ class MemoryTrace:
     def check_settlement_capacity(self, event_id: int, outcome: dict) -> None:
         """Read-only storage check; a completed but unstoreable result is UNKNOWN."""
         with self._lock:
-            self.journal()
+            self._refresh()
             self._check_entry_capacity(
                 self._entry("settle", {"event_id": event_id, "outcome": outcome})
             )
 
     def begin(self, tool: str, args: dict, *, expected_epoch: int, expected_digest: str) -> int:
         with self._lock:
-            if self.epoch != expected_epoch or self.digest != expected_digest:
+            self._refresh()
+            if len(self._records) != expected_epoch or self._digest != expected_digest:
                 raise StaleAnchor("Request was produced against another real history")
-            if any(r["status"] in {"pending", "interrupted_unknown"} for r in self.records):
+            if any(r["status"] in {"pending", "interrupted_unknown"} for r in self._records):
                 raise InterruptedEffect("Unresolved external effect blocks new effects")
             if not isinstance(tool, str) or not tool or not isinstance(args, dict):
                 raise ValidationError("Invalid effect request")
-            event_id = self.epoch
+            event_id = len(self._records)
             self._append("begin", {"event_id": event_id, "tool": tool, "args": clone(args)})
             return event_id
 
     def settle(self, event_id: int, outcome: dict) -> dict:
         with self._lock:
             _validate_outcome(outcome)
-            records = self.records
+            self._refresh()
+            records = self._records
             if (
                 not isinstance(event_id, int)
                 or isinstance(event_id, bool)
@@ -282,7 +306,7 @@ class MemoryTrace:
             ):
                 raise ValidationError("No pending event to settle")
             self._append("settle", {"event_id": event_id, "outcome": outcome})
-            return self.records[event_id]
+            return clone(self._records[event_id])
 
     def resolve(self, event_id: int, outcome: dict, *, reason: str) -> dict:
         """Operator supplies known outcome; never executes a tool or assumes rollback."""
@@ -294,7 +318,8 @@ class MemoryTrace:
                 or not reason.strip()
             ):
                 raise ValidationError("Resolution needs a known outcome and a reason")
-            records = self.records
+            self._refresh()
+            records = self._records
             if (
                 not isinstance(event_id, int)
                 or isinstance(event_id, bool)
@@ -303,7 +328,7 @@ class MemoryTrace:
             ):
                 raise ValidationError("Event is not unresolved")
             self._append("resolve", {"event_id": event_id, "outcome": outcome, "reason": reason})
-            return self.records[event_id]
+            return clone(self._records[event_id])
 
     def save_checkpoint(self, data: dict) -> None:
         with self._lock:
@@ -339,10 +364,10 @@ class MemoryTrace:
             raise TraceIntegrityError("Invalid trace storage limits")
         obj = cls(**limits)
         _part_size(data["journal"], obj.max_journal_bytes, "real journal")
-        _reduce(data["journal"])
         if data.get("checkpoint") is not None:
             _part_size(data["checkpoint"], obj.max_checkpoint_bytes, "runtime checkpoint")
         obj._entries = clone(data["journal"])
+        obj._records, obj._digest = _reduce(obj._entries)
         obj._checkpoint = clone(data.get("checkpoint"))
         return obj
 
@@ -379,49 +404,107 @@ class SQLiteTrace(MemoryTrace):
         self._db.execute(
             "CREATE TABLE IF NOT EXISTS checkpoint (id INTEGER PRIMARY KEY CHECK(id=1), data TEXT NOT NULL)"
         )
+        self._verified_version: tuple[int, int, int] | None = None
         try:
             self._refresh()
-            _reduce(self._entries)
         except BaseException:
             self._db.close()
             raise
 
+    def _storage_version(self) -> tuple[int, int, int]:
+        # data_version changes on commits by other connections, including edits
+        # to old rows. total_changes also catches writes on this connection.
+        return (
+            self._db.execute("PRAGMA data_version").fetchone()[0],
+            self._db.total_changes,
+            self.max_journal_bytes,
+        )
+
     def _refresh(self) -> None:
-        byte_count, rows = self._db.execute(
-            "SELECT COALESCE(SUM(length(CAST(entry AS BLOB))),0), COUNT(*) FROM journal"
-        ).fetchone()
-        required = byte_count + max(0, rows - 1) + 2
+        version = self._storage_version()
+        if version == self._verified_version:
+            return
+        own_snapshot = not self._db.in_transaction
+        if own_snapshot:
+            self._db.execute("BEGIN")
+        try:
+            # Capture BEFORE reading, never after: an external commit during a
+            # read must not mark an older snapshot as verified at the new version.
+            version = self._storage_version()
+            byte_count, rows = self._db.execute(
+                "SELECT COALESCE(SUM(length(CAST(entry AS BLOB))),0), COUNT(*) FROM journal"
+            ).fetchone()
+            required = byte_count + max(0, rows - 1) + 2
+            if required > self.max_journal_bytes:
+                raise ResourceLimitExceeded("real journal", self.max_journal_bytes, required)
+            entries = []
+            for expected, (row_seq, encoded) in enumerate(
+                self._db.execute("SELECT seq, entry FROM journal ORDER BY seq")
+            ):
+                if type(row_seq) is not int or row_seq != expected:
+                    raise TraceIntegrityError("SQLite journal sequence is not contiguous from zero")
+                entries.append(json.loads(encoded))
+            canonical_bytes = _part_size(entries, self.max_journal_bytes, "real journal")
+            records, trace_digest = _reduce(entries)
+            if own_snapshot:
+                self._db.execute("COMMIT")
+        except BaseException:
+            if own_snapshot and self._db.in_transaction:
+                self._db.execute("ROLLBACK")
+            raise
+        # Publish only a fully validated, consistent snapshot. Changed stores
+        # get FULL verification: inspecting just the suffix would miss tampering.
+        self._entries, self._records, self._digest = entries, records, trace_digest
+        self._stored_journal_bytes = required
+        self._canonical_journal_bytes = canonical_bytes
+        self._verified_version = version
+
+    def _admission_overhead(self) -> int:
+        # Reserve both the observation and fallback against physical storage,
+        # too. Otherwise padded rows could admit a host call whose outcome (even
+        # UNKNOWN) cannot fit. Negative overhead never relaxes canonical limits.
+        return max(0, self._stored_journal_bytes - self._canonical_journal_bytes)
+
+    def _check_entry_capacity(self, entry: dict) -> None:
+        super()._check_entry_capacity(entry)
+        # Existing rows need not be canonical JSON (for example, whitespace
+        # padding). Preserve the durable raw-byte limit as well as the logical
+        # canonical limit when extending a verified cached prefix.
+        required = (
+            self._stored_journal_bytes
+            + encoded_size(entry, resource="real journal")
+            + bool(self._entries)
+        )
         if required > self.max_journal_bytes:
             raise ResourceLimitExceeded("real journal", self.max_journal_bytes, required)
-        entries = []
-        for expected, (row_seq, encoded) in enumerate(
-            self._db.execute("SELECT seq, entry FROM journal ORDER BY seq")
-        ):
-            if type(row_seq) is not int or row_seq != expected:
-                raise TraceIntegrityError("SQLite journal sequence is not contiguous from zero")
-            entries.append(json.loads(encoded))
-        self._entries = entries
-        _part_size(self._entries, self.max_journal_bytes, "real journal")
-
-    def journal(self) -> list[dict]:
-        with self._lock:
-            self._refresh()
-            return clone(self._entries)
 
     def _append(self, op: str, payload: dict) -> None:
         self._refresh()
-        body = {
-            "seq": len(self._entries),
-            "op": op,
-            "payload": clone(payload),
-            "previous_hash": _reduce(self._entries)[1],
-        }
-        entry = {**body, "hash": digest(body)}
+        entry = self._entry(op, payload)
         self._check_entry_capacity(entry)
-        self._db.execute(
-            "INSERT INTO journal(seq,entry) VALUES (?,?)", (entry["seq"], canonical_json(entry))
+        changes = self._db.total_changes
+        encoded = canonical_json(entry)
+        cursor = self._db.execute(
+            "INSERT INTO journal(seq,entry) VALUES (?,?)", (entry["seq"], encoded)
         )
+        if cursor.rowcount != 1 or self._db.total_changes != changes + 1:
+            # Unexpected triggers must not make the cache authoritative over
+            # stored rows. Reverify all rows, including the just-inserted entry.
+            self._verified_version = None
+            self._refresh()
+            if len(self._entries) <= entry["seq"] or self._entries[entry["seq"]] != entry:
+                raise TraceIntegrityError("SQLite did not persist the admitted journal entry")
+            return
+        self._digest = _apply_entry(self._records, entry, self._digest, len(self._entries))
+        added_bytes = len(encoded.encode("utf-8")) + bool(self._entries)
+        self._stored_journal_bytes += added_bytes
+        self._canonical_journal_bytes += added_bytes
         self._entries.append(entry)
+        self._verified_version = (
+            self._verified_version[0],
+            self._db.total_changes,
+            self.max_journal_bytes,
+        )
 
     def _transaction(self, method, *args, **kwargs):
         with self._lock:
@@ -432,7 +515,11 @@ class SQLiteTrace(MemoryTrace):
                 self._db.execute("COMMIT")
                 return result
             except BaseException:
-                self._db.execute("ROLLBACK")
+                # total_changes is not rolled back. Never retain a reduction
+                # that includes an insertion whose transaction did not commit.
+                self._verified_version = None
+                if self._db.in_transaction:
+                    self._db.execute("ROLLBACK")
                 self._refresh()
                 raise
 
@@ -454,10 +541,24 @@ class SQLiteTrace(MemoryTrace):
     def save_checkpoint(self, data: dict) -> None:
         with self._lock:
             _part_size(data, self.max_checkpoint_bytes, "runtime checkpoint")
-            self._db.execute(
+            changes = self._db.total_changes
+            cursor = self._db.execute(
                 "INSERT INTO checkpoint(id,data) VALUES(1,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data",
                 (canonical_json(data),),
             )
+            if (
+                self._verified_version is not None
+                and cursor.rowcount == 1
+                and self._verified_version[1] == changes
+                and self._db.total_changes == changes + 1
+            ):
+                # Only the checkpoint changed locally. Keep the OLD external
+                # version so a concurrent journal commit still invalidates us.
+                self._verified_version = (
+                    self._verified_version[0],
+                    self._db.total_changes,
+                    self._verified_version[2],
+                )
 
     def load_checkpoint(self) -> dict | None:
         with self._lock:

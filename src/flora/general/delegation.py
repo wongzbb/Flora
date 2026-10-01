@@ -165,11 +165,21 @@ delegate. The parent must inspect your result; never claim it has been verified.
                 "budget": {},
             }
             self._save()
-            self.futures[ident] = self.pool.submit(self._run, ident)
+            self._submit(ident)
         self.owner._child_event(
             {"kind": "subagent_spawned", "agent_id": ident, "name": name, "status": "queued"}
         )
         return {"agent_id": ident, "name": name, "status": "queued", "read_only": True}
+
+    def _submit(self, ident):
+        """Submit a validated child while holding the registry lock."""
+        self.futures[ident] = self.pool.submit(self._run, ident)
+
+    def _prepare_resume(self, ident):
+        """Invalidate subclass receipts only after all resume guards have passed."""
+
+    def _pause_pending(self):
+        """Settle subclass work that has not been dispatched to the pool."""
 
     def _event(self, ident, event):
         self.owner._child_event(
@@ -316,7 +326,8 @@ delegate. The parent must inspect your result; never claim it has been verified.
         if type(timeout) is not int or not 0 <= timeout <= 60:
             raise ValidationError("Wait timeout must be between 0 and 60 seconds")
         ids = self._ids(agent_ids)
-        futures = [self.futures[x] for x in ids if x in self.futures]
+        with self.lock:
+            futures = [self.futures[x] for x in ids if x in self.futures]
         if futures:
             wait(futures, timeout=timeout)
         with self.lock:
@@ -364,12 +375,19 @@ delegate. The parent must inspect your result; never claim it has been verified.
                 raise ValidationError("Child is already running")
             if self.records[agent_id]["status"] == "completed":
                 return self.read_agent(agent_id)
+            if self.records[agent_id]["status"] == "interrupted_unknown":
+                raise ValidationError(
+                    "Resolve the unknown effect with external evidence before resuming this worker"
+                )
+            self._prepare_resume(agent_id)
             self._update(agent_id, status="queued", detail="Explicit resume requested")
-            self.futures[agent_id] = self.pool.submit(self._run, agent_id)
+            self._submit(agent_id)
         return {"agent_id": agent_id, "status": "queued"}
 
     def request_pause(self):
-        self.stop.set()
+        with self.lock:
+            self.stop.set()
+            self._pause_pending()
 
     def clear_pause(self):
         self.stop.clear()
@@ -377,7 +395,7 @@ delegate. The parent must inspect your result; never claim it has been verified.
     def close(self):
         with self.lock:
             self.closed = True
-            self.stop.set()
+            self.request_pause()
         self.pool.shutdown(wait=True)
 
     def specs(self):

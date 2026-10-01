@@ -177,6 +177,9 @@ class Runtime:
         self._last_inserted_diagnostic = False
         self._run_lock = threading.Lock()
         self._completed: dict | None = None
+        # Operational recovery accounting is separate from model-owned memory.
+        # Scheduling slices and reopen must not grant another recovery attempt.
+        self._error_recovery: dict | None = None
         if self.compiler is not None and hasattr(self.compiler, "set_accounting"):
             if hasattr(self.compiler, "max_programs"):
                 self.compiler.max_programs = min(
@@ -712,6 +715,7 @@ class Runtime:
             "diagnostic_calls": self.diagnostic_calls,
             "last_inserted_diagnostic": self._last_inserted_diagnostic,
             "completed": self._completed,
+            "error_recovery": self._error_recovery,
             "retention": self.retention,
             "requires_completion_guard": self.completion_guard is not None,
             "reuse": self.reuse.to_dict(),
@@ -837,7 +841,6 @@ class Runtime:
             if bundle is not None:
                 self.install_bundle(bundle)
             start_steps = self.steps
-            error_recoveries = {}
             while self.config.max_steps is None or self.steps < self.config.max_steps:
                 if slice_steps is not None and self.steps - start_steps >= slice_steps:
                     return self._result(
@@ -1051,16 +1054,17 @@ class Runtime:
                             for r in recent
                         ]
                         key = signatures[-1]
-                        marker = {"signature": key, "epoch": self.trace.epoch}
+                        marker = {"signature": key, "epoch": self.trace.epoch, "stalled": False}
                         request_matches = signature == canonical_json(
                             {"tool": recent[-1]["tool"], "args": recent[-1]["args"]}
                         )
                         if (
                             request_matches
                             and len(set(signatures)) == 1
-                            and self.memory.get("__flora_error_recovery__") != marker
+                            and self._error_recovery != marker
                         ):
-                            self.memory["__flora_error_recovery__"] = marker
+                            stalled = (self._error_recovery or {}).get("signature") == key
+                            self._error_recovery = {**marker, "stalled": stalled}
                             for ident, boundary in boundaries.items():
                                 if (
                                     boundary.kind == "effect"
@@ -1075,12 +1079,11 @@ class Runtime:
                                 request_digest=key,
                                 effects_replayed=False,
                             )
-                            if error_recoveries.get(key, 0):
+                            if stalled:
                                 return self._result(
                                     "stalled",
                                     "Repeated identical observed tool errors after a recovery compilation; change the strategy or input",
                                 )
-                            error_recoveries[key] = 1
                             self.steps += 1
                             self._save()
                             continue
@@ -1112,6 +1115,21 @@ class Runtime:
                     before_dispatch=lambda event_id: self._save(),
                 )
                 self.steps += 1
+                if self._error_recovery and (
+                    receipt["status"] == "returned"
+                    or (
+                        receipt["status"] == "raised"
+                        and digest(
+                            {
+                                "tool": receipt["tool"],
+                                "args": receipt["args"],
+                                "error": receipt["error"],
+                            }
+                        )
+                        != self._error_recovery["signature"]
+                    )
+                ):
+                    self._error_recovery = None
                 self._report(
                     "tool_result",
                     tool=chosen.request["tool"],
@@ -1230,9 +1248,32 @@ class Runtime:
         obj.diagnostic_calls = checkpoint["diagnostic_calls"]
         obj._last_inserted_diagnostic = checkpoint["last_inserted_diagnostic"]
         obj._completed = clone(checkpoint.get("completed"))
+        recovery = checkpoint.get("error_recovery")
+        if recovery is not None and (
+            not isinstance(recovery, dict)
+            or set(recovery) != {"signature", "epoch", "stalled"}
+            or not isinstance(recovery.get("signature"), str)
+            or len(recovery["signature"]) != 64
+            or any(c not in "0123456789abcdef" for c in recovery["signature"])
+            or type(recovery.get("epoch")) is not int
+            or not 0 <= recovery["epoch"] <= trace.epoch
+            or type(recovery.get("stalled")) is not bool
+        ):
+            raise ValidationError("Invalid persisted error recovery state")
+        obj._error_recovery = clone(recovery)
         # A checkpoint may be pre-dispatch while a real receipt was committed.
         # Resume only exact matching stored events, never resend them.
         records = trace.records
+        if recovery and any(
+            r["status"] == "returned"
+            or (
+                r["status"] == "raised"
+                and digest({"tool": r["tool"], "args": r["args"], "error": r["error"]})
+                != recovery["signature"]
+            )
+            for r in records[recovery["epoch"] :]
+        ):
+            obj._error_recovery = None
         # Admission is durable before the pre-dispatch budget checkpoint. A
         # crash in that interval must not refund an already-admitted attempt.
         obj.budget.tool_calls = max(obj.budget.tool_calls, len(records))

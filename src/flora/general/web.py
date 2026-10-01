@@ -345,8 +345,8 @@ class WebTools:
         if payload is not None:
             headers["Content-Type"] = "application/json"
         result = self.client.request(url, method=method, headers=headers, body=payload)
-        text = decode_text(result["body"], result["headers"].get("content-type", "text/plain"))
         try:
+            text = decode_text(result["body"], result["headers"].get("content-type", "text/plain"))
             source = self.store.record(
                 origin=url, title=f"{method} {service}/{path}", text=text, raw=result["body"]
             )

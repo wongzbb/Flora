@@ -1,0 +1,112 @@
+{
+  "date": "2026-10-01",
+  "status": "offline_hardening_awaiting_live_deepseek_glm_acceptance",
+  "repository": "wongzbb/Flora",
+  "branch": "general-agent",
+  "baseline_commit": "e0e6cb7afe7b896053eaed5112f425b0d367d782",
+  "environment": {
+    "platform": "Linux",
+    "python": "3.12.14"
+  },
+  "validation": {
+    "baseline_unittest": {
+      "total": 189,
+      "passed": 188,
+      "skipped": 1,
+      "failed": 0,
+      "seconds": 217.872
+    },
+    "final_source_unittest": {
+      "total": 278,
+      "passed": 277,
+      "skipped": 1,
+      "failed": 0,
+      "seconds": 170.872
+    },
+    "clean_installed_wheel_focused_regressions": {
+      "total": 89,
+      "passed": 89,
+      "skipped": 0,
+      "failed": 0,
+      "seconds": 10.693
+    },
+    "changed_runtime_files_match_installed_wheel": true,
+    "clean_install_general_dependencies": "passed",
+    "pip_check": "passed",
+    "ruff_check_src_tests": "passed",
+    "compileall_src_tests": "passed",
+    "git_diff_check": "passed",
+    "installed_cli_help": "passed",
+    "installed_offline_cli_demos": {
+      "calendar": "completed",
+      "pagination": "completed"
+    },
+    "skipped_test": "macOS-only native memory-reader check on Linux",
+    "live_model_calls": 0
+  },
+  "independent_review": {
+    "core_and_runtime": "no_remaining_blocking_findings",
+    "evaluation_oracles": "no_remaining_blocking_findings",
+    "reproduced_and_fixed": [
+      "stranded dependent futures after registry failures",
+      "unknown-outcome recovery allowance refund",
+      "padded SQLite settlement reservation gap",
+      "workspace path alias grading and forbidden-read bypass",
+      "empty-directory mutation invisibility",
+      "no-match forbidden-scope search",
+      "legacy transport breaker omission",
+      "runtime status lost on evaluator error",
+      "incomplete research success exit",
+      "empty/partial evaluation budget defaults"
+    ]
+  },
+  "evaluation": {
+    "families": [
+      "reconcile",
+      "source_conflict",
+      "pagination",
+      "long_document",
+      "nested_schema",
+      "schema_transition",
+      "edit_preserve",
+      "dependency_route"
+    ],
+    "seeded_synthetic_families": true,
+    "live_family_acceptance_performed": false,
+    "permitted_model_families": [
+      "DeepSeek",
+      "GLM"
+    ],
+    "credential_variable_example": "FLORA_API_KEY",
+    "real_api_blocker": "No supported secure credential execution route for the supplied non-HTTPS endpoint",
+    "grader_is_runtime_gate": false,
+    "spontaneous_contract_diagnostic_synthesis_verified": false,
+    "dependency_causal_use_verified": false
+  },
+  "local_microbenchmarks": [
+    {
+      "name": "SQLite 70 write pairs",
+      "baseline_seconds": 2.23,
+      "improved_seconds": 0.15
+    },
+    {
+      "name": "SQLite 50 read triples",
+      "baseline_seconds": 0.93,
+      "improved_seconds": 0.04
+    },
+    {
+      "name": "128 large optional contract witnesses",
+      "baseline_median_seconds": 6.464,
+      "improved_median_seconds": 1.344,
+      "retained_records": 72
+    },
+    {
+      "name": "128 ordinary optional reports",
+      "baseline_median_seconds": 0.003929,
+      "improved_median_seconds": 0.002202
+    }
+  ],
+  "benchmark_scope": "Local deterministic mechanism measurements, not model latency or general-task competence; execution conditions are not a controlled production benchmark",
+  "compatibility": "Existing tool schemas/descriptions remain pinned; legacy reviews without state digests require recollection and re-review",
+  "readiness_claim": false
+}

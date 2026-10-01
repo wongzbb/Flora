@@ -162,8 +162,13 @@ class BrowserTools:
         page.on("popup", lambda popup: popup.close())
         tab = "tab-" + uuid.uuid4().hex[:12]
         self.pages[tab] = page
-        page.goto(url, wait_until="domcontentloaded")
-        return self._snapshot(tab)
+        try:
+            page.goto(url, wait_until="domcontentloaded")
+            return self._snapshot(tab)
+        except Exception as exc:
+            raise InterruptedEffect(
+                "Browser navigation was dispatched but its observation failed; do not retry"
+            ) from exc
 
     def _snapshot(self, tab):
         page = self._page(tab)
@@ -218,11 +223,16 @@ class BrowserTools:
         tab, handle = self.handles[ref]
         if not handle.evaluate("element => element.isConnected"):
             raise ValidationError("Element was detached; take a new snapshot")
-        if value is None:
-            handle.click(no_wait_after=True)
-        else:
-            handle.fill(value)
-        self._invalidate(tab)
+        try:
+            if value is None:
+                handle.click(no_wait_after=True)
+            else:
+                handle.fill(value)
+            self._invalidate(tab)
+        except Exception as exc:
+            raise InterruptedEffect(
+                "Browser action was dispatched but its outcome could not be confirmed; do not retry"
+            ) from exc
         # A receipt acknowledges this action only. A new snapshot observes the resulting page.
         return {
             "tab": tab,
@@ -238,9 +248,14 @@ class BrowserTools:
         result = self.files.create_bytes(
             path, page.screenshot(full_page=False, timeout=self.policy.timeout * 1000)
         )
-        self.store.record_artifact(
-            result["path"], result["sha256"], [], self.task_key(), kind="screenshot"
-        )
+        try:
+            self.store.record_artifact(
+                result["path"], result["sha256"], [], self.task_key(), kind="screenshot"
+            )
+        except Exception as exc:
+            raise InterruptedEffect(
+                "Screenshot was published but its artifact receipt could not be persisted"
+            ) from exc
         return result
 
     def _close_tab(self, tab):

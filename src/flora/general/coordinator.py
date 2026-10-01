@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from concurrent.futures import Future
 from copy import copy, deepcopy
 from datetime import UTC, datetime
 
@@ -152,7 +153,7 @@ and evidence; do not discard required goals to bypass completion checks.
                 "read_windows": [],
             }
             self._save()
-            self.futures[ident] = self.pool.submit(self._run, ident)
+            self._submit(ident)
         self.owner._child_event(
             {
                 "kind": "subagent_spawned",
@@ -163,6 +164,84 @@ and evidence; do not discard required goals to bypass completion checks.
             }
         )
         return {"agent_id": ident, "name": name, "status": "queued", "read_only": True}
+
+    def _submit(self, ident):
+        # A logical future covers both dependency waiting and worker execution.
+        # Never spend a bounded pool slot waiting for another queued worker: on
+        # recovery its prerequisite may be later in that same pool's queue.
+        self.futures[ident] = Future()
+        self._dispatch_ready()
+
+    def _pause_pending(self):
+        self._dispatch_ready()
+
+    def _dispatch_ready(self):
+        with self.lock:
+            for ident, future in list(self.futures.items()):
+                if future.done() or future.running():
+                    continue
+                row = self.records[ident]
+                if self.stop.is_set() or self.closed:
+                    self._settle(ident, future, status="paused", detail="Paused before dispatch")
+                    continue
+                deps = [self.records[dep] for dep in row["depends_on"]]
+                if any(dep["status"] in {"queued", "running"} for dep in deps):
+                    continue
+                failed = next((dep for dep in deps if dep["status"] != "completed"), None)
+                if failed:
+                    self._settle(
+                        ident,
+                        future,
+                        status="blocked",
+                        detail="Dependency did not complete; resume it before this worker",
+                        failure={"code": "dependency_incomplete", "agent_id": failed["id"]},
+                    )
+                    continue
+                if future.set_running_or_notify_cancel():
+                    try:
+                        self.pool.submit(self._run_scheduled, ident, future)
+                    except Exception as exc:
+                        self._scheduled_failure(ident, future, exc)
+
+    def _settle(self, ident, future, *, error=None, **fields):
+        try:
+            self._update(ident, **fields)
+        except BaseException as exc:
+            # A registry/publication failure must release waiters without
+            # abandoning later dependents. Keep an original worker/submission
+            # exception when there is one; otherwise expose this exact failure.
+            if error is None:
+                error = exc
+        if error is None:
+            future.set_result(None)
+        else:
+            future.set_exception(error)
+
+    def _scheduled_failure(self, ident, future, exc):
+        self._settle(
+            ident,
+            future,
+            error=exc,
+            status="interrupted",
+            detail="Worker stopped; inspect its durable trace",
+            failure={
+                "code": "worker_exception",
+                "exception_type": type(exc).__name__,
+                "effects_replayed": False,
+            },
+        )
+
+    def _run_scheduled(self, ident, future):
+        try:
+            self._run(ident)
+        except BaseException as exc:
+            # Cleanup failures must not leave a queued/running registry entry
+            # whose future has ended. Do not persist exception messages.
+            self._scheduled_failure(ident, future, exc)
+        else:
+            future.set_result(None)
+        finally:
+            self._dispatch_ready()
 
     def _event(self, ident, event):
         if event.get("kind") == "bundle_installed":
@@ -227,29 +306,41 @@ and evidence; do not discard required goals to bypass completion checks.
     def _run(self, ident):
         agent = dialogue = None
         try:
-            row = deepcopy(self.records[ident])
-            dependencies = []
-            for dep in row["depends_on"]:
-                while self.records[dep]["status"] in {"queued", "running"}:
-                    if self.stop.wait(0.2):
-                        raise ChildPause
-                if self.records[dep]["status"] != "completed":
-                    self._update(
-                        ident,
-                        status="blocked",
-                        detail="Dependency did not complete",
-                        failure={"code": "dependency_incomplete", "agent_id": dep},
+            with self.lock:
+                row = deepcopy(self.records[ident])
+                dependencies = []
+                for dep in row["depends_on"]:
+                    view = self._result_view(dep)
+                    if (
+                        self.records[dep]["status"] != "completed"
+                        or view is None
+                        or view["status"] != "completed"
+                    ):
+                        self._update(
+                            ident,
+                            status="blocked",
+                            detail="Dependency has no completed durable result",
+                            failure={"code": "dependency_incomplete", "agent_id": dep},
+                        )
+                        return
+                    dependencies.append(
+                        {
+                            "agent_id": dep,
+                            "result_digest": digest(view),
+                            "result": view,
+                            "claims_verified": False,
+                        }
                     )
-                    return
-                view = self._result_view(dep)
-                dependencies.append(
-                    {
-                        "agent_id": dep,
-                        "result_digest": digest(view),
-                        "result": view,
-                        "claims_verified": False,
-                    }
+            try:
+                self.owner.work.recheck_evidence(row["context"].get("evidence", []))
+            except (OSError, ValidationError):
+                self._update(
+                    ident,
+                    status="blocked",
+                    detail="Handoff evidence changed; inspect the original references",
+                    failure={"code": "stale_handoff_evidence", "effects_replayed": False},
                 )
+                return
             if self.stop.is_set():
                 raise ChildPause
             self._update(ident, status="running", detail="Compiling assigned task")
@@ -392,6 +483,19 @@ and evidence; do not discard required goals to bypass completion checks.
             "claims_verified": False,
         }
 
+    @staticmethod
+    def _result_state(row, view):
+        # A failure with no result is still an observation that must be read.
+        # Bind collection/review to its status as well as its answer bytes.
+        return digest(
+            {
+                "status": row["status"],
+                "detail": row.get("detail"),
+                "failure": row.get("failure"),
+                "result_digest": digest(view) if view is not None else "",
+            }
+        )
+
     def read_agent(self, agent_id: str, offset: int = 0, limit: int = 6000) -> dict:
         """Read the actual child answer as paginated JSON. Follow next_offset; result_digest is required by review_agent. Reading is not acceptance or factual verification."""
         self._ids([agent_id])
@@ -405,19 +509,27 @@ and evidence; do not discard required goals to bypass completion checks.
         with self.lock:
             row = self.records[agent_id]
             view = self._result_view(agent_id)
+            state = self._result_state(row, view)
             if view is None:
+                row.update(read_windows=[], read_digest=None, read_state_digest=state)
+                self._save()
                 return {
                     "agent_id": agent_id,
                     "status": row["status"],
                     "result_available": False,
                     "failure": row.get("failure"),
+                    "detail": row.get("detail"),
                     "task_key": row.get("task_key"),
                 }
             text = json.dumps(view, ensure_ascii=False, separators=(",", ":"))
             if offset > len(text):
                 raise ValidationError("Offset exceeds child result length")
             fingerprint = digest(view)
-            windows = row.get("read_windows", []) if row.get("read_digest") == fingerprint else []
+            windows = (
+                row.get("read_windows", [])
+                if row.get("read_digest") == fingerprint and row.get("read_state_digest") == state
+                else []
+            )
             merged = []
             for start, end in sorted(windows + [[offset, min(offset + limit, len(text))]]):
                 if merged and start <= merged[-1][1]:
@@ -426,7 +538,7 @@ and evidence; do not discard required goals to bypass completion checks.
                     merged.append([start, end])
             if len(merged) > 128:
                 raise ValidationError("Too many fragmented windows; read sequentially")
-            row.update(read_windows=merged, read_digest=fingerprint)
+            row.update(read_windows=merged, read_digest=fingerprint, read_state_digest=state)
             self._save()
             return {
                 "agent_id": agent_id,
@@ -434,6 +546,8 @@ and evidence; do not discard required goals to bypass completion checks.
                 "task_key": row.get("task_key"),
                 "result_available": True,
                 "result_digest": fingerprint,
+                "detail": row.get("detail"),
+                "failure": row.get("failure"),
                 "text": text[offset : offset + limit],
                 "next_offset": offset + limit if offset + limit < len(text) else None,
                 "total_chars": len(text),
@@ -465,6 +579,9 @@ and evidence; do not discard required goals to bypass completion checks.
             view = self._result_view(agent_id)
             if row["status"] in {"queued", "running"}:
                 raise ValidationError("Child is still running")
+            state = self._result_state(row, view)
+            if row.get("read_state_digest") != state:
+                raise ValidationError("Collect the complete current result before reviewing")
             if view is not None:
                 length = len(json.dumps(view, ensure_ascii=False, separators=(",", ":")))
                 if (
@@ -477,13 +594,16 @@ and evidence; do not discard required goals to bypass completion checks.
                 raise ValidationError(
                     "A child without an answer can only be blocked/rejected with an empty result_digest"
                 )
-            if disposition == "accepted" and row["status"] != "completed":
+            if disposition == "accepted" and (
+                row["status"] != "completed" or view is None or view["status"] != "completed"
+            ):
                 raise ValidationError("An unfinished child cannot be accepted as completed")
             review = {
                 "disposition": disposition,
                 "note": note,
                 "evidence": refs,
                 "result_digest": result_digest,
+                "state_digest": state,
                 "claims_verified": False,
             }
             row["review"] = review
@@ -507,10 +627,17 @@ and evidence; do not discard required goals to bypass completion checks.
                 raise ValidationError(
                     "Resolve the unknown effect with external evidence before resuming this worker"
                 )
-            if row["status"] != "completed":
-                row.update(review=None, read_windows=[], read_digest=None, no_progress_compiles=0)
-                self._save()
             return super().resume_agent(agent_id)
+
+    def _prepare_resume(self, ident):
+        self.records[ident].update(
+            review=None,
+            read_windows=[],
+            read_digest=None,
+            read_state_digest=None,
+            no_progress_compiles=0,
+            failure=None,
+        )
 
     def completion(self):
         with self.lock:
@@ -526,12 +653,19 @@ and evidence; do not discard required goals to bypass completion checks.
                         self.owner.work.recheck_evidence(review.get("evidence", []))
                     except (OSError, ValidationError):
                         stale_evidence.append(row["id"])
-                if review and review["disposition"] == "accepted":
+                if review:
                     view = self._result_view(row["id"])
                     if (
-                        row["status"] != "completed"
-                        or view is None
-                        or digest(view) != review["result_digest"]
+                        review.get("state_digest") != self._result_state(row, view)
+                        or review.get("result_digest") != (digest(view) if view is not None else "")
+                        or (
+                            review["disposition"] == "accepted"
+                            and (
+                                row["status"] != "completed"
+                                or view is None
+                                or view["status"] != "completed"
+                            )
+                        )
                     ):
                         unreviewed.append(row["id"])
             limits = [
