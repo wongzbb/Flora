@@ -1,0 +1,2038 @@
+{
+  "checkpoint_code_sha": "d583a6a01fdd8bd561e8950c0fc50bbd466836f0",
+  "recorded_at": "2026-10-01T09:25:02.197139+00:00",
+  "acceptance": "incomplete; failures retained; not a universal reliability claim",
+  "crossmodel_20261005_in_progress": true,
+  "batches": [
+    {
+      "name": "flora-live-crossmodel-20261005",
+      "evidence_directory": "/workspace/scratch/flora-live-crossmodel-20261005",
+      "source": {
+        "git_head": "7ebfc3c6250d07c35553bc0203c74bc0fcdadb3c",
+        "tracked_dirty": false,
+        "python_source_sha256": {
+          "src/flora/__init__.py": "6fa8224f769a9cdbf7acb62d7f3964740035d4d8cdfc62667f9cad9236723702",
+          "src/flora/__main__.py": "a61af76c1f8982845d2686806caa8e918158e971351525d554449d0d33de0a2e",
+          "src/flora/_compat.py": "b17929e2abe50aa7041deeffbcd9e5eec5935f8a2526336dcd6687f02b69fdff",
+          "src/flora/agent/__init__.py": "aee96306f8a6c1ec11a5d12600aef688d03c03e904afbe92807907b44d437d2b",
+          "src/flora/agent/api.py": "78b0b5211319bc44fb102cc65966471db2afefdfc56a57944e0971cce67fb3f8",
+          "src/flora/checks/__init__.py": "beabe2b2603c63a606be7e1152d645072a2728932909a6f81811dbbd249c597d",
+          "src/flora/checks/contracts.py": "dae0ebfb87ea3bbcad5c12f6a16e8927049474e215a67fda42ae0152229f80f3",
+          "src/flora/checks/diagnostics.py": "8a0eaede3fd158441b5f24a81e786a3c68b04ed3162636e1e9d6d529edd6fb09",
+          "src/flora/checks/reuse.py": "5bb0ff9f6bf22158e218f60bf8106da59685d5b4548641a5e6b34f6982421c3c",
+          "src/flora/coding/__init__.py": "8d5d1145004efe24d71472f01447e60ab5e18ff7e918f3ad05915d6b021ba642",
+          "src/flora/coding/agent.py": "2b3d478aca3ce38083a7f17ecf2845387708b63eaa42793e566e610a5a2df32b",
+          "src/flora/coding/cli.py": "7c9223ba5a3af973156dea85a0b54eba53aac66975cb1de8c5191c69d2e98320",
+          "src/flora/coding/navigation.py": "d2ba1a99b9873f59e24445dc5de03ba10d84546d936402ad751bbc7e5d00e61e",
+          "src/flora/coding/project.py": "0c30975b0690e5a3c477dfd8e5ef86e709a1e7309a7a7aa1f889bb9d5fe63bd0",
+          "src/flora/engine/__init__.py": "dbb18fbb73378f8bad9fa95c2f6c575be961a4850f17d1b65af6cf3ce377abcf",
+          "src/flora/engine/budget.py": "fb6d38be8107652025d3f6cee881720dc3e4965ca950be0c99eb09a790989119",
+          "src/flora/engine/effects.py": "a292f15947c1d058805c9884cabd8e6e2d6d614dac0a93d7ab2e74b9ab8b4206",
+          "src/flora/engine/replay.py": "ce2dcbaa27be4867c1ba7db3b3338f1a8b4875831aac7eb9a22dd64b96b060c2",
+          "src/flora/engine/runtime.py": "54427977b8307ff7285a8c34e2558462463e8670b74cb9b14d70e7fe4bba2239",
+          "src/flora/engine/scheduler.py": "63d307ce1d94e02dd1fed49a2a94cffeb57248f1a65e200d21519f3e947462ae",
+          "src/flora/examples/__init__.py": "53aab38fa6253273cc714e251c86478d258c30fdabea3378d6ca4aa3014dc049",
+          "src/flora/general/__init__.py": "4d3e62b5da8cc2a93b727d4f768496ae973f99bf10ad0f0199052049ceb9ffef",
+          "src/flora/general/_document_process.py": "1eca1aa862d08fce7e3da3c122a93cebc010cf61a0aef25f64a7e1dd33695c42",
+          "src/flora/general/_document_worker.py": "c8bffc74c28679546b2d39da06c5ea624fcff39e488739b4d2808b846f52a8b1",
+          "src/flora/general/agent.py": "69d040662bb7e33a565e74a79b86eebd6572d8fae32ac2e614c18914fe4b3bb2",
+          "src/flora/general/browser.py": "cc728046c793ad9bc330e412c1e80101a5cc0027508f58f20813a0312ff24931",
+          "src/flora/general/budgets.py": "55b96973a5f3b8c0d6e44835b6d234dbb2cb04c92f7ea1292ced6fd5be156934",
+          "src/flora/general/cli.py": "c7d97cd104f08a32a2a0c320d6fc0af4df5f7f077c0191cc23a1e9be113a408e",
+          "src/flora/general/coordinator.py": "127a1f752bd3c81a3d5964c867f8e35599c2e0fae08dcd8a060cebdafe64061c",
+          "src/flora/general/delegation.py": "d22b6709cffe3509e77a94f10b159e4d84b16fd37c2bd795b0c0fdf772242585",
+          "src/flora/general/documents.py": "cc29aae2e7acc1f3d02115dd3d61676bbff535ee15c1bbbf9784a1c072174e15",
+          "src/flora/general/mcp.py": "01b2313b3cdcb97ef36f757c0e93abecc7ae30b0532d3268d5c046454e2455fe",
+          "src/flora/general/network.py": "2856f2c0b43d419a33b17dd20eb6d81fa4a647289e378f3944f03f8f03797b8c",
+          "src/flora/general/observability.py": "1790946cb59964cbbd797b941afa4f7a2de6863f3da129b9c99ddbfacb19bd15",
+          "src/flora/general/reliability.py": "d2a57bd15f98687eed7b053176514d6cc4d9fce708184f3c030ad96af975da4b",
+          "src/flora/general/schemas.py": "c3801a665a1898b7f0ac44d314d425fde46dd86858222385dab505d87f2c1927",
+          "src/flora/general/skills.py": "c587183e065e5ac45c431497b49c0659cf6eeda358d4787e03f5dc988f845012",
+          "src/flora/general/storage.py": "e59141a772d1f57039d42c9f1f534e649eef85b544c7210736d962aefb210071",
+          "src/flora/general/web.py": "9daf56f85359fa5bc7004dcd3434ef7ddb407f4733183985a4ba0c60a2988034",
+          "src/flora/general/work.py": "b2d882859d84331e991770c98fedd225ae9c4a3539d07804e790af80dc3b4138",
+          "src/flora/integrations/__init__.py": "3d3b516c614ac17bec8ec0da36812652458b48ca08a6f5cc6ac074295c0e4241",
+          "src/flora/integrations/adapters.py": "e30227c2791b3ae4005109c5a5d5969f1a458a69d8e528779fc7318a8d79cc88",
+          "src/flora/integrations/binding.py": "8ba73bcc93b9649c911aa555aebdbe6bb2ef1f0fbe21d5c211b1a68652ebef73",
+          "src/flora/integrations/providers.py": "ff11d32a7fa16493c0e997bdb6148a87e4399a41de6e0ae640baa3289729385b",
+          "src/flora/integrations/streaming.py": "d2fd1a6fb64a4881024acf7a6ddf6193f492eeb3dbddeba303b9c7678161b6c4",
+          "src/flora/integrations/tools.py": "416e40b413fce1930c9a2aa3b353057b79b83c15ebdd55e1dffd8c65b6342d3f",
+          "src/flora/integrations/workspace.py": "aab0dbbd77a4a10c40c4e3a17842a76c1742b375fbf6a0061a3330d9876c2127",
+          "src/flora/interface/__init__.py": "48137e4917cddcb17d1709e250a9c023160d2e4f194d69223011f2e6865b80ce",
+          "src/flora/interface/cli.py": "bc01b39359df269de8b3dcca680ce53244be7d011d8aaf785e3cb14a1ab36e48",
+          "src/flora/interface/console.py": "e3ac935a2c35ba6c3b97a646517034788fe9f8e7aad2215e91f3c8131eaa8bc9",
+          "src/flora/interface/settings.py": "f5a8804fe085ac219dc48b540b54b1d936e8afe5fc3379dbf6415813fcd11d30",
+          "src/flora/language/__init__.py": "b03fdec5a46300085ec77e6250c54cb705a8c7c33bfbb067d53529a351eae016",
+          "src/flora/language/compiler.py": "19043c55306537f7ab7b40434a0d29c1eab25158c8b66a1badc6c88cf4adfb66",
+          "src/flora/language/expressions.py": "d0d3c09843971dfbf0d78eecc62911401bf949d615e34a2922ac3a4e61c12a55",
+          "src/flora/language/frontend.py": "c64905983d9760588e668e9f7dced61adb37ec19def6b261fa8f996ba2286307",
+          "src/flora/language/ir.py": "257a63cb6e359e935a0ec430a291aebeeb66fb30358182a8a5858a62f85d450f",
+          "src/flora/language/prompts.py": "f18a34728db5a3b88e0f7770044ceb036f6ef2f4c23d6656cf7024d4f52f1817",
+          "src/flora/language/recovery.py": "a52eef7cf2b7ea906dd708358a497ae75817d2f5086b71050ec2297a5da22f4a",
+          "src/flora/language/toolcheck.py": "5bafec7a2ed262900c3fa5ce3bed51c541a57b0076bfe70435836fa410f49aaa",
+          "src/flora/language/vm.py": "c44068c1e8ec358c1d2ad03322c737e64488d0bbe059c0ae25b4ab673418e3b8",
+          "src/flora/state/__init__.py": "a43f9a44e343c72187f94318d216ce0dbdcfb501e4fd1a901a66daf29d09a7aa",
+          "src/flora/state/opaque.py": "5391c9da33ea3a140699711aa33774b66925adaa07b4357438bd178b676c04a5",
+          "src/flora/state/session.py": "388289b94798cc45c13e0f12b72efa7a14c0b81b00b43d3725016e2be817e96f",
+          "src/flora/state/trace.py": "ba32ec67dc53060acbec72ca63e3275f6e726ab847ccbcda36d1aa0680f68832",
+          "src/flora/support/__init__.py": "5a7aa00ab50cccb2589af43d86bb0e3a7e792bb0b6ca4a1ebf46bd01470f374d",
+          "src/flora/support/errors.py": "156c5b22197a0a55dd4120a717c4008e7a33b3f51eacd8fc6d9f0a8b013f0e71",
+          "src/flora/support/resources.py": "a9c123494bbe9f72ccdebb11f175827603e505d491d05711673e5b19e9a09249",
+          "src/flora/support/values.py": "50aedca5b44a20f4ae7b275748d0a4883f018dea3f3a35c60ce88aae7da9db87",
+          "src/flora/terminal/__init__.py": "f4026f7fae55f22652d1bc4dca0f6e352c3686abdc35a653470854ef17a7da1a",
+          "src/flora/terminal/cli.py": "50d7dc7c36201b67cc6c38a6f2bb5459f731f8d78a1a57e455de800a2cb6827d",
+          "src/flora/terminal/connection.py": "d8b9685ff5e8df72b623c05b45f3620011e42fae3578dddb410ec231175cebad",
+          "src/flora/terminal/sessions.py": "0e1b56f83f6332311ea140f785e55702042da600ec27d6df4ceec0030ce2c30e",
+          "src/flora/terminal/ui.py": "2262738a397c0b9741c8fc009846309f49c00c5ee9fa468797df2098fe62a088",
+          "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tests/helpers.py": "0084c00533b7f0603cf0f9a4510481544e348d7bf0df110930d80110a5c4e987",
+          "tests/live_consumer_recovery_probe.py": "030741cb8f06c9178e31b6fe0b431ae0350f59759b42b5614a58457eafed6e8d",
+          "tests/live_general_probe.py": "edcc959642d85c9cf7e982b863a6d6644c86be5ca78a2681c8d174adf90c7485",
+          "tests/live_reliability_probe.py": "bff76248c62b0c3e3ac47432a7a5c925a090970cb57a375d249817f02a04fb7a",
+          "tests/live_terminal_probe.py": "685e282186c7a79c0a15dfa9af59209b100084094c3dbdbc7f85e05016805162",
+          "tests/stress_cases.py": "1bc9acac3b06cb105ab49e0ef46aa9430366cf72ca0b335b705fa0d332e9991d",
+          "tests/test_collaboration.py": "d07961ebe5c3a871a9a182fb56aa806256d9f857500c2aff27a923bead26b95d",
+          "tests/test_compact.py": "b4429b497eabd310156cee03b0b034ae4667f11fb32d63c848f723120b3cfe66",
+          "tests/test_consumer_recovery.py": "07fa8e41e71cbd8e84616f027e22d473908287d52f8fa7e17dffa74aad7015b4",
+          "tests/test_coordinator_recovery.py": "69c6ace577ae8a3dcfeec38aa7596071d1ca3d035724a012f2fa7b64fa9d06ca",
+          "tests/test_documents.py": "0001a1f43f54ee49331ba89824dc7609d2317797e96dd8e325f5fd58129b9ce6",
+          "tests/test_effect_finalization.py": "f13f857d5aa5fdd26581f82993bdbf21e82522c9f253091a459002c611d5b357",
+          "tests/test_expressions.py": "977ffc663e3ff40a28a95fef8d1d3b2649f0d9c709a1b220b284768fae90f871",
+          "tests/test_file_modes.py": "ad0614fbd43753a913d84fe9d1abf0151856fc4b2ac2059b5c33b565394700fe",
+          "tests/test_frontend.py": "a8a7e68009458dbccb894a873aa3228f37b111325283932b231c051e25d9bfe0",
+          "tests/test_general.py": "0f23a5a124ae03a35e54b8f076dc2b65bcfb0976541c6624e833134b4e7e26a2",
+          "tests/test_kernel_invariants.py": "e9aa45324d3904f8f0197c714e7befda6d4601da049bf0f52ad323ce4bf19794",
+          "tests/test_live_oracles.py": "9b9bff75f6985e00f8064064ecba089c04be9a848f64f262f0c16188110760ad",
+          "tests/test_long_tasks.py": "cb17ff818aae2750152749b7d9d9174abf0744d01a52b0d003f71a522a2ebe10",
+          "tests/test_network_policy.py": "cd9f8b530fbfde2bfce4c4ed70231f364edf2e0322b3534167b5fff6328d6289",
+          "tests/test_network_recovery.py": "ae6e0c89c37159af90775ac550b0828e4ac7a36b31875c34ddbed9f4fff3d52f",
+          "tests/test_probe_access_monitor.py": "aa65f9023022cc50b00f09418b88d61bb4a798d4ac4dcdd73350cce246c555f3",
+          "tests/test_recovery.py": "c9945cc3338d6cbf9566db1686e673911813d633fed250184d0ae8b479ef9517",
+          "tests/test_recovery_accounting.py": "c0cee97a8886f73e86543b3416b1c710c598d4a3643d0c22d5aa4e08e98700c9",
+          "tests/test_reliability_integration.py": "95d14de586e9a1aecd2e5102533187329411b2941e88676b29127d76ccb531b5",
+          "tests/test_retention_performance.py": "7ad93a12595cf9bda1211bd8624ccf3f0a9a2bd8ea1fb944001b3cb73bc43803",
+          "tests/test_serialization.py": "153a2c4c48f6ad1b6fd6614554c7708d638306f03ac4de21df7cc82b8ddf25d7",
+          "tests/test_streaming.py": "386547d2d8563ee9f73ced8c9c139eb6934226aa4b1046299300aee330a9aa1f",
+          "tests/test_stress_evaluation.py": "ca52ca04af47165fd8b849a2cfbddb6ee22575d43f6b50ef71755bd51dd50873",
+          "tests/test_terminal_probe.py": "eafcff9441982d98ada640de09405993376fa68335205e8b35cd9aa6ce4b74b6",
+          "tests/test_toolcheck.py": "ba194cc32e90ca7274ca64c6fde7411bb4e51e2b005bb6a6e592a06d93667f48",
+          "tests/test_trace_performance.py": "030de1e815d54596133ac545892cf7d3c42f28beb12712f801eba854708a343d"
+        }
+      },
+      "planned_rows_recorded": 9,
+      "attempted": 9,
+      "passed": 6,
+      "first_pass": 6,
+      "not_run": 0,
+      "usage": {
+        "model_calls": 25,
+        "tool_calls": 39,
+        "input_tokens": 229487,
+        "output_tokens": 180375,
+        "unknown_usage_calls": 0
+      },
+      "latency_seconds": {
+        "p50": 54.165,
+        "p95_nearest_rank": 235.6,
+        "max": 235.6
+      },
+      "cases": [
+        {
+          "model": "deepseek-flash",
+          "case": "pagination",
+          "trial": 1,
+          "fixture_seed": 359339805650858,
+          "status": "completed",
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": false,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "table_query",
+              "table_query"
+            ]
+          },
+          "first_pass": false,
+          "seconds": 54.165,
+          "configuration": {
+            "provider": {
+              "timeout": 60,
+              "total_timeout": 300,
+              "progress_timeout": 60,
+              "first_program_timeout": 240,
+              "max_json_whitespace": 2048,
+              "stream": true,
+              "stream_fallback": true,
+              "allow_insecure_http": false,
+              "reasoning_effort": "low",
+              "thinking": "enabled",
+              "response_format": "json_object"
+            },
+            "compiler": {
+              "max_output_tokens": 24000,
+              "max_repairs": 1,
+              "compilation_timeout": 300
+            },
+            "tool_schema_version": 2
+          },
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 2,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-v4-pro",
+          "case": "pagination",
+          "trial": 1,
+          "fixture_seed": 359339805650858,
+          "status": "completed",
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": false,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "table_query",
+              "table_query",
+              "table_query"
+            ]
+          },
+          "first_pass": false,
+          "seconds": 235.6,
+          "configuration": {
+            "provider": {
+              "timeout": 60,
+              "total_timeout": 300,
+              "progress_timeout": 60,
+              "first_program_timeout": 240,
+              "max_json_whitespace": 2048,
+              "stream": true,
+              "stream_fallback": true,
+              "allow_insecure_http": false,
+              "reasoning_effort": "low",
+              "thinking": "enabled",
+              "response_format": "json_object"
+            },
+            "compiler": {
+              "max_output_tokens": 24000,
+              "max_repairs": 1,
+              "compilation_timeout": 300
+            },
+            "tool_schema_version": 2
+          },
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 3,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "source_conflict",
+          "trial": 2,
+          "fixture_seed": 126764423305527,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 19.716,
+          "configuration": {
+            "provider": {
+              "timeout": 60,
+              "total_timeout": 300,
+              "progress_timeout": 60,
+              "first_program_timeout": 240,
+              "max_json_whitespace": 2048,
+              "stream": true,
+              "stream_fallback": true,
+              "allow_insecure_http": false,
+              "reasoning_effort": "low",
+              "thinking": "enabled",
+              "response_format": "json_object"
+            },
+            "compiler": {
+              "max_output_tokens": 24000,
+              "max_repairs": 1,
+              "compilation_timeout": 300
+            },
+            "tool_schema_version": 2
+          },
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 1,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-v4-pro",
+          "case": "pagination",
+          "trial": 2,
+          "fixture_seed": 528843486478785,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "table_query",
+              "table_query",
+              "table_query"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 180.998,
+          "configuration": {
+            "provider": {
+              "timeout": 60,
+              "total_timeout": 300,
+              "progress_timeout": 60,
+              "first_program_timeout": 240,
+              "max_json_whitespace": 2048,
+              "stream": true,
+              "stream_fallback": true,
+              "allow_insecure_http": false,
+              "reasoning_effort": "low",
+              "thinking": "enabled",
+              "response_format": "json_object"
+            },
+            "compiler": {
+              "max_output_tokens": 24000,
+              "max_repairs": 1,
+              "compilation_timeout": 300
+            },
+            "tool_schema_version": 2
+          },
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 3,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "dependency_route",
+          "trial": 2,
+          "fixture_seed": 290914929996477,
+          "status": "completed",
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": false,
+            "evidence_integrity": false,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "review_agent",
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "review_agent",
+              "read_file",
+              "read_file"
+            ]
+          },
+          "first_pass": false,
+          "seconds": 191.534,
+          "configuration": {
+            "provider": {
+              "timeout": 60,
+              "total_timeout": 300,
+              "progress_timeout": 60,
+              "first_program_timeout": 240,
+              "max_json_whitespace": 2048,
+              "stream": true,
+              "stream_fallback": true,
+              "allow_insecure_http": false,
+              "reasoning_effort": "low",
+              "thinking": "enabled",
+              "response_format": "json_object"
+            },
+            "compiler": {
+              "max_output_tokens": 24000,
+              "max_repairs": 1,
+              "compilation_timeout": 300
+            },
+            "tool_schema_version": 2
+          },
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 12,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-v4-pro",
+          "case": "source_conflict",
+          "trial": 2,
+          "fixture_seed": 126764423305527,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 41.65,
+          "configuration": {
+            "provider": {
+              "timeout": 60,
+              "total_timeout": 300,
+              "progress_timeout": 60,
+              "first_program_timeout": 240,
+              "max_json_whitespace": 2048,
+              "stream": true,
+              "stream_fallback": true,
+              "allow_insecure_http": false,
+              "reasoning_effort": "low",
+              "thinking": "enabled",
+              "response_format": "json_object"
+            },
+            "compiler": {
+              "max_output_tokens": 24000,
+              "max_repairs": 1,
+              "compilation_timeout": 300
+            },
+            "tool_schema_version": 2
+          },
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 1,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "source_conflict",
+          "trial": 1,
+          "fixture_seed": 174126185398698,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 43.731,
+          "configuration": {
+            "provider": {
+              "timeout": 60,
+              "total_timeout": 300,
+              "progress_timeout": 60,
+              "first_program_timeout": 240,
+              "max_json_whitespace": 2048,
+              "stream": true,
+              "stream_fallback": true,
+              "allow_insecure_http": false,
+              "reasoning_effort": "low",
+              "thinking": "enabled",
+              "response_format": "json_object"
+            },
+            "compiler": {
+              "max_output_tokens": 24000,
+              "max_repairs": 1,
+              "compilation_timeout": 300
+            },
+            "tool_schema_version": 2
+          },
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 1,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "dependency_route",
+          "trial": 1,
+          "fixture_seed": 439797697076086,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "read_file",
+              "review_agent",
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "read_file",
+              "review_agent"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 227.62,
+          "configuration": {
+            "provider": {
+              "timeout": 60,
+              "total_timeout": 300,
+              "progress_timeout": 60,
+              "first_program_timeout": 240,
+              "max_json_whitespace": 2048,
+              "stream": true,
+              "stream_fallback": true,
+              "allow_insecure_http": false,
+              "reasoning_effort": "low",
+              "thinking": "enabled",
+              "response_format": "json_object"
+            },
+            "compiler": {
+              "max_output_tokens": 24000,
+              "max_repairs": 1,
+              "compilation_timeout": 300
+            },
+            "tool_schema_version": 2
+          },
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 15,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-v4-pro",
+          "case": "source_conflict",
+          "trial": 1,
+          "fixture_seed": 174126185398698,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 46.469,
+          "configuration": {
+            "provider": {
+              "timeout": 60,
+              "total_timeout": 300,
+              "progress_timeout": 60,
+              "first_program_timeout": 240,
+              "max_json_whitespace": 2048,
+              "stream": true,
+              "stream_fallback": true,
+              "allow_insecure_http": false,
+              "reasoning_effort": "low",
+              "thinking": "enabled",
+              "response_format": "json_object"
+            },
+            "compiler": {
+              "max_output_tokens": 24000,
+              "max_repairs": 1,
+              "compilation_timeout": 300
+            },
+            "tool_schema_version": 2
+          },
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 1,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "flora-live-flash-baseline-20261001",
+      "evidence_directory": "/workspace/scratch/flora-live-flash-baseline-20261001",
+      "source": {
+        "git_head": "da3294b6a332a5094d3a0043fa1db200b5d93809",
+        "tracked_dirty": false,
+        "limitation": "Source identity recorded by operator; per-file snapshot unavailable"
+      },
+      "planned_rows_recorded": 4,
+      "attempted": 4,
+      "passed": 2,
+      "first_pass": 2,
+      "not_run": 0,
+      "usage": {
+        "model_calls": 7,
+        "tool_calls": 5,
+        "input_tokens": 48409,
+        "output_tokens": 47316,
+        "unknown_usage_calls": 1
+      },
+      "latency_seconds": {
+        "p50": 41.0995,
+        "p95_nearest_rank": 56.341,
+        "max": 56.341
+      },
+      "cases": [
+        {
+          "model": "deepseek-flash",
+          "case": "reconcile",
+          "trial": 1,
+          "fixture_seed": 80336995277892,
+          "status": "needs_program",
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": false,
+            "answer_correct": false,
+            "evidence_integrity": false,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": []
+          },
+          "first_pass": false,
+          "seconds": 32.741,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 0,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "edit_preserve",
+          "trial": 1,
+          "fixture_seed": 201050962613446,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file",
+              "read_file",
+              "update_file",
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 49.458,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 4,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "dependency_route",
+          "trial": 1,
+          "fixture_seed": 284788873497900,
+          "status": "needs_program",
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": false,
+            "answer_correct": false,
+            "evidence_integrity": false,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": []
+          },
+          "first_pass": false,
+          "seconds": 56.341,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 0,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "source_conflict",
+          "trial": 1,
+          "fixture_seed": 551907908627638,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 21.875,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 1,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "flora-live-flash-direct-20261001",
+      "evidence_directory": "/workspace/scratch/flora-live-flash-direct-20261001",
+      "source": {
+        "git_head": null,
+        "tracked_dirty": null,
+        "limitation": "Earlier intermediate source was not snapshotted; exact source identity unavailable"
+      },
+      "planned_rows_recorded": 2,
+      "attempted": 2,
+      "passed": 0,
+      "first_pass": 0,
+      "not_run": 0,
+      "usage": {
+        "model_calls": 5,
+        "tool_calls": 0,
+        "input_tokens": 38763,
+        "output_tokens": 4540,
+        "unknown_usage_calls": 0
+      },
+      "latency_seconds": {
+        "p50": 8.7475,
+        "p95_nearest_rank": 16.231,
+        "max": 16.231
+      },
+      "cases": [
+        {
+          "model": "deepseek-flash",
+          "case": "dependency_route",
+          "trial": 1,
+          "fixture_seed": 284788873497900,
+          "status": "completed",
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": false,
+            "evidence_integrity": false,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": []
+          },
+          "first_pass": false,
+          "seconds": 1.264,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 0,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "reconcile",
+          "trial": 1,
+          "fixture_seed": 80336995277892,
+          "status": "needs_program",
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": false,
+            "answer_correct": false,
+            "evidence_integrity": false,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": []
+          },
+          "first_pass": false,
+          "seconds": 16.231,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 0,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "flora-live-flash-final-20261004",
+      "evidence_directory": "/workspace/scratch/flora-live-flash-final-20261004",
+      "source": {
+        "git_head": "efa6cf8c820ccae6086ffa505394110ca2f95ece",
+        "tracked_dirty": false,
+        "limitation": "Source identity recorded by operator; per-file snapshot unavailable"
+      },
+      "planned_rows_recorded": 8,
+      "attempted": 8,
+      "passed": 7,
+      "first_pass": 6,
+      "not_run": 0,
+      "usage": {
+        "model_calls": 26,
+        "tool_calls": 30,
+        "input_tokens": 286790,
+        "output_tokens": 104203,
+        "unknown_usage_calls": 0
+      },
+      "latency_seconds": {
+        "p50": 44.206,
+        "p95_nearest_rank": 131.045,
+        "max": 131.045
+      },
+      "cases": [
+        {
+          "model": "deepseek-flash",
+          "case": "source_conflict",
+          "trial": 1,
+          "fixture_seed": 422373742434036,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 14.428,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 1,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "edit_preserve",
+          "trial": 1,
+          "fixture_seed": 170341566322844,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file",
+              "read_file",
+              "update_file",
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 47.422,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 4,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "nested_schema",
+          "trial": 1,
+          "fixture_seed": 505124866413032,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 21.643,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 1,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "schema_transition",
+          "trial": 1,
+          "fixture_seed": 488041299494000,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file",
+              "read_file",
+              "read_file",
+              "read_file",
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 40.99,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 5,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "long_document",
+          "trial": 1,
+          "fixture_seed": 133071238363814,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file",
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 19.419,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 2,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "dependency_route",
+          "trial": 1,
+          "fixture_seed": 95350194302744,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "spawn_agent",
+              "read_file",
+              "wait_agents",
+              "read_agent",
+              "review_agent",
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "read_file",
+              "review_agent"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 131.045,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 12,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "reconcile",
+          "trial": 1,
+          "fixture_seed": 274546243215318,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file",
+              "read_file"
+            ]
+          },
+          "first_pass": false,
+          "seconds": 54.732,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 2,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "pagination",
+          "trial": 1,
+          "fixture_seed": 391544569092574,
+          "status": "completed",
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": false,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "table_query",
+              "table_query",
+              "table_query"
+            ]
+          },
+          "first_pass": false,
+          "seconds": 124.79,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 3,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "flora-live-flash-heldout-20261002",
+      "evidence_directory": "/workspace/scratch/flora-live-flash-heldout-20261002",
+      "source": {
+        "git_head": null,
+        "tracked_dirty": null,
+        "limitation": "Earlier intermediate source was not snapshotted; exact source identity unavailable"
+      },
+      "planned_rows_recorded": 8,
+      "attempted": 8,
+      "passed": 7,
+      "first_pass": 6,
+      "not_run": 0,
+      "usage": {
+        "model_calls": 25,
+        "tool_calls": 30,
+        "input_tokens": 282282,
+        "output_tokens": 168426,
+        "unknown_usage_calls": 0
+      },
+      "latency_seconds": {
+        "p50": 76.2485,
+        "p95_nearest_rank": 197.995,
+        "max": 197.995
+      },
+      "cases": [
+        {
+          "model": "deepseek-flash",
+          "case": "reconcile",
+          "trial": 1,
+          "fixture_seed": 501220270808888,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file",
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 161.895,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 2,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "long_document",
+          "trial": 1,
+          "fixture_seed": 279827997851002,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file",
+              "read_file"
+            ]
+          },
+          "first_pass": false,
+          "seconds": 88.572,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 2,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "edit_preserve",
+          "trial": 1,
+          "fixture_seed": 132450983956400,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file",
+              "read_file",
+              "update_file",
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 20.161,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 4,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "dependency_route",
+          "trial": 1,
+          "fixture_seed": 132889488920292,
+          "status": "completed",
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": false,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "review_agent",
+              "review_agent",
+              "read_file"
+            ]
+          },
+          "first_pass": false,
+          "seconds": 197.995,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 11,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "nested_schema",
+          "trial": 1,
+          "fixture_seed": 480185284723266,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 63.925,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 1,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "source_conflict",
+          "trial": 1,
+          "fixture_seed": 372031163485000,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 34.585,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 1,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "schema_transition",
+          "trial": 1,
+          "fixture_seed": 55231411101662,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file",
+              "read_file",
+              "read_file",
+              "read_file",
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 58.477,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 5,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "pagination",
+          "trial": 1,
+          "fixture_seed": 551013130333042,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file",
+              "table_query",
+              "table_query",
+              "table_query"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 118.819,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 4,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "flora-live-flash-schema-fixed-20261001",
+      "evidence_directory": "/workspace/scratch/flora-live-flash-schema-fixed-20261001",
+      "source": {
+        "git_head": null,
+        "tracked_dirty": null,
+        "limitation": "Earlier intermediate source was not snapshotted; exact source identity unavailable"
+      },
+      "planned_rows_recorded": 2,
+      "attempted": 2,
+      "passed": 1,
+      "first_pass": 1,
+      "not_run": 0,
+      "usage": {
+        "model_calls": 11,
+        "tool_calls": 13,
+        "input_tokens": 110736,
+        "output_tokens": 75986,
+        "unknown_usage_calls": 0
+      },
+      "latency_seconds": {
+        "p50": 146.383,
+        "p95_nearest_rank": 247.572,
+        "max": 247.572
+      },
+      "cases": [
+        {
+          "model": "deepseek-flash",
+          "case": "dependency_route",
+          "trial": 1,
+          "fixture_seed": 284788873497900,
+          "status": "completed",
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": false,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "read_file",
+              "review_agent",
+              "review_agent"
+            ]
+          },
+          "first_pass": false,
+          "seconds": 247.572,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 11,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "reconcile",
+          "trial": 1,
+          "fixture_seed": 80336995277892,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file",
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 45.194,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 2,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "flora-live-flash-transport-fixed-20261001",
+      "evidence_directory": "/workspace/scratch/flora-live-flash-transport-fixed-20261001",
+      "source": {
+        "git_head": null,
+        "tracked_dirty": null,
+        "limitation": "Earlier intermediate source was not snapshotted; exact source identity unavailable"
+      },
+      "planned_rows_recorded": 2,
+      "attempted": 2,
+      "passed": 0,
+      "first_pass": 0,
+      "not_run": 0,
+      "usage": {
+        "model_calls": 5,
+        "tool_calls": 8,
+        "input_tokens": 58998,
+        "output_tokens": 42938,
+        "unknown_usage_calls": 0
+      },
+      "latency_seconds": {
+        "p50": 85.875,
+        "p95_nearest_rank": 142.834,
+        "max": 142.834
+      },
+      "cases": [
+        {
+          "model": "deepseek-flash",
+          "case": "dependency_route",
+          "trial": 1,
+          "fixture_seed": 284788873497900,
+          "status": "completed",
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": false,
+            "evidence_integrity": false,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "review_agent",
+              "spawn_agent"
+            ]
+          },
+          "first_pass": false,
+          "seconds": 142.834,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 6,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-flash",
+          "case": "reconcile",
+          "trial": 1,
+          "fixture_seed": 80336995277892,
+          "status": "completed",
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": false,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file",
+              "table_query"
+            ]
+          },
+          "first_pass": false,
+          "seconds": 28.916,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 2,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "flora-live-pro-baseline-20261001",
+      "evidence_directory": "/workspace/scratch/flora-live-pro-baseline-20261001",
+      "source": {
+        "git_head": "da3294b6a332a5094d3a0043fa1db200b5d93809",
+        "tracked_dirty": false,
+        "limitation": "Source identity recorded by operator; per-file snapshot unavailable"
+      },
+      "planned_rows_recorded": 2,
+      "attempted": 1,
+      "passed": 0,
+      "first_pass": 0,
+      "not_run": 1,
+      "usage": {
+        "model_calls": 1,
+        "tool_calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 24000,
+        "unknown_usage_calls": 1
+      },
+      "latency_seconds": {
+        "p50": 120.09,
+        "p95_nearest_rank": 120.09,
+        "max": 120.09
+      },
+      "cases": [
+        {
+          "model": "deepseek-v4-pro",
+          "case": "dependency_route",
+          "trial": 1,
+          "fixture_seed": 284788873497900,
+          "status": "needs_program",
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": false,
+            "answer_correct": false,
+            "evidence_integrity": false,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": []
+          },
+          "first_pass": false,
+          "seconds": 120.09,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 0,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-v4-pro",
+          "case": "reconcile",
+          "trial": 1,
+          "fixture_seed": 80336995277892,
+          "status": "not_run",
+          "grade": {
+            "passed": null,
+            "runtime_completed": false,
+            "review_required": false
+          },
+          "first_pass": null,
+          "seconds": 0,
+          "configuration": null,
+          "mechanism_observations": null
+        }
+      ]
+    },
+    {
+      "name": "flora-live-pro-heldout-20261002",
+      "evidence_directory": "/workspace/scratch/flora-live-pro-heldout-20261002",
+      "source": {
+        "git_head": null,
+        "tracked_dirty": null,
+        "limitation": "Earlier intermediate source was not snapshotted; exact source identity unavailable"
+      },
+      "planned_rows_recorded": 4,
+      "attempted": 4,
+      "passed": 3,
+      "first_pass": 3,
+      "not_run": 0,
+      "usage": {
+        "model_calls": 12,
+        "tool_calls": 21,
+        "input_tokens": 144266,
+        "output_tokens": 84889,
+        "unknown_usage_calls": 0
+      },
+      "latency_seconds": {
+        "p50": 110.8345,
+        "p95_nearest_rank": 452.402,
+        "max": 452.402
+      },
+      "cases": [
+        {
+          "model": "deepseek-v4-pro",
+          "case": "long_document",
+          "trial": 1,
+          "fixture_seed": 279827997851002,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file",
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 77.244,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 2,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-v4-pro",
+          "case": "dependency_route",
+          "trial": 1,
+          "fixture_seed": 132889488920292,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "spawn_agent",
+              "read_agent",
+              "wait_agents",
+              "read_agent",
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "read_file",
+              "read_file",
+              "review_agent",
+              "review_agent"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 452.402,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 13,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-v4-pro",
+          "case": "schema_transition",
+          "trial": 1,
+          "fixture_seed": 55231411101662,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file",
+              "read_file",
+              "read_file",
+              "read_file",
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 144.425,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 5,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-v4-pro",
+          "case": "source_conflict",
+          "trial": 1,
+          "fixture_seed": 372031163485000,
+          "status": "completed",
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": false,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file"
+            ]
+          },
+          "first_pass": false,
+          "seconds": 59.213,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 1,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "flora-live-pro-low-20261001",
+      "evidence_directory": "/workspace/scratch/flora-live-pro-low-20261001",
+      "source": {
+        "git_head": null,
+        "tracked_dirty": null,
+        "limitation": "Earlier intermediate source was not snapshotted; exact source identity unavailable"
+      },
+      "planned_rows_recorded": 2,
+      "attempted": 2,
+      "passed": 1,
+      "first_pass": 1,
+      "not_run": 0,
+      "usage": {
+        "model_calls": 5,
+        "tool_calls": 8,
+        "input_tokens": 51284,
+        "output_tokens": 37773,
+        "unknown_usage_calls": 0
+      },
+      "latency_seconds": {
+        "p50": 177.109,
+        "p95_nearest_rank": 244.937,
+        "max": 244.937
+      },
+      "cases": [
+        {
+          "model": "deepseek-v4-pro",
+          "case": "dependency_route",
+          "trial": 1,
+          "fixture_seed": 284788873497900,
+          "status": "completed",
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": false,
+            "evidence_integrity": false,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "review_agent",
+              "spawn_agent"
+            ]
+          },
+          "first_pass": false,
+          "seconds": 244.937,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 6,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        },
+        {
+          "model": "deepseek-v4-pro",
+          "case": "reconcile",
+          "trial": 1,
+          "fixture_seed": 80336995277892,
+          "status": "completed",
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file",
+              "read_file"
+            ]
+          },
+          "first_pass": true,
+          "seconds": 109.281,
+          "configuration": null,
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 2,
+            "revision_checked": 0,
+            "multiple_candidate_bundles": 0,
+            "semantic_or_causal_validation": false
+          }
+        }
+      ]
+    }
+  ],
+  "saved_session_recovery": [
+    {
+      "model": "deepseek-flash",
+      "recovery_exercised": true,
+      "before_status": "paused",
+      "after_status": "completed",
+      "grade": {
+        "passed": true,
+        "review_required": false,
+        "runtime_completed": true,
+        "answer_correct": true,
+        "evidence_integrity": true,
+        "task_success_distinct": true,
+        "dependency_causal_use_verified": false,
+        "tool_calls": [
+          "read_file",
+          "read_file",
+          "update_file",
+          "read_file"
+        ]
+      },
+      "receipt_prefix_preserved": true,
+      "successful_writes": 1,
+      "budget_restored": true,
+      "aggregate_usage": {
+        "model_calls": 2,
+        "tool_calls": 4,
+        "input_tokens": 16043,
+        "output_tokens": 7711,
+        "unknown_usage_calls": 0
+      }
+    },
+    {
+      "model": "deepseek-v4-pro",
+      "recovery_exercised": true,
+      "before_status": "paused",
+      "after_status": "completed",
+      "grade": {
+        "passed": true,
+        "review_required": false,
+        "runtime_completed": true,
+        "answer_correct": true,
+        "evidence_integrity": true,
+        "task_success_distinct": true,
+        "dependency_causal_use_verified": false,
+        "tool_calls": [
+          "read_file",
+          "read_file",
+          "update_file",
+          "read_file"
+        ]
+      },
+      "receipt_prefix_preserved": true,
+      "successful_writes": 1,
+      "budget_restored": true,
+      "aggregate_usage": {
+        "model_calls": 2,
+        "tool_calls": 4,
+        "input_tokens": 16704,
+        "output_tokens": 9667,
+        "unknown_usage_calls": 0
+      }
+    }
+  ],
+  "usage_accounting": "Recorded aggregate parent + worker budgets, once per case. Unknown-usage calls and reserved output prevent exact billed token/currency claims. No verified currency bill available. A separate minimal connectivity completion used 9 input and 1 output token.",
+  "grand_recorded_usage": {
+    "model_calls": 126,
+    "tool_calls": 162,
+    "input_tokens": 1283762,
+    "output_tokens": 787824,
+    "unknown_usage_calls": 2
+  },
+  "verification": {
+    "source": {
+      "tests_run": 301,
+      "skipped": 1,
+      "passed": true,
+      "seconds": 222.904
+    },
+    "installed_wheel": {
+      "tests_run": 301,
+      "skipped": 1,
+      "passed": true,
+      "seconds": 215.775,
+      "isolated_venv": true,
+      "import_path_verified": true
+    },
+    "independent_review": {
+      "focused_tests": 50,
+      "blocking_findings": 0
+    },
+    "ruff": "passed",
+    "pip_check": "passed"
+  }
+}
