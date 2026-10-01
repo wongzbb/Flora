@@ -351,6 +351,9 @@ params then unique dests; no globals or implicit variables. EXPR is JSON recursi
 containing {"var":"x"}; {"literal":JSON} escapes an ENTIRE uninterpreted value.
 Escape data with var/literal keys. get/get_default use string keys or integer array
 indices. Object fields are not variable names. JSON strings are not parsed objects.
+To build an object from registers use {"observed":{"var":"x"}} directly.
+{"literal":{"observed":{"var":"x"}}} returns the var object as DATA, without
+substituting x. Do not quote a computed result object with literal.
 Construct objects directly. to_string serializes JSON; parse_json parses observed
 text. Arithmetic/copies are pure; no Python, eval, imports, clock, random, model
 calls or tools in ops. Loops use explicit index/accumulator params and a separate

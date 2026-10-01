@@ -27,7 +27,7 @@ STRESS_TASKS = {
     ),
     "pagination": (
         "Read ledger.csv completely, across any required pages. Return only a JSON object with "
-        "row_count, signed_total (the sum of units), and flagged_ids (all flagged=true IDs in "
+        "row_count and signed_total (the sum of units) as JSON numbers, and flagged_ids (all flagged=true IDs in "
         "file order). Do not change any files."
     ),
     "long_document": (

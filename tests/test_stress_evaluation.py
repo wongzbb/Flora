@@ -19,6 +19,7 @@ from tests.live_reliability_probe import (
     aggregate_usage,
     assess,
     collect_evidence,
+    configuration_view,
     equal,
     evaluate,
     main,
@@ -314,6 +315,36 @@ class StressFixtureTests(unittest.TestCase):
 
 
 class ProbeExecutionTests(unittest.TestCase):
+    def test_configuration_view_records_only_typed_operational_choices(self):
+        marker = "must-not-be-recorded"
+        profile = {
+            "provider": {
+                "api_key": marker,
+                "base_url": marker,
+                "timeout": marker,
+                "total_timeout": 300,
+                "stream": True,
+                "request_options": {
+                    "reasoning_effort": "low",
+                    "thinking": {"type": "enabled", "extra": marker},
+                    "response_format": {"type": "json_object", "schema": marker},
+                    "extra": marker,
+                },
+            },
+            "compiler": {"max_output_tokens": 24000, "extra": marker},
+            "general": {"tool_schema_version": marker},
+        }
+        view = configuration_view(profile)
+        self.assertNotIn(marker, json.dumps(view))
+        self.assertEqual(view["provider"]["reasoning_effort"], "low")
+        self.assertEqual(view["provider"]["total_timeout"], 300)
+        self.assertIsNone(view["tool_schema_version"])
+        for value in (True, 1.0, 3, [], {}):
+            profile["general"]["tool_schema_version"] = value
+            self.assertIsNone(configuration_view(profile)["tool_schema_version"])
+        profile["general"]["tool_schema_version"] = 2
+        self.assertEqual(configuration_view(profile)["tool_schema_version"], 2)
+
     def options(self, output, **changes):
         return Namespace(
             output=output,
@@ -598,6 +629,48 @@ class EvaluationBlockerRegressions(unittest.TestCase):
                 self.assertEqual(profile["provider"]["timeout"], 90)
                 self.assertEqual(profile["provider"]["total_timeout"], 360)
                 self.assertEqual(profile["compiler"]["compilation_timeout"], 360)
+
+    def test_worker_access_error_pauses_dispatch_and_stops_batch(self):
+        calls, apps = [], []
+
+        def construct(**kwargs):
+            callback = kwargs["on_event"]
+
+            class Provider:
+                def complete(self, messages, *, max_tokens):
+                    calls.append(1)
+                    callback(
+                        {
+                            "kind": "transcript",
+                            "channel": "model_failure",
+                            "actor": "child",
+                            "text": json.dumps({"kind": "model_failure", "http_status": 402}),
+                        }
+                    )
+                    view = json.loads(messages[1]["content"])
+                    return ModelResponse(
+                        json.dumps(bundle(pure("hello"), view["epoch"], view["trace_digest"])), 3, 2
+                    )
+
+            kwargs["provider"], kwargs["session_key"] = Provider(), None
+            kwargs["profile"].pop("provider", None)
+            app = GeneralAgent(**kwargs)
+            apps.append(app)
+            return app
+
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch("tests.live_reliability_probe.GeneralAgent", side_effect=construct),
+            patch("builtins.print"),
+        ):
+            args = self.options(Path(tmp) / "evaluation")
+            args.continue_on_transport_error = True
+            rows = evaluate(args, "fixture-only")
+            self.assertEqual(len(calls), 1)
+            self.assertTrue(apps[0].pause.is_set())
+            attempted = next(r for r in rows if r["status"] != "not_run")
+            self.assertEqual(attempted["failure"]["http_status"], 402)
+            self.assertFalse(attempted["grade"]["passed"])
 
     options = ProbeExecutionTests.options
 

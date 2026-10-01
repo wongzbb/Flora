@@ -21,6 +21,7 @@ import random
 import re
 import sqlite3
 import statistics
+import subprocess
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -68,6 +69,112 @@ CHILD_LIMITS = {
     "max_output_tokens": 90000,
     "max_wall_seconds": 300,
 }
+
+
+def source_provenance():
+    """Only source files and Git metadata; never hash credentials or environment values."""
+    repository = Path(__file__).resolve().parents[1]
+    files = {}
+    for directory in ("src", "tests"):
+        for path in sorted((repository / directory).rglob("*.py")):
+            if path.is_symlink() or not path.resolve().is_relative_to(repository):
+                continue
+            files[str(path.relative_to(repository))] = hashlib.sha256(path.read_bytes()).hexdigest()
+    try:
+        head = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=repository, capture_output=True, text=True, check=True
+        ).stdout.strip()
+        dirty = bool(
+            subprocess.run(
+                ["git", "status", "--porcelain", "--untracked-files=no"],
+                cwd=repository,
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout
+        )
+    except (OSError, subprocess.SubprocessError):
+        head, dirty = None, None
+    return {"git_head": head, "tracked_dirty": dirty, "python_source_sha256": files}
+
+
+def configuration_view(profile):
+    """Record typed operational choices, never arbitrary request options or credentials."""
+    provider = profile.get("provider", {})
+    numeric = (
+        "timeout",
+        "total_timeout",
+        "progress_timeout",
+        "first_program_timeout",
+        "max_response_bytes",
+        "max_stream_bytes",
+        "max_json_whitespace",
+    )
+    view = {k: provider[k] for k in numeric if type(provider.get(k)) in (int, float)}
+    for k in ("stream", "stream_fallback", "stream_idle_fallback", "allow_insecure_http"):
+        if type(provider.get(k)) is bool:
+            view[k] = provider[k]
+    options = provider.get("request_options", {})
+    if isinstance(options, dict):
+        for name, allowed in (("reasoning_effort", {"low", "medium", "high", "max"}),):
+            if isinstance(options.get(name), str) and options[name] in allowed:
+                view[name] = options[name]
+        for name, allowed in (
+            ("thinking", {"enabled", "disabled"}),
+            ("response_format", {"json_object", "text", "json_schema"}),
+        ):
+            value = options.get(name)
+            if (
+                isinstance(value, dict)
+                and isinstance(value.get("type"), str)
+                and value["type"] in allowed
+            ):
+                view[name] = value["type"]
+    compiler = {
+        k: v
+        for k, v in profile.get("compiler", {}).items()
+        if k
+        in {
+            "max_output_tokens",
+            "max_repairs",
+            "compilation_timeout",
+            "max_context_bytes",
+            "max_output_bytes",
+        }
+        and (v is None or type(v) in (int, float))
+    }
+    version = profile.get("general", {}).get("tool_schema_version")
+    return {
+        "provider": view,
+        "compiler": compiler,
+        "tool_schema_version": version if type(version) is int and version in (1, 2) else None,
+    }
+
+
+class AccessFailureMonitor:
+    """Pause parent and workers when their real event stream reports access denial."""
+
+    def __init__(self, events):
+        self.events = events
+        self.app = None
+        self.status = None
+
+    def __call__(self, event):
+        self.events.append(event)
+        failure = event
+        if event.get("kind") == "transcript" and event.get("channel") == "model_failure":
+            try:
+                failure = json.loads(event["text"])
+            except (ValueError, KeyError):
+                return
+        if (
+            isinstance(failure, dict)
+            and failure.get("kind") == "model_failure"
+            and failure.get("http_status") in {401, 402, 403, 404}
+        ):
+            self.status = failure["http_status"]
+            if self.app:
+                self.app.request_pause()
 
 
 def apply_evaluation_limits(profile):
@@ -582,6 +689,17 @@ def evaluate(args, key):
     models, cases = validate_options(args)
     output = args.output.resolve()
     output.mkdir(parents=True, mode=0o700, exist_ok=False)
+    provenance = {
+        "started_at": datetime.now(UTC).isoformat(),
+        "source": source_provenance(),
+        "models": models,
+        "cases": cases,
+        "rounds": args.rounds,
+        "seed": getattr(args, "seed", 20261001),
+        "resume_attempts": getattr(args, "resume_attempts", 0),
+        "pass_definition": "runtime completion AND independently correct task output AND evidence/mutation/publication integrity; research requires human review",
+    }
+    atomic_json(output / "provenance.json", provenance)
     rows = []
     unavailable_models = set()
     access_rejected = False
@@ -635,17 +753,22 @@ def evaluate(args, key):
         profile["general"].setdefault("subagents", {})["enabled"] = case in COLLABORATIVE
         resolved_limits = apply_evaluation_limits(profile)
         events, attempts = [], []
+        monitor = AccessFailureMonitor(events)
+        configuration = configuration_view(profile)
         start = time.monotonic()
         result, app = {}, None
         phase = "initialize"
+
         try:
             app = GeneralAgent(
                 session_dir=case_dir / "session",
                 workspace=root,
                 profile=profile,
                 session_key=key,
-                on_event=events.append,
+                on_event=monitor,
             )
+            monitor.app = app
+            configuration = configuration_view(app.profile)
             for attempt in range(getattr(args, "resume_attempts", 0) + 1):
                 phase = "run"
                 result = {}
@@ -654,10 +777,16 @@ def evaluate(args, key):
                 result["failure"] = result.get("failure") or failure_info(
                     result["status"], result.get("reason", "")
                 )
+                if monitor.status is not None:
+                    result["failure"] = failure_info(
+                        "needs_program", f"model HTTP {monitor.status}"
+                    )
                 phase = "collect_evidence"
                 collect_evidence(app, result)
                 phase = "assess"
                 grade = assess(case, result, root, events, expected)
+                if monitor.status is not None:
+                    grade["passed"] = False
                 intact = unchanged_inputs(root, expected)
                 if not intact:
                     grade["passed"] = False
@@ -709,6 +838,8 @@ def evaluate(args, key):
                 )
                 result["budget"] = app.agent.status()["budget"]
                 row["aggregate_usage"] = aggregate_usage(result)
+        if monitor.status is not None:
+            row["failure"] = failure_info("needs_program", f"model HTTP {monitor.status}")
         if (row.get("failure") or {}).get("code") == "model_transport" and not getattr(
             args, "continue_on_transport_error", False
         ):
@@ -716,6 +847,7 @@ def evaluate(args, key):
         if (row.get("failure") or {}).get("http_status") in {401, 402, 403, 404}:
             access_rejected = True
         row["resolved_limits"] = resolved_limits
+        row["configuration"] = configuration
         row["mechanism_observations"] = mechanism_observations(events)
         row.update(
             model=model,
@@ -727,6 +859,7 @@ def evaluate(args, key):
         rows.append(row)
         manifest = {
             "date": datetime.now(UTC).isoformat(),
+            "provenance": "provenance.json",
             "base_url": args.base_url,
             "seed": seed,
             "model_selection": "explicit DeepSeek/GLM IDs; model provenance not independently verified",
