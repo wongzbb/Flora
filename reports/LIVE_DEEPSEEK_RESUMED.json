@@ -1,6 +1,6 @@
 {
-  "status": "in_progress",
-  "active_session": 22270,
+  "status": "targeted_batch_finished; overall acceptance incomplete",
+  "active_session": null,
   "output_directory": "/workspace/scratch/flora-live-v3-targeted-resume-01",
   "batch_source": "57392e5f31d054d2bb9268b9bcc5e2cdae15742b",
   "restoration_smoke": {
@@ -12,13 +12,8 @@
   },
   "completed_rows": [
     {
-      "model": "deepseek-v4-pro",
-      "case": "pagination",
-      "trial": 2,
-      "fixture_seed": 528843486478785,
       "status": "completed",
       "failure": null,
-      "seconds": 148.029,
       "aggregate_usage": {
         "model_calls": 2,
         "tool_calls": 3,
@@ -69,20 +64,20 @@
         },
         "history_and_current_pass_revisions": 0,
         "semantic_or_causal_validation": false
-      }
+      },
+      "model": "deepseek-v4-pro",
+      "case": "pagination",
+      "trial": 2,
+      "fixture_seed": 528843486478785,
+      "seconds": 148.029
     },
     {
-      "model": "deepseek-v4-pro",
-      "case": "dependency_route",
-      "trial": 1,
-      "fixture_seed": 439797697076086,
       "status": "needs_program",
       "failure": {
         "code": "model_transport",
         "next_action": "Check endpoint and model availability; a new compilation remains charged and may have unknown usage.",
         "effects_replayed": false
       },
-      "seconds": 738.233,
       "aggregate_usage": {
         "model_calls": 9,
         "tool_calls": 8,
@@ -136,6 +131,283 @@
         },
         "history_and_current_pass_revisions": 0,
         "semantic_or_causal_validation": false
+      },
+      "model": "deepseek-v4-pro",
+      "case": "dependency_route",
+      "trial": 1,
+      "fixture_seed": 439797697076086,
+      "seconds": 738.233
+    },
+    {
+      "status": "completed",
+      "failure": null,
+      "aggregate_usage": {
+        "model_calls": 1,
+        "tool_calls": 2,
+        "input_tokens": 7560,
+        "output_tokens": 18012,
+        "unknown_usage_calls": 0
+      },
+      "grade": {
+        "passed": true,
+        "review_required": false,
+        "runtime_completed": true,
+        "answer_correct": true,
+        "evidence_integrity": true,
+        "task_success_distinct": true,
+        "dependency_causal_use_verified": false,
+        "tool_calls": [
+          "table_query",
+          "table_query"
+        ]
+      },
+      "mechanism_observations": {
+        "diagnostic_evaluated": 0,
+        "forecast_observation": 0,
+        "consumer_check": 2,
+        "revision_checked": 0,
+        "reuse_checked": 0,
+        "diagnostic_inapplicable": 0,
+        "invalid_diagnostic": 0,
+        "multiple_candidate_bundles": 0,
+        "inserted_diagnostic_actions": 0,
+        "accepted_revisions": 0,
+        "rejected_reuse": 0,
+        "omitted_reports": 0,
+        "revision_modes": {
+          "PRESERVE": {
+            "checked": 0,
+            "accepted": 0
+          },
+          "EXTEND": {
+            "checked": 0,
+            "accepted": 0
+          },
+          "CHANGE": {
+            "checked": 0,
+            "accepted": 0
+          }
+        },
+        "history_and_current_pass_revisions": 0,
+        "semantic_or_causal_validation": false
+      },
+      "model": "deepseek-flash",
+      "case": "pagination",
+      "trial": 1,
+      "fixture_seed": 359339805650858,
+      "seconds": 164.334
+    },
+    {
+      "status": "completed",
+      "failure": null,
+      "aggregate_usage": {
+        "model_calls": 1,
+        "tool_calls": 1,
+        "input_tokens": 8808,
+        "output_tokens": 973,
+        "unknown_usage_calls": 0
+      },
+      "grade": {
+        "passed": false,
+        "review_required": false,
+        "runtime_completed": true,
+        "answer_correct": false,
+        "evidence_integrity": false,
+        "task_success_distinct": true,
+        "dependency_causal_use_verified": false,
+        "tool_calls": [
+          "read_file"
+        ]
+      },
+      "mechanism_observations": {
+        "diagnostic_evaluated": 0,
+        "forecast_observation": 0,
+        "consumer_check": 1,
+        "revision_checked": 0,
+        "reuse_checked": 0,
+        "diagnostic_inapplicable": 0,
+        "invalid_diagnostic": 0,
+        "multiple_candidate_bundles": 0,
+        "inserted_diagnostic_actions": 0,
+        "accepted_revisions": 0,
+        "rejected_reuse": 0,
+        "omitted_reports": 0,
+        "revision_modes": {
+          "PRESERVE": {
+            "checked": 0,
+            "accepted": 0
+          },
+          "EXTEND": {
+            "checked": 0,
+            "accepted": 0
+          },
+          "CHANGE": {
+            "checked": 0,
+            "accepted": 0
+          }
+        },
+        "history_and_current_pass_revisions": 0,
+        "semantic_or_causal_validation": false
+      },
+      "model": "deepseek-flash",
+      "case": "dependency_route",
+      "trial": 1,
+      "fixture_seed": 439797697076086,
+      "seconds": 5.453
+    },
+    {
+      "status": "completed",
+      "failure": null,
+      "aggregate_usage": {
+        "model_calls": 4,
+        "tool_calls": 12,
+        "input_tokens": 34847,
+        "output_tokens": 25806,
+        "unknown_usage_calls": 0
+      },
+      "grade": {
+        "passed": true,
+        "review_required": false,
+        "runtime_completed": true,
+        "answer_correct": true,
+        "evidence_integrity": true,
+        "task_success_distinct": true,
+        "dependency_causal_use_verified": false,
+        "tool_calls": [
+          "spawn_agent",
+          "wait_agents",
+          "read_agent",
+          "review_agent",
+          "spawn_agent",
+          "wait_agents",
+          "read_agent",
+          "review_agent",
+          "read_file",
+          "read_file"
+        ]
+      },
+      "mechanism_observations": {
+        "diagnostic_evaluated": 0,
+        "forecast_observation": 0,
+        "consumer_check": 12,
+        "revision_checked": 0,
+        "reuse_checked": 0,
+        "diagnostic_inapplicable": 0,
+        "invalid_diagnostic": 0,
+        "multiple_candidate_bundles": 0,
+        "inserted_diagnostic_actions": 0,
+        "accepted_revisions": 0,
+        "rejected_reuse": 0,
+        "omitted_reports": 0,
+        "revision_modes": {
+          "PRESERVE": {
+            "checked": 0,
+            "accepted": 0
+          },
+          "EXTEND": {
+            "checked": 0,
+            "accepted": 0
+          },
+          "CHANGE": {
+            "checked": 0,
+            "accepted": 0
+          }
+        },
+        "history_and_current_pass_revisions": 0,
+        "semantic_or_causal_validation": false
+      },
+      "model": "deepseek-flash",
+      "case": "dependency_route",
+      "trial": 2,
+      "fixture_seed": 290914929996477,
+      "seconds": 100.63
+    },
+    {
+      "status": "completed",
+      "failure": null,
+      "aggregate_usage": {
+        "model_calls": 2,
+        "tool_calls": 3,
+        "input_tokens": 17718,
+        "output_tokens": 21491,
+        "unknown_usage_calls": 0
+      },
+      "grade": {
+        "passed": true,
+        "review_required": false,
+        "runtime_completed": true,
+        "answer_correct": true,
+        "evidence_integrity": true,
+        "task_success_distinct": true,
+        "dependency_causal_use_verified": false,
+        "tool_calls": [
+          "table_query",
+          "table_query",
+          "table_query"
+        ]
+      },
+      "mechanism_observations": {
+        "diagnostic_evaluated": 0,
+        "forecast_observation": 0,
+        "consumer_check": 3,
+        "revision_checked": 0,
+        "reuse_checked": 0,
+        "diagnostic_inapplicable": 0,
+        "invalid_diagnostic": 0,
+        "multiple_candidate_bundles": 0,
+        "inserted_diagnostic_actions": 0,
+        "accepted_revisions": 0,
+        "rejected_reuse": 0,
+        "omitted_reports": 0,
+        "revision_modes": {
+          "PRESERVE": {
+            "checked": 0,
+            "accepted": 0
+          },
+          "EXTEND": {
+            "checked": 0,
+            "accepted": 0
+          },
+          "CHANGE": {
+            "checked": 0,
+            "accepted": 0
+          }
+        },
+        "history_and_current_pass_revisions": 0,
+        "semantic_or_causal_validation": false
+      },
+      "model": "deepseek-flash",
+      "case": "pagination",
+      "trial": 2,
+      "fixture_seed": 528843486478785,
+      "seconds": 84.544
+    },
+    {
+      "model": "deepseek-v4-pro",
+      "case": "dependency_route",
+      "trial": 2,
+      "fixture_seed": 290914929996477,
+      "status": "not_run",
+      "seconds": 0,
+      "reason": "Earlier model transport failure; fix endpoint before retrying",
+      "grade": {
+        "passed": null,
+        "runtime_completed": false,
+        "review_required": false
+      }
+    },
+    {
+      "model": "deepseek-v4-pro",
+      "case": "pagination",
+      "trial": 1,
+      "fixture_seed": 359339805650858,
+      "status": "not_run",
+      "seconds": 0,
+      "reason": "Earlier model transport failure; fix endpoint before retrying",
+      "grade": {
+        "passed": null,
+        "runtime_completed": false,
+        "review_required": false
       }
     }
   ],
@@ -155,5 +427,24 @@
     "parent_source_verification_completed": false,
     "configuration": "thinking enabled, reasoning_effort low; block-list-v2 source and tool schema version 3"
   },
-  "scope": "Partial progress only; no claim of full acceptance or general reliability"
+  "scope": "Partial progress only; no claim of full acceptance or general reliability",
+  "batch_outcome": {
+    "passed": 4,
+    "task_failure": 1,
+    "reasoning_exhausted": 1,
+    "not_run": 2
+  },
+  "batch_usage": {
+    "model_calls": 19,
+    "input_tokens": 195336,
+    "output_tokens": 166982,
+    "unknown_usage_calls": 0
+  },
+  "early_return_failure": {
+    "model": "deepseek-flash",
+    "case": "dependency_route",
+    "trial": 1,
+    "actual": "Only read route.json and returned its file/nonce object; no workers, selected-file verification or required final answer",
+    "seconds": 5.453
+  }
 }
