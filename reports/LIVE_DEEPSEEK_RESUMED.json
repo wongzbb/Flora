@@ -1,0 +1,159 @@
+{
+  "status": "in_progress",
+  "active_session": 22270,
+  "output_directory": "/workspace/scratch/flora-live-v3-targeted-resume-01",
+  "batch_source": "57392e5f31d054d2bb9268b9bcc5e2cdae15742b",
+  "restoration_smoke": {
+    "model": "deepseek-flash",
+    "success": true,
+    "model_calls": 1,
+    "input_tokens": 8,
+    "output_tokens": 1
+  },
+  "completed_rows": [
+    {
+      "model": "deepseek-v4-pro",
+      "case": "pagination",
+      "trial": 2,
+      "fixture_seed": 528843486478785,
+      "status": "completed",
+      "failure": null,
+      "seconds": 148.029,
+      "aggregate_usage": {
+        "model_calls": 2,
+        "tool_calls": 3,
+        "input_tokens": 18059,
+        "output_tokens": 16343,
+        "unknown_usage_calls": 0
+      },
+      "grade": {
+        "passed": true,
+        "review_required": false,
+        "runtime_completed": true,
+        "answer_correct": true,
+        "evidence_integrity": true,
+        "task_success_distinct": true,
+        "dependency_causal_use_verified": false,
+        "tool_calls": [
+          "table_query",
+          "table_query",
+          "table_query"
+        ]
+      },
+      "mechanism_observations": {
+        "diagnostic_evaluated": 0,
+        "forecast_observation": 0,
+        "consumer_check": 3,
+        "revision_checked": 0,
+        "reuse_checked": 0,
+        "diagnostic_inapplicable": 0,
+        "invalid_diagnostic": 0,
+        "multiple_candidate_bundles": 0,
+        "inserted_diagnostic_actions": 0,
+        "accepted_revisions": 0,
+        "rejected_reuse": 0,
+        "omitted_reports": 0,
+        "revision_modes": {
+          "PRESERVE": {
+            "checked": 0,
+            "accepted": 0
+          },
+          "EXTEND": {
+            "checked": 0,
+            "accepted": 0
+          },
+          "CHANGE": {
+            "checked": 0,
+            "accepted": 0
+          }
+        },
+        "history_and_current_pass_revisions": 0,
+        "semantic_or_causal_validation": false
+      }
+    },
+    {
+      "model": "deepseek-v4-pro",
+      "case": "dependency_route",
+      "trial": 1,
+      "fixture_seed": 439797697076086,
+      "status": "needs_program",
+      "failure": {
+        "code": "model_transport",
+        "next_action": "Check endpoint and model availability; a new compilation remains charged and may have unknown usage.",
+        "effects_replayed": false
+      },
+      "seconds": 738.233,
+      "aggregate_usage": {
+        "model_calls": 9,
+        "tool_calls": 8,
+        "input_tokens": 108344,
+        "output_tokens": 84357,
+        "unknown_usage_calls": 0
+      },
+      "grade": {
+        "passed": false,
+        "review_required": false,
+        "runtime_completed": false,
+        "answer_correct": false,
+        "evidence_integrity": false,
+        "task_success_distinct": true,
+        "dependency_causal_use_verified": false,
+        "tool_calls": [
+          "spawn_agent",
+          "wait_agents",
+          "read_agent",
+          "spawn_agent",
+          "wait_agents",
+          "read_agent"
+        ]
+      },
+      "mechanism_observations": {
+        "diagnostic_evaluated": 0,
+        "forecast_observation": 0,
+        "consumer_check": 8,
+        "revision_checked": 0,
+        "reuse_checked": 0,
+        "diagnostic_inapplicable": 0,
+        "invalid_diagnostic": 0,
+        "multiple_candidate_bundles": 0,
+        "inserted_diagnostic_actions": 0,
+        "accepted_revisions": 0,
+        "rejected_reuse": 0,
+        "omitted_reports": 0,
+        "revision_modes": {
+          "PRESERVE": {
+            "checked": 0,
+            "accepted": 0
+          },
+          "EXTEND": {
+            "checked": 0,
+            "accepted": 0
+          },
+          "CHANGE": {
+            "checked": 0,
+            "accepted": 0
+          }
+        },
+        "history_and_current_pass_revisions": 0,
+        "semantic_or_causal_validation": false
+      }
+    }
+  ],
+  "new_failure": {
+    "case_index": 2,
+    "category": "reasoning_exhausted",
+    "http_status": null,
+    "message": "output budget exhausted before a program was produced; select an explicit reasoning profile or output budget; unchanged format repair was not sent",
+    "parent_generation_seconds": [
+      116.89,
+      47.69,
+      184.33,
+      91.05
+    ],
+    "last_generation_output_limit": 24000,
+    "both_workers_completed": true,
+    "parent_source_verification_completed": false,
+    "configuration": "thinking enabled, reasoning_effort low; block-list-v2 source and tool schema version 3"
+  },
+  "scope": "Partial progress only; no claim of full acceptance or general reliability"
+}

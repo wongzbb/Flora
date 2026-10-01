@@ -7,9 +7,9 @@ The user confirmed recharge and explicitly cleared the HTTP 402 stop. One offici
 - Session: `22270`; output: `/workspace/scratch/flora-live-v3-targeted-resume-01`.
 - Source at batch start: `57392e5f31d054d2bb9268b9bcc5e2cdae15742b`; seed 20261005; pagination and dependency_route; both authorized DeepSeek models; two trials each; tool schema version 3.
 - First completed row: Pro / pagination / trial 2 passed answer and evidence checks in 148.029 seconds. Two model calls, 18,059 input / 16,343 output tokens. One source-signature rejection was repaired within the existing budget. This is only one sample, not proof that the previous failures are fixed.
-- At this checkpoint, row 2 (Pro / dependency_route / trial 1) is still running. Do not restart it or rerun the minimal connectivity check. No new access rejection has been observed.
+- Row 2 (Pro / dependency_route / trial 1) ended after 738.233 seconds with `reasoning_exhausted`: its last generation consumed the 24,000-token output allowance without a program. Both workers completed, but parent source verification and final answer did not. Aggregate: 9 calls, 108,344 input / 84,357 output tokens, no unknown usage. This is not an account rejection. The batch continues other eligible samples; do not restart it or repeat connectivity checks.
 
-Latency is an acceptance issue of its own. Row 2's first four completed parent generations took 116.89, 47.69, 184.33 and 91.05 seconds. The third was rejected for a `get` operation with the wrong argument count. The second child also needed repair because its observe error target omitted capture parameters; this same source-signature issue occurred in row 1. These are completed streamed generations and compilation repairs, not merely idle API waiting. Final usage and elapsed time are still pending. Do not treat eventual completion as sufficient usability evidence.
+Latency is an acceptance issue of its own. Row 2's first four completed parent generations took 116.89, 47.69, 184.33 and 91.05 seconds. The third was rejected for a `get` operation with the wrong argument count. The second child also needed repair because its observe error target omitted capture parameters; this same source-signature issue occurred in row 1. These are completed streamed generations and compilation repairs, not merely idle API waiting. The final values are recorded above and in LIVE_DEEPSEEK_RESUMED.json. Do not treat eventual completion as sufficient usability evidence.
 
 ## Reviewed experimental harness
 
@@ -28,3 +28,9 @@ Consumer-recovery evidence needs careful separation: the existing host-seeded `n
 If stronger revision evidence is needed, use a separate labeled legacy two-page fixture with an actual successful old-shape boundary followed by a real new-shape failure, and let the model write the entire migration/consumer. Keep any oracle external; do not introduce a task-specific host solver. No such new runtime feature or stronger live result is claimed here.
 
 After each validated implementation round, commit and push only `general-agent`, verifying the remote ref and keeping incomplete experimental work explicitly labeled. Overall acceptance remains incomplete.
+
+## Reasoning-profile investigation
+
+The official [DeepSeek Chat Completions reference](https://api-docs.deepseek.com/api/create-chat-completion/) confirms `low` is the lowest enabled reasoning effort; `none` disables thinking, while `minimal` maps to `low`. There is no documented lower enabled setting to try. Any non-thinking comparison must explicitly disable thinking and use `none`, preserve task verification, use fresh bounded runs, and be reported as an experimental configuration. Earlier non-thinking Flash failures remain valid evidence; no speed or correctness improvement is assumed.
+
+Separately, an isolated detached worktree is developing an opt-in source-syntax extension for explicitly declared capture subsets. It is not part of the active baseline or a verified runtime fix at this checkpoint.
