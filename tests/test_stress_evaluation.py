@@ -33,11 +33,25 @@ from tests.live_reliability_probe import (
 from tests.stress_cases import STRESS_TASKS
 
 
-def receipt(tool="read_file", path="evidence.json", status="returned", **args):
-    return {"tool": tool, "status": status, "args": {"path": path, **args}}
+def receipt(root, tool="read_file", path="evidence.json", status="returned", **args):
+    from flora.integrations.workspace import WorkspaceTools
+
+    record = {"tool": tool, "status": status, "args": {"path": path, **args}}
+    if status == "returned" and tool == "read_file":
+        record["value"] = WorkspaceTools(root, max_output_bytes=1048576).read_file(path, **args)
+    elif status == "returned" and tool in {"create_file", "write_file", "update_file"}:
+        raw = (root / path).read_bytes()
+        record["value"] = {
+            "path": path,
+            "sha256": hashlib.sha256(raw).hexdigest(),
+            "size_bytes": len(raw),
+        }
+    if status == "raised":
+        record["error"] = {"type": "FileNotFoundError", "message": "missing"}
+    return record
 
 
-def worker(ident, path, value, *, depends_on=()):
+def worker(root, ident, path, value, *, depends_on=()):
     view = {
         "status": "completed",
         "value": value,
@@ -51,7 +65,7 @@ def worker(ident, path, value, *, depends_on=()):
         "id": ident,
         "status": "completed",
         "_view": view,
-        "_receipts": [receipt(path=path)],
+        "_receipts": [receipt(root, path=path)],
         "depends_on": list(depends_on),
         "read_digest": digest(view),
         "read_windows": [[0, length]],
@@ -80,7 +94,7 @@ class ReliabilityOracleTests(unittest.TestCase):
         grade = self.grade("read", result, expected)
         self.assertTrue(grade["answer_correct"])
         self.assertFalse(grade["passed"])
-        result["_receipts"] = [receipt()]
+        result["_receipts"] = [receipt(self.root)]
         self.assertTrue(self.grade("read", result, expected)["passed"])
         result["_receipts"][0]["status"] = "raised"
         self.assertFalse(self.grade("read", result, expected)["passed"])
@@ -90,7 +104,7 @@ class ReliabilityOracleTests(unittest.TestCase):
     def test_search_provenance_uses_actual_match_paths_not_requested_directory(self):
         from tests.live_reliability_probe import observed_paths
 
-        match = receipt("search_files", ".")
+        match = receipt(self.root, "search_files", ".")
         match["value"] = {"matches": [{"path": "manual.txt", "text": "APPROVED fixture"}]}
         self.assertEqual(observed_paths([match]), {"manual.txt"})
         match["value"] = {"matches": []}
@@ -100,24 +114,46 @@ class ReliabilityOracleTests(unittest.TestCase):
 
     def test_report_requires_correct_content_source_and_current_bytes(self):
         expected = prepare_case("report", self.root, 4)
-        source = {
-            "source_id": "src-000001",
-            "origin": "workspace:./evidence.json",
-            "sha256": expected["input_hashes"]["evidence.json"],
-        }
-        result = self.result("./report.md", [receipt("write_report", "./report.md")])
+        from flora.general.documents import DocumentTools, DocumentWorkspace
+        from flora.general.storage import ObservationStore
+
+        store_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(store_dir.cleanup)
+        store = ObservationStore(store_dir.name)
+        self.addCleanup(store.close)
+        docs = DocumentTools(DocumentWorkspace(self.root), store, lambda: "test")
+        source = docs.read_document("./evidence.json")
+        result = self.result("./report.md", [receipt(self.root)])
         result["_sources"] = [source]
 
         def publish(content):
-            (self.root / "report.md").write_text(content)
+            path = self.root / "report.md"
+            old_hash = hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else None
+            source_ids = [source["source_id"]] if "[src-000001]" in content else []
+            args = {
+                "path": "./report.md",
+                "content": content,
+                "source_ids": source_ids,
+                "expected_sha256": old_hash,
+            }
+            observed = docs.write_report(**args)
+            result["_receipts"] = [
+                receipt(self.root),
+                {
+                    "tool": "write_report",
+                    "status": "returned",
+                    "args": args,
+                    "value": observed,
+                },
+            ]
             result["artifacts"] = [
                 {
                     "path": "report.md",
                     "current": True,
                     "current_task": True,
                     "kind": "report",
-                    "sources": ["src-000001"],
-                    "sha256": hashlib.sha256(content.encode()).hexdigest(),
+                    "sources": source_ids,
+                    "sha256": observed["sha256"],
                 }
             ]
 
@@ -140,7 +176,13 @@ class ReliabilityOracleTests(unittest.TestCase):
         (self.root / "summary.json").write_text(
             json.dumps({"project": expected["project"], "total": expected["total"]})
         )
-        result = self.result("summary.json", [receipt(), receipt("create_file", "summary.json")])
+        result = self.result(
+            "summary.json",
+            [
+                receipt(self.root),
+                receipt(self.root, "create_file", "summary.json"),
+            ],
+        )
         self.assertTrue(self.grade("write", result, expected)["passed"])
         result["status"] = "needs_program"
         grade = self.grade("write", result, expected)
@@ -149,24 +191,38 @@ class ReliabilityOracleTests(unittest.TestCase):
 
     def test_branch_present_forbids_fallback_and_missing_requires_observed_error(self):
         expected = prepare_case("branch", self.root, 1)
-        result = self.result(expected["branch_project"], [receipt(path="optional.json")])
+        result = self.result(expected["branch_project"], [receipt(self.root, path="optional.json")])
         self.assertTrue(self.grade("branch", result, expected)["passed"])
-        result["_receipts"].append(receipt())
+        result["_receipts"].append(receipt(self.root))
         self.assertFalse(self.grade("branch", result, expected)["passed"])
         expected.update(optional_present=False, branch_project=expected["project"])
-        result = self.result(expected["project"], [receipt()])
+        result = self.result(
+            expected["project"],
+            [receipt(self.root)],
+        )
         self.assertFalse(self.grade("branch", result, expected)["passed"])
-        result["_receipts"].insert(0, receipt(path="optional.json", status="raised"))
+        result["_receipts"].insert(0, receipt(self.root, path="optional.json", status="raised"))
         self.assertTrue(self.grade("branch", result, expected)["passed"])
 
     def test_multiactor_guessed_total_or_same_worker_is_not_collaboration(self):
         expected = prepare_case("multi", self.root, 11)
         workers = [
-            worker("left", "left.json", {"count": expected["counts"][0], "path": "left.json"}),
-            worker("right", "right.json", {"count": expected["counts"][1], "path": "right.json"}),
+            worker(
+                self.root,
+                "left",
+                "left.json",
+                {"count": expected["counts"][0], "path": "left.json"},
+            ),
+            worker(
+                self.root,
+                "right",
+                "right.json",
+                {"count": expected["counts"][1], "path": "right.json"},
+            ),
         ]
         result = self.result(
-            expected["total"], [receipt(path="left.json"), receipt(path="right.json")]
+            expected["total"],
+            [receipt(self.root, path="left.json"), receipt(self.root, path="right.json")],
         )
         result["workers"] = workers
         self.assertTrue(self.grade("multi", result, expected)["passed"])
@@ -194,15 +250,17 @@ class ReliabilityOracleTests(unittest.TestCase):
     def test_dependent_child_must_deliver_the_actual_dependency_values(self):
         expected = prepare_case("dependency", self.root, 12)
         left, right = expected["counts"]
-        a = worker("a", "left.json", {"count": left, "path": "left.json"})
+        a = worker(self.root, "a", "left.json", {"count": left, "path": "left.json"})
         b = worker(
+            self.root,
             "b",
             "right.json",
             {"left": left, "right": right, "maximum": max(left, right)},
             depends_on=["a"],
         )
         result = self.result(
-            max(left, right), [receipt(path="left.json"), receipt(path="right.json")]
+            max(left, right),
+            [receipt(self.root, path="left.json"), receipt(self.root, path="right.json")],
         )
         result["workers"] = [a, b]
         self.assertTrue(self.grade("dependency", result, expected)["passed"])
@@ -250,18 +308,18 @@ class StressFixtureTests(unittest.TestCase):
             expected = prepare_case("release_audit", root, 17)
             (root / "audit.json").write_text(json.dumps(expected["answer"]))
             workers = [
-                worker(str(i), answer["source"], answer)
+                worker(root, str(i), answer["source"], answer)
                 for i, answer in enumerate(expected["worker_answers"])
             ]
-            failure = receipt(path=expected["missing_primary"], status="raised")
+            failure = receipt(root, path=expected["missing_primary"], status="raised")
             failure["error"] = {"type": "FileNotFoundError", "message": "missing"}
             workers[1]["_receipts"].insert(0, failure)
             result = {
                 "status": "completed",
                 "value": expected["answer"],
                 "workers": workers,
-                "_receipts": [receipt(path=p) for p in expected["required_reads"]]
-                + [receipt("create_file", "audit.json"), receipt(path="audit.json")],
+                "_receipts": [receipt(root, path=p) for p in expected["required_reads"]]
+                + [receipt(root, "create_file", "audit.json"), receipt(root, path="audit.json")],
             }
             self.assertTrue(assess("release_audit", result, root, [], expected)["passed"])
             workers[1]["_receipts"].pop(0)
@@ -298,7 +356,9 @@ class StressFixtureTests(unittest.TestCase):
                 expected = prepare_case(case, root, 201)
                 result = {"status": "completed", "value": expected["answer"], "_receipts": []}
                 self.assertFalse(assess(case, result, root, [], expected)["passed"])
-                result["_receipts"] = [receipt(path=path) for path in expected["required_reads"]]
+                result["_receipts"] = [
+                    receipt(root, path=path) for path in expected["required_reads"]
+                ]
                 self.assertTrue(assess(case, result, root, [], expected)["passed"])
                 result["value"] = {"wrong": True}
                 self.assertFalse(assess(case, result, root, [], expected)["passed"])
@@ -307,18 +367,19 @@ class StressFixtureTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             expected = prepare_case("edit_preserve", root, 17)
+            original_read = receipt(root, path="settings.json")
             (root / "settings.json").write_text(json.dumps(expected["files"]["settings.json"]))
             result = {
                 "status": "completed",
                 "value": expected["answer"],
                 "_receipts": [
-                    receipt(path="settings.json"),
-                    receipt(path="request.json"),
-                    receipt("update_file", "settings.json"),
+                    original_read,
+                    receipt(root, path="request.json"),
+                    receipt(root, "update_file", "settings.json"),
                 ],
             }
             self.assertFalse(assess("edit_preserve", result, root, [], expected)["passed"])
-            result["_receipts"].append(receipt(path="settings.json"))
+            result["_receipts"].append(receipt(root, path="settings.json"))
             self.assertTrue(assess("edit_preserve", result, root, [], expected)["passed"])
             modified = copy.deepcopy(expected["files"]["settings.json"])
             modified["unrelated"]["false"] = 0
@@ -330,19 +391,23 @@ class StressFixtureTests(unittest.TestCase):
             root = Path(tmp)
             expected = prepare_case("dependency_route", root, 55)
             a = worker(
+                root,
                 "a",
                 "route.json",
                 {"file": expected["selected"], "nonce": expected["answer"]["nonce"]},
             )
-            b = worker("b", expected["selected"], expected["answer"], depends_on=["a"])
+            b = worker(root, "b", expected["selected"], expected["answer"], depends_on=["a"])
             result = {
                 "status": "completed",
                 "value": expected["answer"],
                 "workers": [a, b],
-                "_receipts": [receipt(path="route.json"), receipt(path=expected["selected"])],
+                "_receipts": [
+                    receipt(root, path="route.json"),
+                    receipt(root, path=expected["selected"]),
+                ],
             }
             self.assertTrue(assess("dependency_route", result, root, [], expected)["passed"])
-            b["_receipts"].append(receipt(path=expected["forbidden_reads"][0]))
+            b["_receipts"].append(receipt(root, path=expected["forbidden_reads"][0]))
             self.assertFalse(assess("dependency_route", result, root, [], expected)["passed"])
 
 
@@ -612,7 +677,16 @@ class ProbeExecutionTests(unittest.TestCase):
                 self.assertEqual(app.delegation.records, before)
                 self.assertEqual(len(result["workers"]), 2)
                 self.assertTrue(all(len(w["_receipts"]) == 1 for w in result["workers"]))
-                expected = {"counts": [17, 24], "total": 41, "project": "test"}
+                expected = {
+                    "counts": [17, 24],
+                    "total": 41,
+                    "project": "test",
+                    "input_hashes": {
+                        p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+                        for p in root.iterdir()
+                        if p.is_file()
+                    },
+                }
                 self.assertTrue(assess("multi", result, root, [], expected)["passed"])
                 self.assertEqual(aggregate_usage(result)["model_calls"], 3)
 
@@ -881,7 +955,7 @@ class EvaluationBlockerRegressions(unittest.TestCase):
             root = Path(tmp)
             expected = prepare_case("read", root, 19)
             files = DocumentWorkspace(root)
-            read = receipt(path="./evidence.json")
+            read = receipt(root, path="./evidence.json")
             read["value"] = files.read_file("./evidence.json")
             self.assertEqual(read["value"]["path"], "evidence.json")
             result = {
@@ -894,16 +968,16 @@ class EvaluationBlockerRegressions(unittest.TestCase):
             root = Path(tmp)
             expected = prepare_case("edit_preserve", root, 19)
             files = DocumentWorkspace(root)
-            reads = [receipt(path="./settings.json"), receipt(path="./request.json")]
+            reads = [receipt(root, path="./settings.json"), receipt(root, path="./request.json")]
             for read in reads:
                 read["value"] = files.read_file(read["args"]["path"])
-            write = receipt("write_file", "./settings.json")
+            write = receipt(root, "write_file", "./settings.json")
             write["value"] = files.write_file(
                 "./settings.json",
                 json.dumps(expected["files"]["settings.json"]),
                 expected_sha256=reads[0]["value"]["sha256"],
             )
-            readback = receipt(path="./settings.json")
+            readback = receipt(root, path="./settings.json")
             readback["value"] = files.read_file("./settings.json")
             result = {
                 "status": "completed",
@@ -920,7 +994,7 @@ class EvaluationBlockerRegressions(unittest.TestCase):
             root = Path(tmp)
             expected = prepare_case("branch", root, 1)
             files = DocumentWorkspace(root)
-            read = receipt(path="./optional.json")
+            read = receipt(root, path="./optional.json")
             read["value"] = files.read_file("./optional.json")
             result = {
                 "status": "completed",
@@ -928,7 +1002,7 @@ class EvaluationBlockerRegressions(unittest.TestCase):
                 "_receipts": [read],
             }
             self.assertTrue(assess("branch", result, root, [], expected)["passed"])
-            mkdir = receipt("make_directory", "forbidden")
+            mkdir = receipt(root, "make_directory", "forbidden")
             mkdir["value"] = files.make_directory("forbidden")
             result["_receipts"].append(mkdir)
             self.assertEqual(snapshot(root)["forbidden/"], "DIRECTORY")
@@ -943,27 +1017,28 @@ class EvaluationBlockerRegressions(unittest.TestCase):
             expected = prepare_case("dependency_route", root, 55)
             files = DocumentWorkspace(root)
             a = worker(
+                root,
                 "a",
                 "./route.json",
                 {"file": "./" + expected["selected"], "nonce": expected["answer"]["nonce"]},
             )
-            b = worker("b", "./" + expected["selected"], expected["answer"], depends_on=["a"])
+            b = worker(root, "b", "./" + expected["selected"], expected["answer"], depends_on=["a"])
             result = {
                 "status": "completed",
                 "value": expected["answer"],
                 "workers": [a, b],
                 "_receipts": [
-                    receipt(path="./route.json"),
-                    receipt(path="./" + expected["selected"]),
+                    receipt(root, path="./route.json"),
+                    receipt(root, path="./" + expected["selected"]),
                 ],
             }
             self.assertTrue(assess("dependency_route", result, root, [], expected)["passed"])
-            forbidden = receipt(path="./" + expected["forbidden_reads"][0])
+            forbidden = receipt(root, path="./" + expected["forbidden_reads"][0])
             forbidden["value"] = files.read_file(forbidden["args"]["path"])
             b["_receipts"].append(forbidden)
             self.assertFalse(assess("dependency_route", result, root, [], expected)["passed"])
             b["_receipts"].pop()
-            search = receipt("search_files", ".", query="NEVER_OCCURS")
+            search = receipt(root, "search_files", ".", query="NEVER_OCCURS")
             search["value"] = files.search_files("NEVER_OCCURS")
             self.assertEqual(search["value"]["matches"], [])
             b["_receipts"].append(search)

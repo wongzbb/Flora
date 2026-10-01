@@ -1,0 +1,759 @@
+{
+  "flora-round2-phased-pro-01": {
+    "provenance": "provenance.json",
+    "results": [
+      {
+        "status": "completed",
+        "runtime_status": "completed",
+        "failure": null,
+        "budget": {
+          "limits": {
+            "max_tool_calls": 80,
+            "max_model_calls": 12,
+            "max_input_tokens": 500000,
+            "max_output_tokens": 180000,
+            "max_wall_seconds": 900
+          },
+          "tool_calls": 13,
+          "model_calls": 8,
+          "input_tokens": 152316,
+          "output_tokens": 80387,
+          "unknown_usage_calls": 0,
+          "reserved_output": 0,
+          "elapsed_seconds": 832.0548553580002
+        },
+        "aggregate_usage": {
+          "model_calls": 11,
+          "tool_calls": 15,
+          "input_tokens": 175407,
+          "output_tokens": 87484,
+          "unknown_usage_calls": 0
+        },
+        "grade": {
+          "passed": true,
+          "review_required": false,
+          "runtime_completed": true,
+          "answer_correct": true,
+          "evidence_integrity": true,
+          "task_success_distinct": true,
+          "dependency_causal_use_verified": false,
+          "tool_calls": [
+            "spawn_agent",
+            "wait_agents",
+            "read_agent",
+            "read_file",
+            "review_agent",
+            "spawn_agent",
+            "wait_agents",
+            "read_agent",
+            "wait_agents",
+            "read_file",
+            "review_agent",
+            "read_work",
+            "update_work"
+          ]
+        },
+        "fixture_unchanged": true,
+        "first_pass": true,
+        "attempts": [
+          {
+            "attempt": 1,
+            "status": "completed",
+            "grade": {
+              "passed": true,
+              "review_required": false,
+              "runtime_completed": true,
+              "answer_correct": true,
+              "evidence_integrity": true,
+              "task_success_distinct": true,
+              "dependency_causal_use_verified": false,
+              "tool_calls": [
+                "spawn_agent",
+                "wait_agents",
+                "read_agent",
+                "read_file",
+                "review_agent",
+                "spawn_agent",
+                "wait_agents",
+                "read_agent",
+                "wait_agents",
+                "read_file",
+                "review_agent",
+                "read_work",
+                "update_work"
+              ]
+            },
+            "aggregate_usage": {
+              "model_calls": 11,
+              "tool_calls": 15,
+              "input_tokens": 175407,
+              "output_tokens": 87484,
+              "unknown_usage_calls": 0
+            }
+          }
+        ],
+        "output_hashes": {
+          "route.json": "d3cceb359115ed992e1d8305a3fded05f0be17742216c537e503ee29d79dec10",
+          "choice-624c38572f56-0.json": "e5dcba9c0155e4d5894bed4306a23c1364e2c77b4d12c847f661e2950d795a29",
+          "choice-624c38572f56-2.json": "6b9b7de8b496133a339e72e9e844e7f68dbcf9aa8ce31428041106cb68163021",
+          "choice-624c38572f56-1.json": "f97c037bfc7d2241a26abee719543e4b73d0d27e8f12b11d0103429c8979b8d7"
+        },
+        "resolved_limits": {
+          "parent": {
+            "max_model_calls": 12,
+            "max_tool_calls": 80,
+            "max_input_tokens": 500000,
+            "max_output_tokens": 180000,
+            "max_wall_seconds": 900
+          },
+          "per_child": {
+            "max_model_calls": 6,
+            "max_tool_calls": 40,
+            "max_input_tokens": 250000,
+            "max_output_tokens": 90000,
+            "max_wall_seconds": 450
+          }
+        },
+        "configuration": {
+          "provider": {
+            "timeout": 60,
+            "total_timeout": 300,
+            "progress_timeout": 60,
+            "first_program_timeout": 240,
+            "max_response_bytes": 4194304,
+            "max_stream_bytes": 67108864,
+            "max_json_whitespace": 2048,
+            "stream": true,
+            "stream_fallback": true,
+            "allow_insecure_http": false,
+            "reasoning_effort": "low",
+            "thinking": "enabled",
+            "response_format": "json_object"
+          },
+          "compiler": {
+            "max_output_tokens": 24000,
+            "max_repairs": 1,
+            "compilation_timeout": 300,
+            "syntax": "block-list-v3",
+            "prompt_style": "compact-v3"
+          },
+          "general": {
+            "require_task_completion": true
+          },
+          "tool_schema_version": 3
+        },
+        "mechanism_observations": {
+          "diagnostic_evaluated": 0,
+          "forecast_observation": 0,
+          "consumer_check": 15,
+          "revision_checked": 0,
+          "reuse_checked": 0,
+          "diagnostic_inapplicable": 0,
+          "invalid_diagnostic": 0,
+          "multiple_candidate_bundles": 0,
+          "inserted_diagnostic_actions": 0,
+          "accepted_revisions": 0,
+          "rejected_reuse": 0,
+          "omitted_reports": 0,
+          "revision_modes": {
+            "PRESERVE": {
+              "checked": 0,
+              "accepted": 0
+            },
+            "EXTEND": {
+              "checked": 0,
+              "accepted": 0
+            },
+            "CHANGE": {
+              "checked": 0,
+              "accepted": 0
+            }
+          },
+          "history_and_current_pass_revisions": 0,
+          "semantic_or_causal_validation": false
+        },
+        "model": "deepseek-v4-pro",
+        "case": "dependency_route",
+        "trial": 1,
+        "fixture_seed": 439797697076086,
+        "seconds": 832.115
+      }
+    ],
+    "scope": "synthetic task families; research requires human review; no proof of spontaneous diagnostic/contract synthesis or causal benefit"
+  },
+  "flora-round2-authority-flash-01": {
+    "provenance": "provenance.json",
+    "results": [
+      {
+        "status": "budget_exhausted",
+        "runtime_status": "budget_exhausted",
+        "failure": {
+          "code": "explicit_limit",
+          "next_action": "A configured cumulative limit was reached; resume does not refund usage.",
+          "effects_replayed": false
+        },
+        "budget": {
+          "limits": {
+            "max_tool_calls": 80,
+            "max_model_calls": 12,
+            "max_input_tokens": 500000,
+            "max_output_tokens": 180000,
+            "max_wall_seconds": 900
+          },
+          "tool_calls": 13,
+          "model_calls": 12,
+          "input_tokens": 326530,
+          "output_tokens": 80380,
+          "unknown_usage_calls": 0,
+          "reserved_output": 0,
+          "elapsed_seconds": 390.89714598099954
+        },
+        "aggregate_usage": {
+          "model_calls": 18,
+          "tool_calls": 16,
+          "input_tokens": 380869,
+          "output_tokens": 100213,
+          "unknown_usage_calls": 0
+        },
+        "grade": {
+          "passed": false,
+          "review_required": false,
+          "runtime_completed": false,
+          "answer_correct": false,
+          "evidence_integrity": false,
+          "task_success_distinct": true,
+          "dependency_causal_use_verified": false,
+          "tool_calls": [
+            "read_file",
+            "spawn_agent",
+            "spawn_agent",
+            "wait_agents",
+            "read_agent",
+            "read_agent",
+            "read_file",
+            "read_file",
+            "review_agent",
+            "review_agent",
+            "create_file",
+            "read_file",
+            "read_work"
+          ]
+        },
+        "fixture_unchanged": true,
+        "first_pass": false,
+        "attempts": [
+          {
+            "attempt": 1,
+            "status": "paused",
+            "grade": {
+              "passed": false,
+              "review_required": false,
+              "runtime_completed": false,
+              "answer_correct": false,
+              "evidence_integrity": false,
+              "task_success_distinct": true,
+              "dependency_causal_use_verified": false,
+              "tool_calls": [
+                "read_file",
+                "spawn_agent",
+                "spawn_agent",
+                "wait_agents",
+                "read_agent",
+                "read_agent",
+                "read_file",
+                "read_file",
+                "review_agent",
+                "review_agent",
+                "create_file"
+              ]
+            },
+            "aggregate_usage": {
+              "model_calls": 11,
+              "tool_calls": 14,
+              "input_tokens": 140438,
+              "output_tokens": 43559,
+              "unknown_usage_calls": 0
+            }
+          },
+          {
+            "attempt": 2,
+            "status": "needs_program",
+            "grade": {
+              "passed": false,
+              "review_required": false,
+              "runtime_completed": false,
+              "answer_correct": false,
+              "evidence_integrity": false,
+              "task_success_distinct": true,
+              "dependency_causal_use_verified": false,
+              "tool_calls": [
+                "read_file",
+                "spawn_agent",
+                "spawn_agent",
+                "wait_agents",
+                "read_agent",
+                "read_agent",
+                "read_file",
+                "read_file",
+                "review_agent",
+                "review_agent",
+                "create_file",
+                "read_file",
+                "read_work"
+              ]
+            },
+            "aggregate_usage": {
+              "model_calls": 15,
+              "tool_calls": 16,
+              "input_tokens": 280404,
+              "output_tokens": 69616,
+              "unknown_usage_calls": 0
+            }
+          },
+          {
+            "attempt": 3,
+            "status": "budget_exhausted",
+            "grade": {
+              "passed": false,
+              "review_required": false,
+              "runtime_completed": false,
+              "answer_correct": false,
+              "evidence_integrity": false,
+              "task_success_distinct": true,
+              "dependency_causal_use_verified": false,
+              "tool_calls": [
+                "read_file",
+                "spawn_agent",
+                "spawn_agent",
+                "wait_agents",
+                "read_agent",
+                "read_agent",
+                "read_file",
+                "read_file",
+                "review_agent",
+                "review_agent",
+                "create_file",
+                "read_file",
+                "read_work"
+              ]
+            },
+            "aggregate_usage": {
+              "model_calls": 18,
+              "tool_calls": 16,
+              "input_tokens": 380869,
+              "output_tokens": 100213,
+              "unknown_usage_calls": 0
+            }
+          }
+        ],
+        "output_hashes": {
+          "notices-ad8d10e7c3b9-0.json": "2d57162b68908e326de15d36097c86bf521d529c11148e3c581c205367079f19",
+          "audit.json": "5eebc1fc6e3092fb7a9fbd8bf56b4b4023b16eccb15a1aa25094ed6fe34bc221",
+          "notices-ad8d10e7c3b9-1.json": "87e06b261e0bd88c31d11a66079a53c5ff9d7617c9bf08eb5a61240e157df792",
+          "audit-manifest.json": "28d0dffd892d369d345fc60d8666ffe84ce39ff4d934936764487072e2b8887f"
+        },
+        "resolved_limits": {
+          "parent": {
+            "max_model_calls": 12,
+            "max_tool_calls": 80,
+            "max_input_tokens": 500000,
+            "max_output_tokens": 180000,
+            "max_wall_seconds": 900
+          },
+          "per_child": {
+            "max_model_calls": 6,
+            "max_tool_calls": 40,
+            "max_input_tokens": 250000,
+            "max_output_tokens": 90000,
+            "max_wall_seconds": 450
+          }
+        },
+        "configuration": {
+          "provider": {
+            "timeout": 60,
+            "total_timeout": 300,
+            "progress_timeout": 60,
+            "first_program_timeout": 240,
+            "max_response_bytes": 4194304,
+            "max_stream_bytes": 67108864,
+            "max_json_whitespace": 2048,
+            "stream": true,
+            "stream_fallback": true,
+            "allow_insecure_http": false,
+            "reasoning_effort": "low",
+            "thinking": "enabled",
+            "response_format": "json_object"
+          },
+          "compiler": {
+            "max_output_tokens": 24000,
+            "max_repairs": 1,
+            "compilation_timeout": 300,
+            "syntax": "block-list-v3",
+            "prompt_style": "compact-v3"
+          },
+          "general": {
+            "require_task_completion": true
+          },
+          "tool_schema_version": 4
+        },
+        "reopen_recovery": {
+          "receipts_preserved": true,
+          "budget_counters_preserved": true,
+          "before_receipt_count": 11
+        },
+        "mechanism_observations": {
+          "diagnostic_evaluated": 0,
+          "forecast_observation": 0,
+          "consumer_check": 16,
+          "revision_checked": 0,
+          "reuse_checked": 0,
+          "diagnostic_inapplicable": 0,
+          "invalid_diagnostic": 0,
+          "multiple_candidate_bundles": 0,
+          "inserted_diagnostic_actions": 0,
+          "accepted_revisions": 0,
+          "rejected_reuse": 0,
+          "omitted_reports": 0,
+          "revision_modes": {
+            "PRESERVE": {
+              "checked": 0,
+              "accepted": 0
+            },
+            "EXTEND": {
+              "checked": 0,
+              "accepted": 0
+            },
+            "CHANGE": {
+              "checked": 0,
+              "accepted": 0
+            }
+          },
+          "history_and_current_pass_revisions": 0,
+          "semantic_or_causal_validation": false
+        },
+        "compilation_telemetry": {
+          "first_tool_dispatch_seconds": 3.645,
+          "generated_program_text_bytes": 36853,
+          "largest_generated_program_text_bytes": 6353,
+          "generations_with_program_text": 18,
+          "validation_rejections": 7,
+          "replans": 5,
+          "scope": "Observer wall time and UTF-8 program transcript chunks; not tokens, lowered IR size, or causal evidence"
+        },
+        "model": "deepseek-flash",
+        "case": "release_audit",
+        "trial": 1,
+        "fixture_seed": 395765991775520,
+        "seconds": 390.988
+      }
+    ],
+    "scope": "synthetic task families; research requires human review; no proof of spontaneous diagnostic/contract synthesis or causal benefit"
+  },
+  "receipt_audit": [
+    {
+      "run": "flora-round2-phased-pro-01",
+      "receipts": [
+        {
+          "journal": "kernel/turn-00000001.sqlite",
+          "event_id": 3,
+          "tool": "read_file",
+          "status": "returned",
+          "path": "route.json",
+          "args_window": {},
+          "returned": {
+            "offset": 0,
+            "read_bytes": 63,
+            "sha256": "d3cceb359115ed992e1d8305a3fded05f0be17742216c537e503ee29d79dec10",
+            "truncated": false
+          },
+          "content_bytes": 63,
+          "content_sha256": "d3cceb359115ed992e1d8305a3fded05f0be17742216c537e503ee29d79dec10"
+        },
+        {
+          "journal": "kernel/turn-00000001.sqlite",
+          "event_id": 9,
+          "tool": "read_file",
+          "status": "returned",
+          "path": "choice-624c38572f56-2.json",
+          "args_window": {},
+          "returned": {
+            "offset": 0,
+            "read_bytes": 46,
+            "sha256": "6b9b7de8b496133a339e72e9e844e7f68dbcf9aa8ce31428041106cb68163021",
+            "truncated": false
+          },
+          "content_bytes": 46,
+          "content_sha256": "6b9b7de8b496133a339e72e9e844e7f68dbcf9aa8ce31428041106cb68163021"
+        },
+        {
+          "journal": "subagents/a-16f4b22c9576/kernel/turn-00000001.sqlite",
+          "event_id": 0,
+          "tool": "read_file",
+          "status": "returned",
+          "path": "choice-624c38572f56-2.json",
+          "args_window": {},
+          "returned": {
+            "offset": 0,
+            "read_bytes": 46,
+            "sha256": "6b9b7de8b496133a339e72e9e844e7f68dbcf9aa8ce31428041106cb68163021",
+            "truncated": false
+          },
+          "content_bytes": 46,
+          "content_sha256": "6b9b7de8b496133a339e72e9e844e7f68dbcf9aa8ce31428041106cb68163021"
+        },
+        {
+          "journal": "subagents/a-89dd8e915c2a/kernel/turn-00000001.sqlite",
+          "event_id": 0,
+          "tool": "read_file",
+          "status": "returned",
+          "path": "route.json",
+          "args_window": {},
+          "returned": {
+            "offset": 0,
+            "read_bytes": 63,
+            "sha256": "d3cceb359115ed992e1d8305a3fded05f0be17742216c537e503ee29d79dec10",
+            "truncated": false
+          },
+          "content_bytes": 63,
+          "content_sha256": "d3cceb359115ed992e1d8305a3fded05f0be17742216c537e503ee29d79dec10"
+        }
+      ]
+    },
+    {
+      "run": "flora-handoff-phased-flash-01",
+      "receipts": [
+        {
+          "journal": "kernel/turn-00000001.sqlite",
+          "event_id": 4,
+          "tool": "read_file",
+          "status": "returned",
+          "path": "route.json",
+          "args_window": {},
+          "returned": {
+            "offset": 0,
+            "read_bytes": 63,
+            "sha256": "d3cceb359115ed992e1d8305a3fded05f0be17742216c537e503ee29d79dec10",
+            "truncated": false
+          },
+          "content_bytes": 63,
+          "content_sha256": "d3cceb359115ed992e1d8305a3fded05f0be17742216c537e503ee29d79dec10"
+        },
+        {
+          "journal": "kernel/turn-00000001.sqlite",
+          "event_id": 9,
+          "tool": "read_file",
+          "status": "returned",
+          "path": "route.json",
+          "args_window": {},
+          "returned": {
+            "offset": 0,
+            "read_bytes": 63,
+            "sha256": "d3cceb359115ed992e1d8305a3fded05f0be17742216c537e503ee29d79dec10",
+            "truncated": false
+          },
+          "content_bytes": 63,
+          "content_sha256": "d3cceb359115ed992e1d8305a3fded05f0be17742216c537e503ee29d79dec10"
+        },
+        {
+          "journal": "kernel/turn-00000001.sqlite",
+          "event_id": 10,
+          "tool": "read_file",
+          "status": "returned",
+          "path": "choice-624c38572f56-2.json",
+          "args_window": {},
+          "returned": {
+            "offset": 0,
+            "read_bytes": 46,
+            "sha256": "6b9b7de8b496133a339e72e9e844e7f68dbcf9aa8ce31428041106cb68163021",
+            "truncated": false
+          },
+          "content_bytes": 46,
+          "content_sha256": "6b9b7de8b496133a339e72e9e844e7f68dbcf9aa8ce31428041106cb68163021"
+        },
+        {
+          "journal": "subagents/a-2103eb1f498a/kernel/turn-00000001.sqlite",
+          "event_id": 0,
+          "tool": "read_file",
+          "status": "returned",
+          "path": "route.json",
+          "args_window": {},
+          "returned": {
+            "offset": 0,
+            "read_bytes": 63,
+            "sha256": "d3cceb359115ed992e1d8305a3fded05f0be17742216c537e503ee29d79dec10",
+            "truncated": false
+          },
+          "content_bytes": 63,
+          "content_sha256": "d3cceb359115ed992e1d8305a3fded05f0be17742216c537e503ee29d79dec10"
+        },
+        {
+          "journal": "subagents/a-2eb4b76b35cb/kernel/turn-00000001.sqlite",
+          "event_id": 0,
+          "tool": "read_file",
+          "status": "returned",
+          "path": "choice-624c38572f56-2.json",
+          "args_window": {},
+          "returned": {
+            "offset": 0,
+            "read_bytes": 46,
+            "sha256": "6b9b7de8b496133a339e72e9e844e7f68dbcf9aa8ce31428041106cb68163021",
+            "truncated": false
+          },
+          "content_bytes": 46,
+          "content_sha256": "6b9b7de8b496133a339e72e9e844e7f68dbcf9aa8ce31428041106cb68163021"
+        }
+      ]
+    },
+    {
+      "run": "flora-round2-authority-flash-01",
+      "receipts": [
+        {
+          "journal": "kernel/turn-00000001.sqlite",
+          "event_id": 0,
+          "tool": "read_file",
+          "status": "returned",
+          "path": "audit-manifest.json",
+          "args_window": {},
+          "returned": {
+            "offset": 0,
+            "read_bytes": 239,
+            "sha256": "28d0dffd892d369d345fc60d8666ffe84ce39ff4d934936764487072e2b8887f",
+            "truncated": false
+          },
+          "content_bytes": 239,
+          "content_sha256": "28d0dffd892d369d345fc60d8666ffe84ce39ff4d934936764487072e2b8887f"
+        },
+        {
+          "journal": "kernel/turn-00000001.sqlite",
+          "event_id": 6,
+          "tool": "read_file",
+          "status": "returned",
+          "path": "notices-ad8d10e7c3b9-0.json",
+          "args_window": {},
+          "returned": {
+            "offset": 0,
+            "read_bytes": 397,
+            "sha256": "2d57162b68908e326de15d36097c86bf521d529c11148e3c581c205367079f19",
+            "truncated": false
+          },
+          "content_bytes": 397,
+          "content_sha256": "2d57162b68908e326de15d36097c86bf521d529c11148e3c581c205367079f19"
+        },
+        {
+          "journal": "kernel/turn-00000001.sqlite",
+          "event_id": 7,
+          "tool": "read_file",
+          "status": "returned",
+          "path": "notices-ad8d10e7c3b9-1.json",
+          "args_window": {},
+          "returned": {
+            "offset": 0,
+            "read_bytes": 235,
+            "sha256": "87e06b261e0bd88c31d11a66079a53c5ff9d7617c9bf08eb5a61240e157df792",
+            "truncated": false
+          },
+          "content_bytes": 235,
+          "content_sha256": "87e06b261e0bd88c31d11a66079a53c5ff9d7617c9bf08eb5a61240e157df792"
+        },
+        {
+          "journal": "kernel/turn-00000001.sqlite",
+          "event_id": 10,
+          "tool": "create_file",
+          "status": "returned",
+          "path": "audit.json",
+          "args_window": {},
+          "returned": {
+            "sha256": "5eebc1fc6e3092fb7a9fbd8bf56b4b4023b16eccb15a1aa25094ed6fe34bc221"
+          },
+          "content_bytes": null,
+          "content_sha256": null
+        },
+        {
+          "journal": "kernel/turn-00000001.sqlite",
+          "event_id": 11,
+          "tool": "read_file",
+          "status": "returned",
+          "path": "audit.json",
+          "args_window": {},
+          "returned": {
+            "offset": 0,
+            "read_bytes": 204,
+            "sha256": "5eebc1fc6e3092fb7a9fbd8bf56b4b4023b16eccb15a1aa25094ed6fe34bc221",
+            "truncated": false
+          },
+          "content_bytes": 204,
+          "content_sha256": "5eebc1fc6e3092fb7a9fbd8bf56b4b4023b16eccb15a1aa25094ed6fe34bc221"
+        },
+        {
+          "journal": "subagents/a-0941cf29f155/kernel/turn-00000001.sqlite",
+          "event_id": 0,
+          "tool": "read_file",
+          "status": "returned",
+          "path": "notices-ad8d10e7c3b9-0.json",
+          "args_window": {},
+          "returned": {
+            "offset": 0,
+            "read_bytes": 397,
+            "sha256": "2d57162b68908e326de15d36097c86bf521d529c11148e3c581c205367079f19",
+            "truncated": false
+          },
+          "content_bytes": 397,
+          "content_sha256": "2d57162b68908e326de15d36097c86bf521d529c11148e3c581c205367079f19"
+        },
+        {
+          "journal": "subagents/a-900a12d70e7b/kernel/turn-00000001.sqlite",
+          "event_id": 0,
+          "tool": "read_file",
+          "status": "raised",
+          "path": "unavailable-ad8d10e7c3b9.json",
+          "args_window": {},
+          "returned": {},
+          "content_bytes": null,
+          "content_sha256": null
+        },
+        {
+          "journal": "subagents/a-900a12d70e7b/kernel/turn-00000001.sqlite",
+          "event_id": 1,
+          "tool": "read_file",
+          "status": "returned",
+          "path": "notices-ad8d10e7c3b9-1.json",
+          "args_window": {},
+          "returned": {
+            "offset": 0,
+            "read_bytes": 235,
+            "sha256": "87e06b261e0bd88c31d11a66079a53c5ff9d7617c9bf08eb5a61240e157df792",
+            "truncated": false
+          },
+          "content_bytes": 235,
+          "content_sha256": "87e06b261e0bd88c31d11a66079a53c5ff9d7617c9bf08eb5a61240e157df792"
+        }
+      ]
+    }
+  ],
+  "offline_schema_replay": [
+    {
+      "request": "5200e7c61c5e",
+      "new_schema_static_arguments": "PASS"
+    },
+    {
+      "request": "82c154ffd61e",
+      "new_schema_static_arguments": "PASS"
+    },
+    {
+      "request": "d07cf233098d",
+      "new_schema_static_arguments": "PASS"
+    },
+    {
+      "request": "fa3a1bead47a",
+      "new_schema_static_arguments": "PASS"
+    }
+  ],
+  "compiler_rejection_attribution": {
+    "scope": "Seven rejection events in the completed authority Flash release-audit run, not independent tasks",
+    "host_unsupported_pattern": 4,
+    "observe_target_signature": 2,
+    "strict_json_duplicate_inputs": 1,
+    "strict_json_program_bytes": 2220,
+    "semantic_type_drift_separate": true
+  }
+}

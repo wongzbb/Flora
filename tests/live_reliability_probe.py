@@ -55,7 +55,7 @@ TASKS = {
 BASE_CASES = [name for name in TASKS if name not in STRESS_TASKS]
 COLLABORATIVE = {"multi", "dependency", "dependency_route", "release_audit"}
 COUNTERS = ("model_calls", "tool_calls", "input_tokens", "output_tokens", "unknown_usage_calls")
-READ_TOOLS = {"read_file", "read_document", "table_query", "search_files"}
+READ_TOOLS = {"read_file", "read_lines", "read_document", "table_query", "search_files"}
 PARENT_LIMITS = {
     "max_model_calls": 12,
     "max_tool_calls": 80,
@@ -457,7 +457,305 @@ def observed_paths(receipts):
                 )
         elif receipt.get("tool") in READ_TOOLS:
             paths.add(receipt_path(receipt))
+        elif receipt.get("tool") == "read_source":
+            value = receipt.get("value", {})
+            origin = value.get("origin") if isinstance(value, dict) else None
+            if isinstance(origin, str) and origin.startswith("workspace:"):
+                paths.add(workspace_path(origin[len("workspace:") :]))
+            elif isinstance(origin, str) and origin.startswith("table:"):
+                paths.add(workspace_path(origin[len("table:") :].rsplit(":", 1)[0]))
     return paths - {None}
+
+
+# These predicates inspect observed tool records only. They never provide feedback
+# to the model and never turn a revision hash into proof of content observation.
+WRITE_TOOLS = {
+    "create_file",
+    "write_file",
+    "update_file",
+    "replace_text",
+    "append_lines",
+    "write_report",
+}
+
+
+def _sha(value):
+    return isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) is not None
+
+
+def _whole_windows(windows, size):
+    """Join exact overlapping windows; reject gaps or inconsistent overlaps."""
+    if type(size) is not int or size < 0:
+        return None
+    result = None
+    for start, data in sorted(windows, key=lambda item: item[0]):
+        if result is None:
+            if start != 0:
+                return None
+            result = data[:0]
+        if start > len(result) or start < 0 or start + len(data) > size:
+            return None
+        overlap = min(len(data), len(result) - start)
+        if result[start : start + overlap] != data[:overlap]:
+            return None
+        result += data[overlap:]
+    return result if result is not None and len(result) == size else None
+
+
+def complete_versions(receipts):
+    """Paths mapped to fully observed versions, never unions across revisions.
+
+    File byte/line windows must reconstruct their full-file hash. Extracted source
+    windows use the actual source ID, raw input hash and exact character coverage;
+    extraction fidelity remains the document tool's responsibility. Complete
+    unfiltered table rows count as observed parsed content; arbitrary filtered or
+    aggregate queries and search snippets do not establish full content coverage.
+    """
+    byte_windows, line_windows, source_windows, table_windows = {}, {}, {}, {}
+    table_sources = {}
+    for receipt in receipts:
+        value, args = receipt.get("value"), receipt.get("args", {})
+        if receipt.get("status") != "returned" or not isinstance(value, dict):
+            continue
+        tool = receipt.get("tool")
+        if tool == "table_query":
+            path, sha = workspace_path(args.get("path")), value.get("input_sha256")
+            rows, count, start = (
+                value.get("rows"),
+                value.get("total_result_rows"),
+                args.get("offset", 0),
+            )
+            if (
+                path
+                and Path(path).suffix.lower() == ".csv"
+                and _sha(sha)
+                and not args.get("filters")
+                and not args.get("metrics")
+                and not args.get("group_by")
+                and args.get("sheet") in (None, "", "Sheet1")
+                and isinstance(rows, list)
+                and all(isinstance(row, dict) for row in rows)
+                and type(count) is int
+                and count >= 0
+                and type(start) is int
+                and start >= 0
+                and start + len(rows) <= count
+                and value.get("matched_rows") == count
+                and value.get("rows_in_source") is False
+                and value.get("next_offset")
+                == (start + len(rows) if start + len(rows) < count else None)
+                and isinstance(value.get("source_id"), str)
+            ):
+                table_windows.setdefault((path, sha, value["source_id"], count), []).append(
+                    (start, rows)
+                )
+            continue
+        sha = value.get("sha256")
+        if not _sha(sha):
+            continue
+        path = workspace_path(args.get("path"))
+        if tool in {"read_file", "read_lines"}:
+            if path is None or workspace_path(value.get("path")) != path:
+                continue
+            content, size = value.get("content"), value.get("size_bytes")
+            if not isinstance(content, str) or type(size) is not int or size < 0:
+                continue
+            raw = content.encode("utf-8")
+            if tool == "read_file":
+                start = value.get("offset")
+                if (
+                    type(start) is not int
+                    or start != args.get("offset", 0)
+                    or start < 0
+                    or value.get("read_bytes") != len(raw)
+                    or type(value.get("read_bytes")) is not int
+                    or start + len(raw) > size
+                ):
+                    continue
+                more = start + len(raw) < size
+                partial = start > 0 or more
+                if (
+                    value.get("has_more") is not more
+                    or value.get("truncated") is not partial
+                    or value.get("next_offset") != (start + len(raw) if more else None)
+                    or (partial and value.get("partial_sha256") != hashlib.sha256(raw).hexdigest())
+                ):
+                    continue
+                byte_windows.setdefault((path, sha, size), []).append((start, raw))
+            else:
+                start, end, total = (
+                    value.get(k) for k in ("start_line", "end_line", "total_lines")
+                )
+                lines = content.splitlines(keepends=True)
+                if (
+                    any(type(n) is not int for n in (start, end, total))
+                    or total < 0
+                    or start < 1
+                    or start != args.get("start_line", 1)
+                    or end != start + len(lines) - 1
+                    or end > total
+                    or value.get("next_line") != (end + 1 if end < total else None)
+                    or value.get("truncated") is not (start > 1 or end < total)
+                ):
+                    continue
+                line_windows.setdefault((path, sha, size, total), []).append((start - 1, lines))
+        elif tool in {"read_document", "read_source"}:
+            origin, ident = value.get("origin"), value.get("source_id")
+            if not isinstance(origin, str):
+                continue
+            table_source = tool == "read_source" and origin.startswith("table:")
+            source_path = (
+                workspace_path(origin[len("workspace:") :])
+                if origin.startswith("workspace:")
+                else None
+            )
+            if (source_path is None and not table_source) or not isinstance(ident, str):
+                continue
+            if tool == "read_document" and path != source_path:
+                continue
+            if tool == "read_source" and args.get("source_id") != ident:
+                continue
+            start, size, text = (value.get(k) for k in ("offset", "total_characters", "text"))
+            if (
+                type(start) is not int
+                or type(size) is not int
+                or not isinstance(text, str)
+                or start < 0
+                or size < 0
+                or start + len(text) > size
+                or start != (args.get("offset", 0) if tool == "read_source" else 0)
+                or value.get("next_offset")
+                != (start + len(text) if start + len(text) < size else None)
+            ):
+                continue
+            if table_source:
+                table_sources.setdefault((origin, sha, ident, size), []).append((start, text))
+            else:
+                source_windows.setdefault((source_path, sha, ident, size), []).append((start, text))
+    complete = {}
+    for (path, sha, size), windows in byte_windows.items():
+        content = _whole_windows(windows, size)
+        if content is not None and hashlib.sha256(content).hexdigest() == sha:
+            complete.setdefault(path, set()).add(sha)
+    for (path, sha, size, total), windows in line_windows.items():
+        lines = _whole_windows(windows, total)
+        if lines is not None:
+            content = "".join(lines).encode("utf-8")
+            if len(content) == size and hashlib.sha256(content).hexdigest() == sha:
+                complete.setdefault(path, set()).add(sha)
+    for (path, sha, ident, size), windows in source_windows.items():
+        if _whole_windows(windows, size) is not None:
+            complete.setdefault(path, set()).add(sha)
+    for (path, sha, ident, count), windows in table_windows.items():
+        if _whole_windows(windows, count) is not None:
+            complete.setdefault(path, set()).add(sha)
+    for (origin, sha, ident, size), windows in table_sources.items():
+        text = _whole_windows(windows, size)
+        if text is None or hashlib.sha256(text.encode()).hexdigest() != sha:
+            continue
+        try:
+            data = json.loads(text)
+            query, rows = data["query"], data["rows"]
+            path_text, query_digest = origin[len("table:") :].rsplit(":", 1)
+            path = workspace_path(path_text)
+        except (ValueError, KeyError, TypeError):
+            continue
+        if (
+            path
+            and Path(path).suffix.lower() == ".csv"
+            and isinstance(query, dict)
+            and query.get("sheet") == "Sheet1"
+            and not query.get("filters")
+            and not query.get("group_by")
+            and not query.get("metrics")
+            and _sha(data.get("input_sha256"))
+            and isinstance(rows, list)
+            and all(isinstance(row, dict) for row in rows)
+            and type(data.get("matched_rows")) is int
+            and data["matched_rows"] == len(rows)
+            and hashlib.sha256(json.dumps(query, sort_keys=True).encode()).hexdigest()[:16]
+            == query_digest
+        ):
+            complete.setdefault(path, set()).add(data["input_sha256"])
+    return complete
+
+
+def sufficient_paths(receipts, expected):
+    """Require complete observed content of the fixture's original input version."""
+    versions = complete_versions(receipts)
+    return {
+        path
+        for path, sha in expected.get("input_hashes", {}).items()
+        if sha in versions.get(path, set())
+    }
+
+
+def publication_checks(receipts, root, expected):
+    """Counts and final-version readback are separate from answer correctness."""
+    writes = {}
+    for index, receipt in enumerate(receipts):
+        if receipt.get("tool") in WRITE_TOOLS and receipt.get("status") == "returned":
+            path = receipt_path(receipt)
+            if path:
+                writes.setdefault(path, []).append((index, receipt))
+    counts = {path: len(items) for path, items in writes.items()}
+    once = {path: counts.get(path, 0) == 1 for path in expected.get("single_publication_paths", [])}
+    readback = None
+    path = expected.get("readback")
+    if path:
+        readback = False
+        if writes.get(path):
+            index, receipt = writes[path][-1]
+            value = receipt.get("value", {})
+            try:
+                final_hash = hashlib.sha256((root / path).read_bytes()).hexdigest()
+            except OSError:
+                final_hash = None
+            readback = bool(
+                final_hash
+                and isinstance(value, dict)
+                and workspace_path(value.get("path")) == path
+                and value.get("sha256") == final_hash
+                and final_hash in complete_versions(receipts[index + 1 :]).get(path, set())
+            )
+    return {
+        "successful_writes_by_path": counts,
+        "single_publication_checks": once,
+        "final_version_readback": readback,
+        "passed": all(once.values()) and readback is not False,
+    }
+
+
+def table_sum_observed(receipts, expected):
+    """The table fixture permits the actual exact sum computation, not arbitrary queries."""
+    for receipt in receipts:
+        args, value = receipt.get("args", {}), receipt.get("value", {})
+        if (
+            receipt.get("tool") != "table_query"
+            or receipt.get("status") != "returned"
+            or workspace_path(args.get("path")) != "sales.csv"
+            or not isinstance(value, dict)
+            or value.get("input_sha256") != expected["input_hashes"].get("sales.csv")
+            or args.get("filters")
+            or args.get("group_by")
+            or args.get("offset", 0) != 0
+            or value.get("next_offset") is not None
+            or value.get("rows_in_source") is not False
+        ):
+            continue
+        metrics, rows = args.get("metrics"), value.get("rows")
+        if not isinstance(metrics, list) or not isinstance(rows, list) or len(rows) != 1:
+            continue
+        for metric in metrics:
+            if (
+                isinstance(metric, dict)
+                and metric.get("op") == "sum"
+                and metric.get("column") == "amount"
+                and isinstance(rows[0], dict)
+                and str(rows[0].get(metric.get("as", "sum_amount"))) == str(expected["total"])
+            ):
+                return True
+    return False
 
 
 def search_covers_forbidden(receipt, forbidden):
@@ -479,6 +777,14 @@ def search_covers_forbidden(receipt, forbidden):
         and len(path[len(prefix) :].split("/")) - 1 <= depth
         and fnmatch.fnmatchcase(path, pattern)
         for path in forbidden
+    )
+
+
+def accessed_before(receipts, index, path):
+    """Early source access cannot be erased by a later correctly ordered read."""
+    return any(
+        receipt_path(r) == path or path in observed_paths([r]) or search_covers_forbidden(r, {path})
+        for r in receipts[:index]
     )
 
 
@@ -513,14 +819,14 @@ def collaboration_checks(case, result, expected):
         return False
     if not all(reviewed(worker) for worker in workers):
         return False
-    parent_paths = observed_paths(result.get("_receipts", []))
+    parent_paths = sufficient_paths(result.get("_receipts", []), expected)
     if case == "release_audit":
         for answer in expected["worker_answers"]:
             matches = [
                 w
                 for w in workers
                 if equal(w["_view"].get("value"), answer)
-                and answer["source"] in observed_paths(w.get("_receipts", []))
+                and answer["source"] in sufficient_paths(w.get("_receipts", []), expected)
             ]
             if len(matches) != 1:
                 return False
@@ -540,7 +846,14 @@ def collaboration_checks(case, result, expected):
                     and receipt_path(r) == answer["source"]
                     and r.get("tool") in READ_TOOLS
                 ]
-                if not missing or not fallback or min(missing) >= min(fallback):
+                if (
+                    not missing
+                    or not fallback
+                    or min(missing) >= min(fallback)
+                    or accessed_before(receipts, min(missing), answer["source"])
+                    or answer["source"]
+                    not in sufficient_paths(receipts[min(missing) + 1 :], expected)
+                ):
                     return False
         return set(expected["required_reads"]) <= parent_paths
     if case == "multi":
@@ -549,7 +862,7 @@ def collaboration_checks(case, result, expected):
                 w
                 for w in workers
                 if path_value_equal(w["_view"].get("value"), {"count": count, "path": path})
-                and path in observed_paths(w.get("_receipts", []))
+                and path in sufficient_paths(w.get("_receipts", []), expected)
                 and not w.get("depends_on")
             ]
             if len(matches) != 1:
@@ -572,7 +885,7 @@ def collaboration_checks(case, result, expected):
             w
             for w in workers
             if path_value_equal(w["_view"].get("value"), first_answer)
-            and first_path in observed_paths(w.get("_receipts", []))
+            and first_path in sufficient_paths(w.get("_receipts", []), expected)
             and not w.get("depends_on")
         ),
         None,
@@ -582,7 +895,7 @@ def collaboration_checks(case, result, expected):
             w
             for w in workers
             if equal(w["_view"].get("value"), second_answer)
-            and second_path in observed_paths(w.get("_receipts", []))
+            and second_path in sufficient_paths(w.get("_receipts", []), expected)
         ),
         None,
     )
@@ -603,7 +916,7 @@ def assess(case, result, root, events, expected):
     """
     value, receipts = result.get("value"), result.get("_receipts", [])
     calls = [r.get("tool") for r in receipts]
-    paths = observed_paths(receipts)
+    paths = sufficient_paths(receipts, expected)
     ready = result.get("status") == "completed"
     provenance = not any(r.get("status") in {"pending", "interrupted_unknown"} for r in receipts)
     checks = {
@@ -628,13 +941,26 @@ def assess(case, result, root, events, expected):
             ]
             provenance &= bool(optional)
             if expected["optional_present"]:
-                provenance &= "optional.json" in paths and "evidence.json" not in paths
+                provenance &= "optional.json" in paths and not accessed_before(
+                    receipts, len(receipts), "evidence.json"
+                )
             else:
-                provenance &= any(r.get("status") == "raised" for r in optional)
-                provenance &= "evidence.json" in paths
+                missing = [
+                    i
+                    for i, r in enumerate(receipts)
+                    if r in optional
+                    and r.get("status") == "raised"
+                    and (r.get("error") or {}).get("type") == "FileNotFoundError"
+                ]
+                provenance &= bool(missing) and "evidence.json" in sufficient_paths(
+                    receipts[min(missing) + 1 :] if missing else [], expected
+                )
+                provenance &= bool(missing) and not accessed_before(
+                    receipts, min(missing) if missing else 0, "evidence.json"
+                )
         elif case == "table":
             checks[case] = equal(value, expected["total"]) or value == str(expected["total"])
-            provenance &= "sales.csv" in paths
+            provenance &= "sales.csv" in paths or table_sum_observed(receipts, expected)
         elif case == "write":
             try:
                 checks[case] = equal(json.loads((root / "summary.json").read_text()), answer)
@@ -676,6 +1002,7 @@ def assess(case, result, root, events, expected):
             except (OSError, ValueError):
                 checks[case] = False
             provenance &= "write_report" in calls and path_answer(value, root, "report.md")
+            provenance &= "evidence.json" in paths
         else:
             checks[case] = equal(
                 value, expected["total"] if case == "multi" else max(expected["counts"])
@@ -692,16 +1019,43 @@ def assess(case, result, root, events, expected):
                 checks[case] &= equal(json.loads((root / path).read_text()), target)
             except (OSError, ValueError):
                 checks[case] = False
-        if expected.get("readback"):
-            path = expected["readback"]
-            writes = [
+        # Editing must be based on the old version observed before the first
+        # successful mutation, not merely a later read of the final output.
+        for path in expected.get("allowed_changes", []):
+            first_write = next(
+                (
+                    i
+                    for i, r in enumerate(receipts)
+                    if r.get("tool") in WRITE_TOOLS
+                    and r.get("status") == "returned"
+                    and receipt_path(r) == path
+                ),
+                None,
+            )
+            provenance &= first_write is not None and path in sufficient_paths(
+                receipts[:first_write], expected
+            )
+    publication = publication_checks(receipts, root, expected)
+    provenance &= publication["passed"]
+    required_before_publish = (
+        expected.get("required_reads", [])
+        if expected.get("readback")
+        else ["evidence.json"]
+        if case in {"write", "report"}
+        else []
+    )
+    if required_before_publish:
+        first_write = next(
+            (
                 i
                 for i, r in enumerate(receipts)
-                if r.get("status") == "returned"
-                and r.get("tool") in {"create_file", "write_file", "update_file", "replace_text"}
-                and receipt_path(r) == path
-            ]
-            provenance &= bool(writes) and path in observed_paths(receipts[writes[-1] + 1 :])
+                if r.get("tool") in WRITE_TOOLS and r.get("status") == "returned"
+            ),
+            None,
+        )
+        provenance &= first_write is not None and set(required_before_publish) <= sufficient_paths(
+            receipts[:first_write], expected
+        )
     if case in COLLABORATIVE:
         provenance &= collaboration_checks(case, result, expected)
     all_receipts = receipts + [r for w in result.get("workers", []) for r in w.get("_receipts", [])]
@@ -724,6 +1078,13 @@ def assess(case, result, root, events, expected):
         "runtime_completed": ready,
         "answer_correct": grade,
         "evidence_integrity": bool(provenance),
+        "evidence_scope": "Observed content/version coverage, ordering and fixture checks; not proof of understanding, semantic use or causal correctness",
+        "coverage_limitations": [
+            "Byte and line windows are evaluated independently; mixed partial representations may be conservatively rejected",
+            "Document extraction fidelity is trusted; full content observation does not establish comprehension",
+            "Full table-row coverage supports single-table CSV; a selected XLSX worksheet is not treated as a complete workbook",
+        ],
+        "publication_checks": publication,
         "task_success_distinct": True,
         "dependency_causal_use_verified": False,
         "tool_calls": calls,

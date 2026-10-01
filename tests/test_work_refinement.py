@@ -11,8 +11,10 @@ from unittest.mock import patch
 
 from flora.general.agent import GeneralAgent, _normalize
 from flora.general.storage import atomic_json
+from flora.language.toolcheck import validate_effect_arguments
 from flora.support.errors import ValidationError
 from tests.test_long_tasks import object_provider
+from tests.test_toolcheck import authored
 
 
 def step(ident, **fields):
@@ -306,6 +308,71 @@ class WorkRefinementTests(unittest.TestCase):
         for protocol in ("general-v1", "general-v2", "general-v3"):
             with self.assertRaises(ValidationError):
                 _normalize({"general": {"protocol": protocol, "tool_schema_version": 4}})
+
+    def test_work_tools_compile_and_execute_through_registry(self):
+        requests = [
+            ("update_work", {"steps": [self.anchor, step("initial")], "expected_revision": 1}),
+            (
+                "refine_work",
+                {
+                    "superseded_ids": ["initial"],
+                    "replacements": [step("revised")],
+                    "reason": "Revise the local plan",
+                    "evidence": [],
+                    "expected_revision": 2,
+                },
+            ),
+        ]
+        for name, args in requests:
+            with self.subTest(tool=name):
+                for dynamic in (False, True):
+                    source_args = copy.deepcopy(args)
+                    if dynamic:
+                        source_args["steps" if name == "update_work" else "replacements"] = {
+                            "var": "steps"
+                        }
+                    source = authored(source_args)
+                    source["programs"][0]["program"]["blocks"]["main"]["term"]["tool"] = name
+                    validate_effect_arguments(source, self.app.agent.tools.descriptions())
+                result = self.app.agent.tools.call({"tool": name, "args": args})
+                self.assertEqual(result["revision"], args["expected_revision"] + 1)
+
+    def test_registry_still_rejects_illegal_work_ids_without_mutation(self):
+        for name in ("update_work", "refine_work"):
+            with self.subTest(tool=name):
+                before = self.work.path.read_bytes()
+                bad = step("invalid/id")
+                args = (
+                    {"steps": [self.anchor, bad], "expected_revision": 1}
+                    if name == "update_work"
+                    else {
+                        "superseded_ids": ["initial"],
+                        "replacements": [bad],
+                        "reason": "Replan",
+                        "evidence": [],
+                        "expected_revision": 1,
+                    }
+                )
+                with self.assertRaises(ValidationError):
+                    self.app.agent.tools.call({"tool": name, "args": args})
+                self.assertEqual(self.work.path.read_bytes(), before)
+
+    def test_registry_rejects_duplicate_superseded_ids_without_mutation(self):
+        before = self.work.path.read_bytes()
+        with self.assertRaises(ValidationError):
+            self.app.agent.tools.call(
+                {
+                    "tool": "refine_work",
+                    "args": {
+                        "superseded_ids": ["initial", "initial"],
+                        "replacements": [step("revised")],
+                        "reason": "Replan",
+                        "evidence": [],
+                        "expected_revision": 1,
+                    },
+                }
+            )
+        self.assertEqual(self.work.path.read_bytes(), before)
 
     def test_legacy_versions_keep_original_tools_and_no_history_fields(self):
         for version in (1, 2, 3):

@@ -57,7 +57,11 @@ def bounded_specs(
             "limit": {"minimum": 1, "maximum": 20, "default": 20},
         },
         "refine_work": {
-            "superseded_ids": {"minItems": 1, "maxItems": 64, "uniqueItems": True},
+            "superseded_ids": {
+                "minItems": 1,
+                "maxItems": 64,
+                "description": "Distinct current step IDs; duplicates are rejected by the work ledger.",
+            },
             "reason": {"minLength": 1, "maxLength": 4000},
             "evidence": {"maxItems": 64},
             "expected_revision": {"minimum": 0},
@@ -119,7 +123,12 @@ def bounded_specs(
                     "additionalProperties": False,
                     "required": ["id", "goal", "status", "required", "evidence", "note"],
                     "properties": {
-                        "id": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$"},
+                        "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64,
+                            "description": "Start with an ASCII letter; remaining characters must be ASCII letters, digits, underscore, dot, or hyphen. Enforced by the work ledger.",
+                        },
                         "goal": {"type": "string", "minLength": 1, "maxLength": 2000},
                         "status": {
                             "type": "string",
