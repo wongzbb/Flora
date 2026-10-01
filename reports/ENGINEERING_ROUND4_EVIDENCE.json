@@ -1,0 +1,602 @@
+{
+  "flora-round3-authority-flash-01": {
+    "provenance": "provenance.json",
+    "results": [
+      {
+        "status": "completed",
+        "runtime_status": "completed",
+        "failure": null,
+        "budget": {
+          "limits": {
+            "max_tool_calls": 80,
+            "max_model_calls": 12,
+            "max_input_tokens": 500000,
+            "max_output_tokens": 180000,
+            "max_wall_seconds": 900
+          },
+          "tool_calls": 14,
+          "model_calls": 6,
+          "input_tokens": 110852,
+          "output_tokens": 40474,
+          "unknown_usage_calls": 0,
+          "reserved_output": 0,
+          "elapsed_seconds": 182.40804225000102
+        },
+        "aggregate_usage": {
+          "model_calls": 10,
+          "tool_calls": 17,
+          "input_tokens": 147048,
+          "output_tokens": 52160,
+          "unknown_usage_calls": 0
+        },
+        "grade": {
+          "passed": false,
+          "review_required": false,
+          "runtime_completed": true,
+          "answer_correct": true,
+          "evidence_integrity": false,
+          "evidence_scope": "Observed content/version coverage, ordering and fixture checks; not proof of understanding, semantic use or causal correctness",
+          "coverage_limitations": [
+            "Byte and line windows are evaluated independently; mixed partial representations may be conservatively rejected",
+            "Document extraction fidelity is trusted; full content observation does not establish comprehension",
+            "Full table-row coverage supports single-table CSV; a selected XLSX worksheet is not treated as a complete workbook"
+          ],
+          "publication_checks": {
+            "successful_writes_by_path": {
+              "audit.json": 1
+            },
+            "single_publication_checks": {},
+            "final_version_readback": true,
+            "passed": true
+          },
+          "task_success_distinct": true,
+          "dependency_causal_use_verified": false,
+          "tool_calls": [
+            "read_file",
+            "spawn_agent",
+            "spawn_agent",
+            "read_agent",
+            "read_agent",
+            "read_file",
+            "read_file",
+            "read_file",
+            "review_agent",
+            "review_agent",
+            "create_file",
+            "read_file",
+            "read_work",
+            "update_work"
+          ]
+        },
+        "fixture_unchanged": true,
+        "first_pass": false,
+        "attempts": [
+          {
+            "attempt": 1,
+            "status": "paused",
+            "grade": {
+              "passed": false,
+              "review_required": false,
+              "runtime_completed": false,
+              "answer_correct": false,
+              "evidence_integrity": false,
+              "evidence_scope": "Observed content/version coverage, ordering and fixture checks; not proof of understanding, semantic use or causal correctness",
+              "coverage_limitations": [
+                "Byte and line windows are evaluated independently; mixed partial representations may be conservatively rejected",
+                "Document extraction fidelity is trusted; full content observation does not establish comprehension",
+                "Full table-row coverage supports single-table CSV; a selected XLSX worksheet is not treated as a complete workbook"
+              ],
+              "publication_checks": {
+                "successful_writes_by_path": {
+                  "audit.json": 1
+                },
+                "single_publication_checks": {},
+                "final_version_readback": false,
+                "passed": false
+              },
+              "task_success_distinct": true,
+              "dependency_causal_use_verified": false,
+              "tool_calls": [
+                "read_file",
+                "spawn_agent",
+                "spawn_agent",
+                "read_agent",
+                "read_agent",
+                "read_file",
+                "read_file",
+                "read_file",
+                "review_agent",
+                "review_agent",
+                "create_file"
+              ]
+            },
+            "aggregate_usage": {
+              "model_calls": 9,
+              "tool_calls": 14,
+              "input_tokens": 123162,
+              "output_tokens": 42071,
+              "unknown_usage_calls": 0
+            }
+          },
+          {
+            "attempt": 2,
+            "status": "completed",
+            "grade": {
+              "passed": false,
+              "review_required": false,
+              "runtime_completed": true,
+              "answer_correct": true,
+              "evidence_integrity": false,
+              "evidence_scope": "Observed content/version coverage, ordering and fixture checks; not proof of understanding, semantic use or causal correctness",
+              "coverage_limitations": [
+                "Byte and line windows are evaluated independently; mixed partial representations may be conservatively rejected",
+                "Document extraction fidelity is trusted; full content observation does not establish comprehension",
+                "Full table-row coverage supports single-table CSV; a selected XLSX worksheet is not treated as a complete workbook"
+              ],
+              "publication_checks": {
+                "successful_writes_by_path": {
+                  "audit.json": 1
+                },
+                "single_publication_checks": {},
+                "final_version_readback": true,
+                "passed": true
+              },
+              "task_success_distinct": true,
+              "dependency_causal_use_verified": false,
+              "tool_calls": [
+                "read_file",
+                "spawn_agent",
+                "spawn_agent",
+                "read_agent",
+                "read_agent",
+                "read_file",
+                "read_file",
+                "read_file",
+                "review_agent",
+                "review_agent",
+                "create_file",
+                "read_file",
+                "read_work",
+                "update_work"
+              ]
+            },
+            "aggregate_usage": {
+              "model_calls": 10,
+              "tool_calls": 17,
+              "input_tokens": 147048,
+              "output_tokens": 52160,
+              "unknown_usage_calls": 0
+            }
+          }
+        ],
+        "output_hashes": {
+          "notices-ad8d10e7c3b9-0.json": "2d57162b68908e326de15d36097c86bf521d529c11148e3c581c205367079f19",
+          "audit.json": "91a69a157b3162040af40d35b9b9ad4e8074e00a2309ec792fda1753b0cb2447",
+          "notices-ad8d10e7c3b9-1.json": "87e06b261e0bd88c31d11a66079a53c5ff9d7617c9bf08eb5a61240e157df792",
+          "audit-manifest.json": "28d0dffd892d369d345fc60d8666ffe84ce39ff4d934936764487072e2b8887f"
+        },
+        "resolved_limits": {
+          "parent": {
+            "max_model_calls": 12,
+            "max_tool_calls": 80,
+            "max_input_tokens": 500000,
+            "max_output_tokens": 180000,
+            "max_wall_seconds": 900
+          },
+          "per_child": {
+            "max_model_calls": 6,
+            "max_tool_calls": 40,
+            "max_input_tokens": 250000,
+            "max_output_tokens": 90000,
+            "max_wall_seconds": 450
+          }
+        },
+        "configuration": {
+          "provider": {
+            "timeout": 60,
+            "total_timeout": 300,
+            "progress_timeout": 60,
+            "first_program_timeout": 240,
+            "max_response_bytes": 4194304,
+            "max_stream_bytes": 67108864,
+            "max_json_whitespace": 2048,
+            "stream": true,
+            "stream_fallback": true,
+            "allow_insecure_http": false,
+            "reasoning_effort": "low",
+            "thinking": "enabled",
+            "response_format": "json_object"
+          },
+          "compiler": {
+            "max_output_tokens": 24000,
+            "max_repairs": 1,
+            "compilation_timeout": 300,
+            "syntax": "block-list-v3",
+            "prompt_style": "compact-v3"
+          },
+          "general": {
+            "require_task_completion": true
+          },
+          "tool_schema_version": 4
+        },
+        "reopen_recovery": {
+          "receipts_preserved": true,
+          "budget_counters_preserved": true,
+          "before_receipt_count": 11
+        },
+        "mechanism_observations": {
+          "diagnostic_evaluated": 0,
+          "forecast_observation": 0,
+          "consumer_check": 17,
+          "revision_checked": 0,
+          "reuse_checked": 0,
+          "diagnostic_inapplicable": 0,
+          "invalid_diagnostic": 0,
+          "multiple_candidate_bundles": 0,
+          "inserted_diagnostic_actions": 0,
+          "accepted_revisions": 0,
+          "rejected_reuse": 0,
+          "omitted_reports": 0,
+          "revision_modes": {
+            "PRESERVE": {
+              "checked": 0,
+              "accepted": 0
+            },
+            "EXTEND": {
+              "checked": 0,
+              "accepted": 0
+            },
+            "CHANGE": {
+              "checked": 0,
+              "accepted": 0
+            }
+          },
+          "history_and_current_pass_revisions": 0,
+          "semantic_or_causal_validation": false
+        },
+        "compilation_telemetry": {
+          "first_tool_dispatch_seconds": 3.449,
+          "generated_program_text_bytes": 25567,
+          "largest_generated_program_text_bytes": 5347,
+          "generations_with_program_text": 10,
+          "validation_rejections": 1,
+          "replans": 5,
+          "scope": "Observer wall time and UTF-8 program transcript chunks; not tokens, lowered IR size, or causal evidence"
+        },
+        "model": "deepseek-flash",
+        "case": "release_audit",
+        "trial": 1,
+        "fixture_seed": 395765991775520,
+        "seconds": 182.5
+      }
+    ],
+    "scope": "synthetic task families; research requires human review; no proof of spontaneous diagnostic/contract synthesis or causal benefit"
+  },
+  "flora-round3-phased-flash-01": {
+    "provenance": "provenance.json",
+    "results": [
+      {
+        "status": "completed",
+        "runtime_status": "completed",
+        "failure": null,
+        "budget": {
+          "limits": {
+            "max_tool_calls": 80,
+            "max_model_calls": 12,
+            "max_input_tokens": 500000,
+            "max_output_tokens": 180000,
+            "max_wall_seconds": 900
+          },
+          "tool_calls": 16,
+          "model_calls": 9,
+          "input_tokens": 201529,
+          "output_tokens": 54094,
+          "unknown_usage_calls": 0,
+          "reserved_output": 0,
+          "elapsed_seconds": 244.85404157200082
+        },
+        "aggregate_usage": {
+          "model_calls": 14,
+          "tool_calls": 19,
+          "input_tokens": 247170,
+          "output_tokens": 65396,
+          "unknown_usage_calls": 0
+        },
+        "grade": {
+          "passed": false,
+          "review_required": false,
+          "runtime_completed": true,
+          "answer_correct": false,
+          "evidence_integrity": false,
+          "evidence_scope": "Observed content/version coverage, ordering and fixture checks; not proof of understanding, semantic use or causal correctness",
+          "coverage_limitations": [
+            "Byte and line windows are evaluated independently; mixed partial representations may be conservatively rejected",
+            "Document extraction fidelity is trusted; full content observation does not establish comprehension",
+            "Full table-row coverage supports single-table CSV; a selected XLSX worksheet is not treated as a complete workbook"
+          ],
+          "publication_checks": {
+            "successful_writes_by_path": {
+              "audit.json": 1
+            },
+            "single_publication_checks": {},
+            "final_version_readback": true,
+            "passed": true
+          },
+          "task_success_distinct": true,
+          "dependency_causal_use_verified": false,
+          "tool_calls": [
+            "read_file",
+            "spawn_agent",
+            "spawn_agent",
+            "wait_agents",
+            "read_agent",
+            "read_agent",
+            "read_file",
+            "read_file",
+            "read_file",
+            "review_agent",
+            "review_agent",
+            "create_file",
+            "read_file",
+            "read_work",
+            "update_work",
+            "update_work"
+          ]
+        },
+        "fixture_unchanged": true,
+        "first_pass": false,
+        "attempts": [
+          {
+            "attempt": 1,
+            "status": "paused",
+            "grade": {
+              "passed": false,
+              "review_required": false,
+              "runtime_completed": false,
+              "answer_correct": false,
+              "evidence_integrity": false,
+              "evidence_scope": "Observed content/version coverage, ordering and fixture checks; not proof of understanding, semantic use or causal correctness",
+              "coverage_limitations": [
+                "Byte and line windows are evaluated independently; mixed partial representations may be conservatively rejected",
+                "Document extraction fidelity is trusted; full content observation does not establish comprehension",
+                "Full table-row coverage supports single-table CSV; a selected XLSX worksheet is not treated as a complete workbook"
+              ],
+              "publication_checks": {
+                "successful_writes_by_path": {
+                  "audit.json": 1
+                },
+                "single_publication_checks": {},
+                "final_version_readback": false,
+                "passed": false
+              },
+              "task_success_distinct": true,
+              "dependency_causal_use_verified": false,
+              "tool_calls": [
+                "read_file",
+                "spawn_agent",
+                "spawn_agent",
+                "wait_agents",
+                "read_agent",
+                "read_agent",
+                "read_file",
+                "read_file",
+                "read_file",
+                "review_agent",
+                "review_agent",
+                "create_file"
+              ]
+            },
+            "aggregate_usage": {
+              "model_calls": 9,
+              "tool_calls": 15,
+              "input_tokens": 106755,
+              "output_tokens": 38858,
+              "unknown_usage_calls": 0
+            }
+          },
+          {
+            "attempt": 2,
+            "status": "needs_program",
+            "grade": {
+              "passed": false,
+              "review_required": false,
+              "runtime_completed": false,
+              "answer_correct": false,
+              "evidence_integrity": false,
+              "evidence_scope": "Observed content/version coverage, ordering and fixture checks; not proof of understanding, semantic use or causal correctness",
+              "coverage_limitations": [
+                "Byte and line windows are evaluated independently; mixed partial representations may be conservatively rejected",
+                "Document extraction fidelity is trusted; full content observation does not establish comprehension",
+                "Full table-row coverage supports single-table CSV; a selected XLSX worksheet is not treated as a complete workbook"
+              ],
+              "publication_checks": {
+                "successful_writes_by_path": {
+                  "audit.json": 1
+                },
+                "single_publication_checks": {},
+                "final_version_readback": true,
+                "passed": true
+              },
+              "task_success_distinct": true,
+              "dependency_causal_use_verified": false,
+              "tool_calls": [
+                "read_file",
+                "spawn_agent",
+                "spawn_agent",
+                "wait_agents",
+                "read_agent",
+                "read_agent",
+                "read_file",
+                "read_file",
+                "read_file",
+                "review_agent",
+                "review_agent",
+                "create_file",
+                "read_file"
+              ]
+            },
+            "aggregate_usage": {
+              "model_calls": 11,
+              "tool_calls": 16,
+              "input_tokens": 163496,
+              "output_tokens": 59401,
+              "unknown_usage_calls": 0
+            }
+          },
+          {
+            "attempt": 3,
+            "status": "completed",
+            "grade": {
+              "passed": false,
+              "review_required": false,
+              "runtime_completed": true,
+              "answer_correct": false,
+              "evidence_integrity": false,
+              "evidence_scope": "Observed content/version coverage, ordering and fixture checks; not proof of understanding, semantic use or causal correctness",
+              "coverage_limitations": [
+                "Byte and line windows are evaluated independently; mixed partial representations may be conservatively rejected",
+                "Document extraction fidelity is trusted; full content observation does not establish comprehension",
+                "Full table-row coverage supports single-table CSV; a selected XLSX worksheet is not treated as a complete workbook"
+              ],
+              "publication_checks": {
+                "successful_writes_by_path": {
+                  "audit.json": 1
+                },
+                "single_publication_checks": {},
+                "final_version_readback": true,
+                "passed": true
+              },
+              "task_success_distinct": true,
+              "dependency_causal_use_verified": false,
+              "tool_calls": [
+                "read_file",
+                "spawn_agent",
+                "spawn_agent",
+                "wait_agents",
+                "read_agent",
+                "read_agent",
+                "read_file",
+                "read_file",
+                "read_file",
+                "review_agent",
+                "review_agent",
+                "create_file",
+                "read_file",
+                "read_work",
+                "update_work",
+                "update_work"
+              ]
+            },
+            "aggregate_usage": {
+              "model_calls": 14,
+              "tool_calls": 19,
+              "input_tokens": 247170,
+              "output_tokens": 65396,
+              "unknown_usage_calls": 0
+            }
+          }
+        ],
+        "output_hashes": {
+          "notices-ad8d10e7c3b9-0.json": "2d57162b68908e326de15d36097c86bf521d529c11148e3c581c205367079f19",
+          "audit.json": "5eebc1fc6e3092fb7a9fbd8bf56b4b4023b16eccb15a1aa25094ed6fe34bc221",
+          "notices-ad8d10e7c3b9-1.json": "87e06b261e0bd88c31d11a66079a53c5ff9d7617c9bf08eb5a61240e157df792",
+          "audit-manifest.json": "28d0dffd892d369d345fc60d8666ffe84ce39ff4d934936764487072e2b8887f"
+        },
+        "resolved_limits": {
+          "parent": {
+            "max_model_calls": 12,
+            "max_tool_calls": 80,
+            "max_input_tokens": 500000,
+            "max_output_tokens": 180000,
+            "max_wall_seconds": 900
+          },
+          "per_child": {
+            "max_model_calls": 6,
+            "max_tool_calls": 40,
+            "max_input_tokens": 250000,
+            "max_output_tokens": 90000,
+            "max_wall_seconds": 450
+          }
+        },
+        "configuration": {
+          "provider": {
+            "timeout": 60,
+            "total_timeout": 300,
+            "progress_timeout": 60,
+            "first_program_timeout": 240,
+            "max_response_bytes": 4194304,
+            "max_stream_bytes": 67108864,
+            "max_json_whitespace": 2048,
+            "stream": true,
+            "stream_fallback": true,
+            "allow_insecure_http": false,
+            "reasoning_effort": "low",
+            "thinking": "enabled",
+            "response_format": "json_object"
+          },
+          "compiler": {
+            "max_output_tokens": 24000,
+            "max_repairs": 1,
+            "compilation_timeout": 300,
+            "syntax": "block-list-v3",
+            "prompt_style": "compact-v3"
+          },
+          "general": {
+            "require_task_completion": true
+          },
+          "tool_schema_version": 3
+        },
+        "reopen_recovery": {
+          "receipts_preserved": true,
+          "budget_counters_preserved": true,
+          "before_receipt_count": 12
+        },
+        "mechanism_observations": {
+          "diagnostic_evaluated": 0,
+          "forecast_observation": 0,
+          "consumer_check": 19,
+          "revision_checked": 0,
+          "reuse_checked": 0,
+          "diagnostic_inapplicable": 0,
+          "invalid_diagnostic": 0,
+          "multiple_candidate_bundles": 0,
+          "inserted_diagnostic_actions": 0,
+          "accepted_revisions": 0,
+          "rejected_reuse": 0,
+          "omitted_reports": 0,
+          "revision_modes": {
+            "PRESERVE": {
+              "checked": 0,
+              "accepted": 0
+            },
+            "EXTEND": {
+              "checked": 0,
+              "accepted": 0
+            },
+            "CHANGE": {
+              "checked": 0,
+              "accepted": 0
+            }
+          },
+          "history_and_current_pass_revisions": 0,
+          "semantic_or_causal_validation": false
+        },
+        "compilation_telemetry": {
+          "first_tool_dispatch_seconds": 2.892,
+          "generated_program_text_bytes": 26581,
+          "largest_generated_program_text_bytes": 5168,
+          "generations_with_program_text": 14,
+          "validation_rejections": 4,
+          "replans": 5,
+          "scope": "Observer wall time and UTF-8 program transcript chunks; not tokens, lowered IR size, or causal evidence"
+        },
+        "model": "deepseek-flash",
+        "case": "release_audit",
+        "trial": 1,
+        "fixture_seed": 395765991775520,
+        "seconds": 244.948
+      }
+    ],
+    "scope": "synthetic task families; research requires human review; no proof of spontaneous diagnostic/contract synthesis or causal benefit"
+  }
+}
