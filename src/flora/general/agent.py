@@ -123,6 +123,9 @@ def _new_session_defaults(profile, *, builtin_provider):
         compiler.setdefault("syntax", "observe-v1")
     compiler.setdefault("compilation_timeout", 180)
     if general["protocol"] == "general-v4":
+        # New sessions advertise collaboration bounds; saved sessions without
+        # this marker retain their exact original tool schemas and identity.
+        general.setdefault("tool_schema_version", 2)
         runtime = profile.setdefault("runtime", {})
         runtime.setdefault("max_steps", None)
         runtime.setdefault("max_compile_cycles", None)
@@ -192,8 +195,14 @@ def _normalize(profile):
         "storage_bytes",
         "subagents",
         "protocol",
+        "tool_schema_version",
     }:
         raise ValidationError("Unknown general configuration field")
+    if "tool_schema_version" in general and (
+        type(general["tool_schema_version"]) is not int
+        or general["tool_schema_version"] not in (1, 2)
+    ):
+        raise ValidationError("tool_schema_version must be 1 or 2")
     if general.get("protocol", "general-v1") not in (
         "general-v1",
         "general-v2",
@@ -436,6 +445,8 @@ class GeneralAgent:
                     bounded_specs(
                         specs,
                         describe_results=general.get("protocol") in ("general-v3", "general-v4"),
+                        collaboration=self.work is not None
+                        and general.get("tool_schema_version", 1) == 2,
                     )
                 ),
                 session_dir=self.directory / "kernel",

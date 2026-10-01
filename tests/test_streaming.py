@@ -103,6 +103,21 @@ class StreamingTests(unittest.TestCase):
         self.failure(sse(frame("{}")), "stream_limit", "wire_limit", limit=10)
         self.failure(b":" + b"x" * 65536, "stream_limit", "line_limit")
 
+    def test_framing_and_decoded_content_have_independent_limits(self):
+        raw = sse(
+            *(frame(reasoning="x") for _ in range(200)), frame("{}"), frame(finish="stop"), "[DONE]"
+        )
+        data = self.read(raw, limit=202, wire_limit=len(raw))
+        self.assertEqual(data["choices"][0]["message"]["content"], "{}")
+        self.assertEqual(len(data["choices"][0]["message"]["reasoning_content"]), 200)
+        self.failure(raw, "stream_limit", "decoded_limit", limit=201, wire_limit=len(raw))
+        self.failure(raw, "stream_limit", "wire_limit", limit=202, wire_limit=100)
+
+    def test_decoded_limit_counts_utf8_in_both_channels(self):
+        raw = sse(frame(reasoning="中"), frame("文"), frame(finish="stop"), "[DONE]")
+        self.read(raw, limit=6, wire_limit=len(raw))
+        self.failure(raw, "stream_limit", "decoded_limit", limit=5, wire_limit=len(raw))
+
     def test_upstream_error_is_sanitized_and_auth_not_retryable(self):
         for status in (401, 403, 429, 503, "secret-payload"):
             err = self.failure(

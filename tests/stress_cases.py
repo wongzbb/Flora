@@ -60,7 +60,8 @@ STRESS_TASKS = {
         "nonce as a JSON object. Spawn the second with depends_on the first; it must read "
         "the file selected by the first actual answer and return {nonce, code, amount} using "
         "the dependency nonce and selected file values. Collect complete results and review "
-        "both workers, inspect the selected evidence yourself, and return only the second "
+        "both workers, read route.json and the selected file yourself to check their claims, "
+        "and return only the second "
         "answer object. Do not read unselected choice files or change files."
     ),
 }

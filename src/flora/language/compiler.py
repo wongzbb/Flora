@@ -27,6 +27,36 @@ from flora.language.ir import parse_program
 from flora.support.errors import CompilerError, StaleAnchor, ValidationError
 from flora.support.values import canonical_json, clone, digest
 
+
+def _delimiter_error(text):
+    """Describe a lexical mismatch; never rewrite or accept malformed model output."""
+    stack = []
+    quoted = escaped = False
+    for offset, char in enumerate(text):
+        if quoted:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                quoted = False
+        elif char == '"':
+            quoted = True
+        elif char in "[{":
+            stack.append((char, offset))
+        elif char in "]}":
+            expected = {"[": "]", "{": "}"}[stack[-1][0]] if stack else None
+            if char != expected:
+                return {
+                    "offset": offset,
+                    "found": char,
+                    "expected": expected,
+                    "opening_offset": stack[-1][1] if stack else None,
+                }
+            stack.pop()
+    return None
+
+
 SYSTEM_PROMPT = r"""You compile an agent's remaining task into Flora IR version 1.
 Return exactly ONE JSON object; no markdown, explanations, comments, NaN, duplicate
 keys, or extra fields. You are not executing code or tools. Use only named tools
@@ -864,6 +894,7 @@ class LLMCompiler:
                         "offset": exc.pos,
                         "start": max(0, exc.pos - 384),
                         "text": response.text[max(0, exc.pos - 384) : exc.pos + 384],
+                        "delimiter_error": _delimiter_error(response.text),
                     }
                     raise ValidationError(
                         f"compiler output must be strict JSON: {exc.msg} "
@@ -932,6 +963,7 @@ class LLMCompiler:
                                         if truncated
                                         else "Return a fresh COMPLETE JSON object, not a patch or continuation. "
                                         "Correct the stated error and check every delimiter and escaped string. "
+                                        "Use line breaks between blocks and keep each term inside its block, after ops. "
                                         "Compile the next closed phase, including known pure result consumers and branches. "
                                         "Use replan only when new semantic reasoning is necessary. Keep meaningful alternatives "
                                         "and diagnostics. Preserve the task, exact anchor and tool capabilities."

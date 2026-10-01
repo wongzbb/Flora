@@ -535,6 +535,70 @@ class ProbeExecutionTests(unittest.TestCase):
 
 
 class EvaluationBlockerRegressions(unittest.TestCase):
+    def test_access_rejection_stops_all_models_even_with_transport_override(self):
+        from flora.integrations.providers import TransportError
+
+        for status in (401, 402, 403, 404):
+            calls = []
+
+            class Rejected:
+                def complete(self, messages, *, max_tokens):
+                    calls.append(1)
+                    raise TransportError(
+                        f"model HTTP {status}: rejected", category="http", status=status
+                    )
+
+            def construct(**kwargs):
+                kwargs["provider"] = Rejected()
+                kwargs["session_key"] = None
+                kwargs["profile"].pop("provider", None)
+                return GeneralAgent(**kwargs)
+
+            with (
+                self.subTest(status=status),
+                tempfile.TemporaryDirectory() as tmp,
+                patch("tests.live_reliability_probe.GeneralAgent", side_effect=construct),
+                patch("builtins.print"),
+            ):
+                args = self.options(Path(tmp) / "evaluation")
+                args.cases, args.rounds = "greet,compute", 2
+                args.continue_on_transport_error = True
+                rows = evaluate(args, "fixture-only")
+                self.assertEqual(len(calls), 1)
+                self.assertEqual(sum(r["status"] == "not_run" for r in rows), len(rows) - 1)
+                failure = next(r for r in rows if r["status"] != "not_run")["failure"]
+                self.assertEqual(failure["http_status"], status)
+
+    def test_explicit_profile_request_deadlines_are_preserved(self):
+        profiles = []
+
+        def construct(**kwargs):
+            profiles.append(copy.deepcopy(kwargs["profile"]))
+            return self.construct(**kwargs)
+
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch("tests.live_reliability_probe.GeneralAgent", side_effect=construct),
+            patch("builtins.print"),
+        ):
+            args = self.options(Path(tmp) / "evaluation")
+            args.profile = Path(tmp) / "profile.json"
+            args.profile.write_text(
+                json.dumps(
+                    {
+                        "provider": {"timeout": 90, "total_timeout": 360},
+                        "compiler": {"compilation_timeout": 360},
+                    }
+                )
+            )
+            rows = evaluate(args, "fixture-only")
+            self.assertTrue(all(r["grade"]["passed"] for r in rows))
+            self.assertTrue(profiles)
+            for profile in profiles:
+                self.assertEqual(profile["provider"]["timeout"], 90)
+                self.assertEqual(profile["provider"]["total_timeout"], 360)
+                self.assertEqual(profile["compiler"]["compilation_timeout"], 360)
+
     options = ProbeExecutionTests.options
 
     @staticmethod

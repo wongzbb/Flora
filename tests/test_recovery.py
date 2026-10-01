@@ -75,6 +75,38 @@ class RecoveryTests(unittest.TestCase):
                 )
                 self.assertFalse(any(e["kind"] == "compiler_rejected" for e in self.events))
 
+    def test_delimiter_diagnostic_does_not_repair_or_execute_model_output(self):
+        from flora.language.compiler import _delimiter_error
+
+        malformed = '{"programs":[}]}'
+        requests = []
+
+        class Recording(SequenceProvider):
+            def complete(self, messages, *, max_tokens):
+                requests.append(messages)
+                return super().complete(messages, max_tokens=max_tokens)
+
+        provider = Recording(
+            ModelResponse(malformed, 1, 1), ModelResponse(json.dumps(bundle()), 1, 1)
+        )
+        self.assertEqual(self.compiler(provider).compile(context())["incumbent"], "main")
+        repair = json.loads(requests[1][-1]["content"])
+        self.assertEqual(
+            repair["syntax_window"]["delimiter_error"],
+            {
+                "offset": 13,
+                "found": "}",
+                "expected": "]",
+                "opening_offset": 12,
+            },
+        )
+        self.assertEqual(provider.calls, 2)
+        self.assertEqual(len(self.usage), 2)
+        self.assertIsNone(_delimiter_error(json.dumps({"text": 'brackets ] } and quote " and \\'})))
+        rejected = self.compiler(SequenceProvider(ModelResponse(malformed, 1, 1)), max_repairs=0)
+        with self.assertRaises(CompilerError):
+            rejected.compile(context())
+
     def test_reasoning_fallback_requires_explicit_different_profile(self):
         p = self.provider(
             json_response("", "length", "thought"),
@@ -178,6 +210,44 @@ class RecoveryTests(unittest.TestCase):
                 self.assertFalse(caught.exception.retryable)
                 self.assertEqual(p._opener.open.call_count, 1)
                 self.assertNotIn("secret", str(caught.exception) + json.dumps(self.events))
+
+    def test_provider_accepts_bounded_stream_overhead_without_lifting_output_limit(self):
+        raw = sse(
+            *(frame(reasoning="x") for _ in range(200)), frame("{}"), frame(finish="stop"), "[DONE]"
+        )
+        p = self.provider(Response(raw), stream=True, max_response_bytes=202)
+        self.assertEqual(
+            p.complete([{"role": "user", "content": "fixture"}], max_tokens=300).text, "{}"
+        )
+        for options, expected in (
+            ({"max_response_bytes": 201}, "decoded_limit"),
+            ({"max_stream_bytes": 100}, "wire_limit"),
+        ):
+            p = self.provider(Response(raw), stream=True, **options)
+            with self.assertRaises(TransportError) as caught:
+                p.complete([{"role": "user", "content": "fixture"}], max_tokens=300)
+            self.assertEqual(caught.exception.diagnostics["reason"], expected)
+            self.assertEqual(p._opener.open.call_count, 1)
+
+    def test_transport_classification_includes_stream_limits_and_auth(self):
+        from flora.general.reliability import failure_info
+
+        for reason in (
+            "model stream_limit: wire_limit; partial program discarded",
+            "model stream_malformed: invalid_json; partial program discarded",
+            "output budget exhausted before a program was produced",
+        ):
+            self.assertEqual(failure_info("needs_program", reason)["code"], "model_transport")
+        for status in (401, 402, 403, 404):
+            p = self.provider(
+                Response(sse({"error": {"code": status, "message": "secret"}})), stream=True
+            )
+            with self.assertRaises(TransportError) as caught:
+                p.complete([{"role": "user", "content": "fixture"}], max_tokens=300)
+            info = failure_info("needs_program", str(caught.exception))
+            self.assertEqual(info["http_status"], status)
+            self.assertEqual(info["code"], "model_transport")
+            self.assertNotIn("secret", json.dumps(info))
 
     def test_recovery_budget_shared_with_format_repair(self):
         transient = TransportError("fixture", category="connection", retryable=True)

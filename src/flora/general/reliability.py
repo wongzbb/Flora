@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import re
+
 
 def failure_info(status, reason=""):
     text = str(reason).lower()
@@ -28,7 +30,19 @@ def failure_info(status, reason=""):
             "program_validation",
             "Repair only the program using the reported validation error and existing successful receipts.",
         )
-    elif "transport" in text or "deadline" in text or "timeout" in text or "connection" in text:
+    elif any(
+        marker in text
+        for marker in (
+            "transport",
+            "deadline",
+            "timeout",
+            "connection",
+            "model http ",
+            "model stream_",
+            "model model_no_progress",
+            "output budget exhausted before a program",
+        )
+    ):
         code, action = (
             "model_transport",
             "Check endpoint and model availability; a new compilation remains charged and may have unknown usage.",
@@ -55,7 +69,11 @@ def failure_info(status, reason=""):
             "execution_incomplete",
             "Inspect the actual receipts and unresolved work before continuing.",
         )
-    return {"code": code, "next_action": action, "effects_replayed": False}
+    result = {"code": code, "next_action": action, "effects_replayed": False}
+    http = re.search(r"\bmodel http (\d{3})\b", text)
+    if code == "model_transport" and http:
+        result["http_status"] = int(http[1])
+    return result
 
 
 def network_failure(exc):

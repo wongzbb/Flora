@@ -584,6 +584,7 @@ def evaluate(args, key):
     output.mkdir(parents=True, mode=0o700, exist_ok=False)
     rows = []
     unavailable_models = set()
+    access_rejected = False
     seed = getattr(args, "seed", 20261001)
     order = [
         (model, repeat, case) for model in models for repeat in range(args.rounds) for case in cases
@@ -594,7 +595,7 @@ def evaluate(args, key):
         fixture_seed = (
             int(hashlib.sha256(f"{seed}:{repeat}:{case}".encode()).hexdigest()[:12], 16) << 1
         ) | (repeat % 2)
-        if model in unavailable_models:
+        if access_rejected or model in unavailable_models:
             rows.append(
                 {
                     "model": model,
@@ -603,7 +604,11 @@ def evaluate(args, key):
                     "fixture_seed": fixture_seed,
                     "status": "not_run",
                     "seconds": 0,
-                    "reason": "Earlier model transport failure; fix endpoint before retrying",
+                    "reason": (
+                        "Earlier authentication, balance or model-access rejection; no further requests"
+                        if access_rejected
+                        else "Earlier model transport failure; fix endpoint before retrying"
+                    ),
                     "grade": {"passed": None, "runtime_completed": False, "review_required": False},
                 }
             )
@@ -614,16 +619,17 @@ def evaluate(args, key):
         expected = prepare_case(case, root, fixture_seed)
         atomic_json(case_dir / "oracle.json", expected)  # Outside the agent's file root.
         profile = read_profile(args.profile) if args.profile else {}
-        profile.setdefault("provider", {}).update(
+        provider = profile.setdefault("provider", {})
+        provider.update(
             model=model,
             base_url=args.base_url,
             api_key_env=None,
             allow_insecure_http=getattr(args, "allow_insecure_http", False),
-            timeout=30,
-            total_timeout=120,
             max_tokens_parameter="max_tokens",
         )
-        profile.setdefault("compiler", {}).update(compilation_timeout=120)
+        provider.setdefault("timeout", 30)
+        provider.setdefault("total_timeout", 120)
+        profile.setdefault("compiler", {}).setdefault("compilation_timeout", 120)
         # Operational bounds prevent runaway calls; explicit profile limits/None are preserved.
         profile.setdefault("general", {}).update(allow_commands=False)
         profile["general"].setdefault("subagents", {})["enabled"] = case in COLLABORATIVE
@@ -707,6 +713,8 @@ def evaluate(args, key):
             args, "continue_on_transport_error", False
         ):
             unavailable_models.add(model)
+        if (row.get("failure") or {}).get("http_status") in {401, 402, 403, 404}:
+            access_rejected = True
         row["resolved_limits"] = resolved_limits
         row["mechanism_observations"] = mechanism_observations(events)
         row.update(

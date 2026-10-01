@@ -6,6 +6,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from flora.general.agent import GeneralAgent
 from flora.integrations.providers import ModelResponse
@@ -56,6 +57,64 @@ class CollaborationTests(unittest.TestCase):
         ident = self.app.delegation.spawn_agent(task, **kwargs)["agent_id"]
         self.app.delegation.futures[ident].result(timeout=5)
         return ident
+
+    def test_collaboration_schema_rejects_known_bad_shapes_before_dispatch(self):
+        from flora.language.toolcheck import validate_effect_arguments
+
+        tools = self.app.agent.tools.descriptions()
+        for tool, args in (
+            ("spawn_agent", {"task": "Inspect", "context": {"selected_file": {"var": "path"}}}),
+            ("read_agent", {"agent_id": {"var": "child"}, "limit": 100000}),
+            ("wait_agents", {"agent_ids": [{"var": "child"}], "timeout": 61}),
+            (
+                "review_agent",
+                {"agent_id": "x", "result_digest": "", "disposition": "done", "note": "x"},
+            ),
+        ):
+            source = {
+                "programs": [
+                    {
+                        "id": "main",
+                        "program": {
+                            "blocks": {
+                                "main": {"term": {"op": "effect", "tool": tool, "args": args}}
+                            }
+                        },
+                    }
+                ]
+            }
+            with self.subTest(tool=tool), self.assertRaises(ValidationError):
+                validate_effect_arguments(source, tools)
+        source["programs"][0]["program"]["blocks"]["main"]["term"].update(
+            tool="spawn_agent", args={"task": "Inspect", "context": {"guidance": {"var": "facts"}}}
+        )
+        validate_effect_arguments(source, tools)
+        self.assertEqual(self.provider.calls, 0)
+        self.assertFalse(self.app.delegation.records)
+
+    def test_saved_v4_without_schema_version_keeps_its_identity(self):
+        from flora.general.agent import _new_session_defaults
+
+        def legacy(profile, **kwargs):
+            _new_session_defaults(profile, **kwargs)
+            profile["general"].pop("tool_schema_version", None)
+
+        path = self.root / "legacy"
+        with patch("flora.general.agent._new_session_defaults", side_effect=legacy):
+            with GeneralAgent(
+                session_dir=path,
+                workspace=self.workspace,
+                provider=WorkerProvider(),
+                profile={"general": {"subagents": {"enabled": True}}},
+            ) as app:
+                identity = app.agent._fingerprint
+                tools = app.agent.tools.descriptions()
+                self.assertNotIn("tool_schema_version", app.profile["general"])
+        with GeneralAgent(session_dir=path, provider=WorkerProvider()) as app:
+            self.assertEqual(app.agent._fingerprint, identity)
+            self.assertEqual(app.agent.tools.descriptions(), tools)
+            self.assertNotIn("tool_schema_version", app.profile["general"])
+        self.assertEqual(self.app.profile["general"]["tool_schema_version"], 2)
 
     def collect(self, ident):
         row = self.app.delegation.read_agent(ident, limit=24000)

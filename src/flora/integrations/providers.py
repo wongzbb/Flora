@@ -154,6 +154,7 @@ class OpenAICompatibleProvider:
         api_key_env: str | None = "OPENAI_API_KEY",
         timeout: float = 60.0,
         max_response_bytes: int = 4 * 1024 * 1024,
+        max_stream_bytes: int = 64 * 1024 * 1024,
         max_request_bytes: int = 2 * 1024 * 1024,
         max_tokens_parameter: str = "max_completion_tokens",
         allow_insecure_http: bool = False,
@@ -205,6 +206,7 @@ class OpenAICompatibleProvider:
             raise ValidationError("timeout must be a positive finite number")
         for name, size in (
             ("max_response_bytes", max_response_bytes),
+            ("max_stream_bytes", max_stream_bytes),
             ("max_request_bytes", max_request_bytes),
         ):
             if type(size) is not int or size < 1:
@@ -220,6 +222,7 @@ class OpenAICompatibleProvider:
         self.api_key_env = api_key_env
         self.timeout = float(timeout)
         self.max_response_bytes = max_response_bytes
+        self.max_stream_bytes = max_stream_bytes
         self.max_request_bytes = max_request_bytes
         self.max_tokens_parameter = max_tokens_parameter
         self.request_options = self._options({} if request_options is None else request_options)
@@ -434,6 +437,7 @@ class OpenAICompatibleProvider:
                         data = read_completion(
                             response,
                             limit=self.max_response_bytes,
+                            wire_limit=self.max_stream_bytes,
                             deadline=deadline,
                             loads=_strict_json_loads,
                             emit=self._emit,
@@ -447,8 +451,9 @@ class OpenAICompatibleProvider:
                             else False,
                         )
                     except StreamFailure as exc:
+                        label = f"HTTP {exc.status}" if exc.status is not None else exc.category
                         raise TransportError(
-                            f"model {exc.category}: {exc.reason}; partial program discarded",
+                            f"model {label}: {exc.reason}; partial program discarded",
                             category=exc.category,
                             retryable=exc.retryable,
                             status=exc.status,

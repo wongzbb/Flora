@@ -134,6 +134,7 @@ def read_completion(
     response,
     *,
     limit,
+    wire_limit=None,
     deadline,
     loads,
     emit,
@@ -154,7 +155,9 @@ def read_completion(
     usage, finish, ident = None, None, None
     saw_choice = False
     try:
-        for line in _lines(response, limit, deadline, idle_timeout, progress):
+        for line in _lines(
+            response, limit if wire_limit is None else wire_limit, deadline, idle_timeout, progress
+        ):
             if line.startswith(":"):
                 continue
             if line:
@@ -238,6 +241,8 @@ def read_completion(
                         progress.text(text, channel)
                     except UnicodeError:
                         raise StreamFailure("stream_malformed", "invalid_text") from None
+                    if progress.program_bytes + progress.reasoning_bytes > limit:
+                        raise StreamFailure("stream_limit", "decoded_limit")
                     target.append(text)
                     if text:
                         emit({"kind": "model_delta", "channel": channel, "text": text})
