@@ -2195,7 +2195,11 @@
     "subsequent_requests": "stopped",
     "queued_release_audit": "cancelled before start",
     "revision_subsystem_probe": "prepared but not run",
-    "retry_requires": "account access restored and explicit clearance of the access-denial stop"
+    "retry_requires": "account access restored and explicit clearance of the access-denial stop",
+    "category": "http",
+    "sanitized_message": "model HTTP 402: check the account balance",
+    "message_origin": "Locally generated HTTP-status advice; the remote 402 body is deliberately not retained",
+    "upstream_error_code_or_message": "unavailable from saved logs"
   },
   "followup_code_sha": "4e29789",
   "followup_changes": [
@@ -2212,8 +2216,100 @@
       "seconds": 200.61,
       "note": "Followed by 43 passing targeted tests for final operational-metadata changes"
     },
-    "installed_wheel": "built; fresh-environment full suite running",
+    "installed_wheel": {
+      "tests_run": 308,
+      "skipped": 1,
+      "passed": true,
+      "seconds": 197.525,
+      "fresh_virtual_environment": true,
+      "import_path_verified": true
+    },
     "independent_reviews": "interface and revision-state changes reviewed; no blocking findings",
     "ruff": "passed"
-  }
+  },
+  "confirmed_usage": {
+    "scope": "All recorded evaluation batches plus two saved-session recovery runs; excludes separate connectivity smoke completion",
+    "model_calls": 140,
+    "calls_with_known_usage": 137,
+    "input_tokens": 1453871,
+    "output_tokens": 869647,
+    "unknown_usage_calls": 3,
+    "excluded_output_reservations": 72000,
+    "derivation": "Each unknown call was a TransportError with no token usage; the ledger charged its 24000-token output reservation, not measured output. These reservations are excluded here.",
+    "connectivity_smoke_separate": {
+      "model_calls": 1,
+      "input_tokens": 9,
+      "output_tokens": 1
+    },
+    "crossmodel_20261005": {
+      "deepseek-flash": {
+        "model_calls": 16,
+        "input_tokens": 149988,
+        "output_tokens": 127470,
+        "unknown_usage_calls": 0
+      },
+      "deepseek-v4-pro": {
+        "model_calls": 23,
+        "input_tokens": 249608,
+        "output_tokens": 182728,
+        "unknown_usage_calls": 1,
+        "excluded_output_reservation": 24000
+      }
+    }
+  },
+  "closeout": {
+    "base_commit": "4182d453191b5c029287eebfe5600f9961975397",
+    "live_requests": 0,
+    "runtime_changes": false,
+    "resume_document": "reports/LIVE_DEEPSEEK_RESUME.md",
+    "resume_profile": "configs/deepseek-live-acceptance.json",
+    "overall_status": "incomplete; waiting for explicit account restoration and access-stop clearance",
+    "focused_checks": {
+      "tests_run": 3,
+      "passed": true,
+      "coverage": [
+        "CSV actual cell types and unchanged comparison semantics",
+        "Complete structured worker result remains unverified",
+        "Saved schema version 2 identity and result compatibility"
+      ]
+    },
+    "pip_check": "passed",
+    "session_20490": "Previously captured terminal result: successful, 308 run, 1 skipped, 197.525 seconds; session has retired and cannot be reattached",
+    "active_python_test_processes": false
+  },
+  "remaining_task_failures": [
+    {
+      "model": "deepseek-flash",
+      "case": "pagination",
+      "trial": 1,
+      "cause": "Boolean true filter did not match CSV string true; flagged_ids empty while count and sum correct",
+      "fix_coverage": "Version 3 discloses cell_types before filtering; exact comparison unchanged",
+      "live_retest": "pending"
+    },
+    {
+      "model": "deepseek-v4-pro",
+      "case": "pagination",
+      "trial": 1,
+      "cause": "Boolean true filter did not match CSV string true; flagged_ids empty while count and sum correct",
+      "fix_coverage": "Version 3 discloses cell_types before filtering; exact comparison unchanged",
+      "live_retest": "pending"
+    },
+    {
+      "model": "deepseek-flash",
+      "case": "dependency_route",
+      "trial": 2,
+      "cause": "Returned read_agent window instead of answer; parent selected-file read used empty path and raised ValidationError: A file path is required",
+      "offline_reconstruction": {
+        "both_worker_answers_correct": true,
+        "both_complete_worker_reviews_valid": true,
+        "dependency_declared_correctly": true,
+        "parent_successful_observed_paths": [
+          "route.json"
+        ],
+        "collaboration_checks": false
+      },
+      "fix_coverage": "Version 3 exposes structured worker result; it does not automatically extract the answer or recover the empty-path parent read",
+      "live_retest": "pending for both final answer and parent source verification"
+    }
+  ]
 }

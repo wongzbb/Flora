@@ -1,6 +1,6 @@
 # Live DeepSeek reliability checkpoint
 
-This is an intermediate checkpoint, not final acceptance. Runtime code: `d583a6a01fdd8bd561e8950c0fc50bbd466836f0`. Only `general-agent` is authorized for publication. Real requests use the user-confirmed `https://api.deepseek.com`, only `deepseek-flash` and `deepseek-v4-pro`. Credentials are never included in these reports.
+This is an intermediate checkpoint, not final acceptance. Initial verified runtime checkpoint: `d583a6a01fdd8bd561e8950c0fc50bbd466836f0`; follow-up runtime code: `4e29789`, included in closeout base `4182d453191b5c029287eebfe5600f9961975397`. Only `general-agent` is authorized for publication. Real requests use the user-confirmed `https://api.deepseek.com`, only `deepseek-flash` and `deepseek-v4-pro`. Credentials are never included in these reports.
 
 ## Recorded batches
 
@@ -17,7 +17,7 @@ This is an intermediate checkpoint, not final acceptance. Runtime code: `d583a6a
 | flora-live-pro-heldout-20261002 | 3/4 | 3 | 110.8345 / 452.402 |
 | flora-live-pro-low-20261001 | 1/2 | 1 | 177.109 / 244.937 |
 
-The crossmodel-20261005 batch finished with 7 passes, 4 failures and 1 unrun trial. Trial 11 received HTTP 402; the global batch stop prevented trial 12 and cancelled the queued release_audit batch before it started. No further authenticated requests were sent. Individual failures remain in the JSON report. Per-case seeds, grades, operational configuration and mechanism counts are retained. Earlier dirty development batches lack exact source snapshots; do not treat them as reproducible clean-SHA comparisons. The new harness records source identity before requests.
+The crossmodel-20261005 batch finished with 7 passes, 3 task failures, 1 HTTP failure and 1 unrun trial. Trial 11 received HTTP 402; the global batch stop prevented trial 12 and cancelled the queued release_audit batch before it started. No further authenticated requests were sent. Individual failures remain in the JSON report. Per-case seeds, grades, operational configuration and mechanism counts are retained. Earlier dirty development batches lack exact source snapshots; do not treat them as reproducible clean-SHA comparisons. The new harness records source identity before requests.
 
 ## Findings and changes
 
@@ -61,4 +61,20 @@ The mechanism investigation found that new user turns do not preserve previous c
 
 A separate legacy-consumer repair probe is prepared, explicitly labeled host-seeded initial program plus real model repair. It is neither end-to-end model generation nor spontaneous revision evidence, and was NOT executed after the HTTP 402 stop. No live diagnostic insertion, accepted model migration, or causal benefit is claimed. The successful task outcomes and offline gate tests must remain separate.
 
-Follow-up verification: the full source suite passed 308 tests (one platform skip), followed by 43 passing focused checks for final operational-metadata changes. Ruff passed. The 4e29789 wheel built successfully; its full installed-package suite is running in a new virtual environment. This pending installed check is not claimed as passed.
+Follow-up verification: the full source suite passed 308 tests (one platform skip), followed by 43 passing focused checks for final operational-metadata changes. Ruff passed. The 4e29789 wheel built and installed successfully in a new virtual environment. Its import path was verified, and the full installed-package suite passed 308 tests (one platform skip) in 197.525 seconds.
+
+## Exact saved error and measured usage
+
+The saved main-actor model_failure event has category `http`, HTTP status `402`, and sanitized message `model HTTP 402: check the account balance`. The advice after the colon is generated locally from the status code. The provider deliberately does not retain a remote 402 body, headers or URL, so no exact upstream account error code/message is available. No new request was made to investigate it.
+
+Across recorded evaluation batches and the two saved-session recovery runs: 140 model-call attempts, 137 with known usage; confirmed input 1,453,871 tokens and confirmed output 869,647 tokens. Three failed calls have unknown actual usage. The budget ledger's output total includes 72,000 reservation tokens for those failures; they are excluded from confirmed usage. A separate connectivity completion adds one call, 9 input and 1 output token. No dollar estimate is made.
+
+For the final crossmodel batch alone: Flash made 16 calls with 149,988 input / 127,470 output tokens; Pro made 23 attempts with 249,608 confirmed input / 182,728 confirmed output tokens and one unknown-usage HTTP 402 call. The Pro ledger additionally charged a 24,000-token output reservation for that rejected call; this is not measured or billed usage evidence.
+
+See LIVE_DEEPSEEK_RESUME.md for the explicit restart conditions, evidence inventory and rerun list. The overall live task remains incomplete.
+
+## Closeout failure reconstruction
+
+The Flash dependency_route trial-2 failure also lacked successful parent verification of the selected file. Both workers returned correct answers with complete accepted reviews and the required dependency. The parent successfully read route.json, then passed an empty path to read_file; it raised `ValidationError: A file path is required`. Read-only replay confirms only route.json in parent observed paths and a failed collaboration check. Version 3 exposes the structured worker result but does not automatically recover this failed read or choose the final answer. Both obligations still require live verification.
+
+The CSV type/filter, structured-result and version-2 compatibility minimal checks were rerun successfully at closeout (3 tests). Installed-wheel pip check passed. No runtime code changed and no live requests were made during closeout. Session 20490 has retired; its previously captured successful terminal result is retained above, not a claim of a newly repeated full suite. The resume document contains the exact conditional commands and evidence inventory.
