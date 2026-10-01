@@ -1,6 +1,6 @@
 # Resume after the HTTP 402 stop
 
-Status: live acceptance is incomplete. Do not execute the live commands below until the user confirms account access is restored and clears the access stop. No payment, recharge, account change or automatic retry is authorized by this document. Authentication previously succeeded; do not restart credential discovery or repeat initialization checks.
+Status: live acceptance is incomplete. The user confirmed recharge and explicitly cleared the access stop on 2026-10-01; a single official Flash completion succeeded (8 input / 1 output token). The targeted v3 batch has resumed. See LIVE_DEEPSEEK_RESUMED.md for current progress. The remaining instructions below preserve the original conditional restart procedure; do not duplicate an active batch. No payment, recharge, account change or automatic retry is authorized by this document. Authentication previously succeeded; do not restart credential discovery or repeat initialization checks.
 
 ## Checkpoint and completed verification
 
