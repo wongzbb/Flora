@@ -57,6 +57,36 @@ def _delimiter_error(text):
     return None
 
 
+def _quoted_local_references(bundle):
+    """Find a syntactic ambiguity, never infer that literal data is incorrect."""
+    found = []
+
+    def references(value, names):
+        if isinstance(value, dict):
+            if set(value) == {"var"} and isinstance(value["var"], str):
+                return value["var"] in names
+            return any(references(v, names) for v in value.values())
+        return isinstance(value, list) and any(references(v, names) for v in value)
+
+    def quoted(value, names):
+        if isinstance(value, dict):
+            if set(value) == {"literal"}:
+                return references(value["literal"], names)
+            return any(quoted(v, names) for v in value.values())
+        return isinstance(value, list) and any(quoted(v, names) for v in value)
+
+    for candidate in bundle["programs"]:
+        for label, block in candidate["program"]["blocks"].items():
+            names = set(block["params"])
+            ambiguous = False
+            for op in block["ops"]:
+                ambiguous |= quoted(op["args"], names)
+                names.add(op["dest"])
+            if ambiguous or quoted(block["term"], names):
+                found.append({"candidate": candidate["id"], "block": label})
+    return found[:8]
+
+
 SYSTEM_PROMPT = r"""You compile an agent's remaining task into Flora IR version 1.
 Return exactly ONE JSON object; no markdown, explanations, comments, NaN, duplicate
 keys, or extra fields. You are not executing code or tools. Use only named tools
@@ -919,6 +949,35 @@ class LLMCompiler:
                     from flora.language.toolcheck import validate_effect_arguments
 
                     validate_effect_arguments(validated, snapshot.tools)
+                quoted = _quoted_local_references(validated)
+                if quoted and attempt < self.max_repairs:
+                    # This valid program may intentionally return code as data.
+                    # Spend only the existing optional repair allowance, and let
+                    # the model retain it unchanged after reviewing the task.
+                    self._emit(
+                        {
+                            "kind": "compiler_advisory",
+                            "code": "quoted_local_references",
+                            "locations": quoted,
+                        }
+                    )
+                    fragment = response.text.encode("utf-8")[
+                        : min(self.max_output_bytes, 16384)
+                    ].decode("utf-8", errors="ignore")
+                    messages = self.build_messages(snapshot) + [
+                        {"role": "assistant", "content": fragment},
+                        {
+                            "role": "user",
+                            "content": canonical_json(
+                                {
+                                    "review": "This is valid IR, not a validation failure. Review quoted local references against the user's task. A literal yields its entire payload as data, including var objects; it does not evaluate those references. If producing code/data is intentional, preserve it. Otherwise choose the appropriate expression yourself. Return a complete bundle for the SAME anchor. No effects have executed. This is the final optional review; no hidden answer or expected output type is supplied.",
+                                    "locations": quoted,
+                                    "previous_output_truncated": len(fragment) < len(response.text),
+                                }
+                            ),
+                        },
+                    ]
+                    continue
                 self._check_deadline()
                 self._emit({"kind": "compiler_validated", "attempt": attempt})
                 return validated

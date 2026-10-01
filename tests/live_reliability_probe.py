@@ -52,7 +52,7 @@ TASKS = {
     **STRESS_TASKS,
 }
 BASE_CASES = [name for name in TASKS if name not in STRESS_TASKS]
-COLLABORATIVE = {"multi", "dependency", "dependency_route"}
+COLLABORATIVE = {"multi", "dependency", "dependency_route", "release_audit"}
 COUNTERS = ("model_calls", "tool_calls", "input_tokens", "output_tokens", "unknown_usage_calls")
 READ_TOOLS = {"read_file", "read_document", "table_query", "search_files"}
 PARENT_LIMITS = {
@@ -154,13 +154,25 @@ def configuration_view(profile):
 class AccessFailureMonitor:
     """Pause parent and workers when their real event stream reports access denial."""
 
-    def __init__(self, events):
+    def __init__(self, events, *, pause_after_write=False):
         self.events = events
         self.app = None
         self.status = None
+        self.pause_after_write = pause_after_write
+        self.write_paused = False
 
     def __call__(self, event):
         self.events.append(event)
+        if (
+            self.pause_after_write
+            and not self.write_paused
+            and self.app
+            and event.get("kind") == "tool_result"
+            and event.get("status") == "returned"
+            and event.get("tool") in {"create_file", "write_file", "update_file", "write_report"}
+        ):
+            self.write_paused = True
+            self.app.request_pause()
         failure = event
         if event.get("kind") == "transcript" and event.get("channel") == "model_failure":
             try:
@@ -263,12 +275,30 @@ def collect_evidence(app, result):
 def mechanism_observations(events):
     """Observed kernel activity, not evidence of synthesis quality or causal benefit."""
     records = [e.get("event", {}) if e.get("kind") == "subagent_event" else e for e in events]
-    kinds = ("diagnostic_evaluated", "forecast_observation", "consumer_check", "revision_checked")
+    kinds = (
+        "diagnostic_evaluated",
+        "forecast_observation",
+        "consumer_check",
+        "revision_checked",
+        "reuse_checked",
+        "diagnostic_inapplicable",
+        "invalid_diagnostic",
+    )
     values = {kind: sum(e.get("kind") == kind for e in records) for kind in kinds}
     values["multiple_candidate_bundles"] = sum(
         e.get("kind") == "bundle_installed" and len(e.get("normal_candidates", [])) > 1
         for e in records
     )
+    values["inserted_diagnostic_actions"] = sum(
+        e.get("kind") == "action_selected" and e.get("diagnostic") is True for e in records
+    )
+    values["accepted_revisions"] = sum(
+        e.get("kind") == "revision_checked" and e.get("accepted") is True for e in records
+    )
+    values["rejected_reuse"] = sum(
+        e.get("kind") == "reuse_checked" and e.get("accepted") is False for e in records
+    )
+    values["omitted_reports"] = sum(e.get("kind") == "report_omitted" for e in records)
     values["semantic_or_causal_validation"] = False
     return values
 
@@ -418,6 +448,35 @@ def collaboration_checks(case, result, expected):
     if not all(reviewed(worker) for worker in workers):
         return False
     parent_paths = observed_paths(result.get("_receipts", []))
+    if case == "release_audit":
+        for answer in expected["worker_answers"]:
+            matches = [
+                w
+                for w in workers
+                if equal(w["_view"].get("value"), answer)
+                and answer["source"] in observed_paths(w.get("_receipts", []))
+            ]
+            if len(matches) != 1:
+                return False
+            if answer["project"] == expected["fallback_project"]:
+                receipts = matches[0].get("_receipts", [])
+                missing = [
+                    i
+                    for i, r in enumerate(receipts)
+                    if r.get("status") == "raised"
+                    and receipt_path(r) == expected["missing_primary"]
+                    and (r.get("error") or {}).get("type") == "FileNotFoundError"
+                ]
+                fallback = [
+                    i
+                    for i, r in enumerate(receipts)
+                    if r.get("status") == "returned"
+                    and receipt_path(r) == answer["source"]
+                    and r.get("tool") in READ_TOOLS
+                ]
+                if not missing or not fallback or min(missing) >= min(fallback):
+                    return False
+        return set(expected["required_reads"]) <= parent_paths
     if case == "multi":
         for path, count in zip(("left.json", "right.json"), expected["counts"], strict=True):
             matches = [
@@ -573,7 +632,7 @@ def assess(case, result, root, events, expected):
                 i
                 for i, r in enumerate(receipts)
                 if r.get("status") == "returned"
-                and r.get("tool") in {"write_file", "update_file", "replace_text"}
+                and r.get("tool") in {"create_file", "write_file", "update_file", "replace_text"}
                 and receipt_path(r) == path
             ]
             provenance &= bool(writes) and path in observed_paths(receipts[writes[-1] + 1 :])
@@ -679,6 +738,8 @@ def validate_options(args):
         raise ValueError("Plain HTTP requires explicit --allow-insecure-http; prefer HTTPS")
     if not 1 <= args.rounds <= 20 or not 0 <= getattr(args, "resume_attempts", 0) <= 2:
         raise ValueError("rounds must be 1..20 and resume-attempts 0..2")
+    if getattr(args, "reopen_after_write", False) and not getattr(args, "resume_attempts", 0):
+        raise ValueError("reopen-after-write requires at least one resume attempt")
     output, repository = args.output.resolve(), Path(__file__).resolve().parents[1]
     if output == repository or repository in output.parents:
         raise ValueError("Evaluation output must be outside the repository")
@@ -697,6 +758,7 @@ def evaluate(args, key):
         "rounds": args.rounds,
         "seed": getattr(args, "seed", 20261001),
         "resume_attempts": getattr(args, "resume_attempts", 0),
+        "reopen_after_write": getattr(args, "reopen_after_write", False),
         "pass_definition": "runtime completion AND independently correct task output AND evidence/mutation/publication integrity; research requires human review",
     }
     atomic_json(output / "provenance.json", provenance)
@@ -753,7 +815,10 @@ def evaluate(args, key):
         profile["general"].setdefault("subagents", {})["enabled"] = case in COLLABORATIVE
         resolved_limits = apply_evaluation_limits(profile)
         events, attempts = [], []
-        monitor = AccessFailureMonitor(events)
+        monitor = AccessFailureMonitor(
+            events, pause_after_write=getattr(args, "reopen_after_write", False)
+        )
+        recovery = None
         configuration = configuration_view(profile)
         start = time.monotonic()
         result, app = {}, None
@@ -799,6 +864,36 @@ def evaluate(args, key):
                         "aggregate_usage": aggregate_usage(result),
                     }
                 )
+                if monitor.write_paused and recovery is None and monitor.status is None:
+                    # Operational interruption only: no oracle is sent to the model.
+                    old_receipts = result["_receipts"]
+                    old_budget = result["budget"]
+                    app.close()
+                    if monitor.status is not None:
+                        break  # A worker may report access denial while close joins it.
+                    app = GeneralAgent(
+                        session_dir=case_dir / "session",
+                        workspace=root,
+                        session_key=key,
+                        on_event=monitor,
+                    )
+                    monitor.app = app
+                    restored = read_receipts(app.agent.current_trace_path)
+                    recovery = {
+                        "receipts_preserved": restored == old_receipts,
+                        "budget_counters_preserved": all(
+                            app.agent.status()["budget"].get(k) == old_budget.get(k)
+                            for k in COUNTERS
+                        ),
+                        "before_receipt_count": len(old_receipts),
+                    }
+                    if result["status"] in {
+                        "paused",
+                        "needs_program",
+                        "stalled",
+                        "incomplete",
+                    } and attempt < getattr(args, "resume_attempts", 0):
+                        continue
                 if (result.get("failure") or {}).get("code") == "model_transport":
                     break  # Compiler transport retries are already bounded and charged.
                 if result["status"] not in {"needs_program", "stalled", "incomplete"}:
@@ -848,6 +943,8 @@ def evaluate(args, key):
             access_rejected = True
         row["resolved_limits"] = resolved_limits
         row["configuration"] = configuration
+        if recovery is not None:
+            row["reopen_recovery"] = recovery
         row["mechanism_observations"] = mechanism_observations(events)
         row.update(
             model=model,
@@ -894,6 +991,11 @@ def main():
     parser.add_argument("--rounds", type=int, default=2)
     parser.add_argument("--seed", type=int, default=20261001)
     parser.add_argument("--resume-attempts", type=int, default=0)
+    parser.add_argument(
+        "--reopen-after-write",
+        action="store_true",
+        help="Pause after the first successful parent publication, close and reopen the saved session; requires a resume allowance",
+    )
     parser.add_argument("--profile", type=Path)
     parser.add_argument(
         "--api-key-env", help="Explicit environment variable; otherwise hidden interactive input"

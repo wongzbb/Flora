@@ -385,6 +385,9 @@ in pure consumers; do not recompile after every tool. Read a supplied path direc
 Use real read_file.content (string), not its object/envelope, for parse_json.
 Check has_more/truncated; full sha256 is needed before replacing existing files.
 A successful read is not a write receipt. Use exact numeric table_query results.
+CSV cells are strings. table_query eq/ne compare exact string representations:
+the CSV text "true" differs from the JSON boolean true. Observe unknown cell
+encodings before choosing filters; an empty match does not validate an assumed type.
 Replan only for NEW semantic reasoning: nonempty reason and object state retain
 actual local facts for remaining work. It saves state then charges a new model call,
 replaces the program/stack, and appears in memory.__openharness_continuation__.

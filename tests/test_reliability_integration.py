@@ -311,11 +311,11 @@ class ReliabilityIntegrationTests(unittest.TestCase):
         examples = [
             json.loads(line) for line in prompt.splitlines() if line.startswith('{"programs":')
         ]
-        self.assertEqual(len(examples), 3)
+        self.assertEqual(len(examples), 4)
         for item in examples:
             validate_bundle(lower_bundle(item, syntax="block-list-v2"))
-        self.assertTrue(examples[-1]["diagnostics"])
-        self.assertLess(len(prompt), 12000)
+        self.assertTrue(examples[2]["diagnostics"])
+        self.assertLess(len(prompt), 14000)
         for rule in (
             "PASS/FAIL/UNKNOWN",
             "PRESERVE",

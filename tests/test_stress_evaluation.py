@@ -244,6 +244,38 @@ class ReliabilityOracleTests(unittest.TestCase):
 
 
 class StressFixtureTests(unittest.TestCase):
+    def test_release_audit_requires_unknown_evidence_worker_recovery_and_readback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            expected = prepare_case("release_audit", root, 17)
+            (root / "audit.json").write_text(json.dumps(expected["answer"]))
+            workers = [
+                worker(str(i), answer["source"], answer)
+                for i, answer in enumerate(expected["worker_answers"])
+            ]
+            failure = receipt(path=expected["missing_primary"], status="raised")
+            failure["error"] = {"type": "FileNotFoundError", "message": "missing"}
+            workers[1]["_receipts"].insert(0, failure)
+            result = {
+                "status": "completed",
+                "value": expected["answer"],
+                "workers": workers,
+                "_receipts": [receipt(path=p) for p in expected["required_reads"]]
+                + [receipt("create_file", "audit.json"), receipt(path="audit.json")],
+            }
+            self.assertTrue(assess("release_audit", result, root, [], expected)["passed"])
+            workers[1]["_receipts"].pop(0)
+            self.assertFalse(assess("release_audit", result, root, [], expected)["passed"])
+            workers[0]["_receipts"].insert(0, failure)
+            self.assertFalse(assess("release_audit", result, root, [], expected)["passed"])
+            workers[0]["_receipts"].pop(0)
+            workers[1]["_receipts"].append(failure)
+            self.assertFalse(assess("release_audit", result, root, [], expected)["passed"])
+            workers[1]["_receipts"].pop()
+            workers[1]["_receipts"].insert(0, failure)
+            result["_receipts"].pop()
+            self.assertFalse(assess("release_audit", result, root, [], expected)["passed"])
+
     def test_every_family_varies_with_seed_is_reproducible_and_key_stays_outside(self):
         for case in STRESS_TASKS:
             with self.subTest(case=case), tempfile.TemporaryDirectory() as tmp:
@@ -260,7 +292,7 @@ class StressFixtureTests(unittest.TestCase):
                 self.assertTrue(unchanged_inputs(roots[0], a))
 
     def test_correct_stress_answers_require_evidence_and_wrong_answers_fail(self):
-        for case in set(STRESS_TASKS) - {"edit_preserve", "dependency_route"}:
+        for case in set(STRESS_TASKS) - {"edit_preserve", "dependency_route", "release_audit"}:
             with self.subTest(case=case), tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp)
                 expected = prepare_case(case, root, 201)
@@ -315,6 +347,75 @@ class StressFixtureTests(unittest.TestCase):
 
 
 class ProbeExecutionTests(unittest.TestCase):
+    def test_reopen_after_write_preserves_receipts_and_does_not_replay_publication(self):
+        calls = []
+
+        class Provider:
+            def complete(self, messages, *, max_tokens):
+                calls.append(1)
+                context = json.loads(messages[1]["content"])
+                program = {
+                    "version": 1,
+                    "entry": "main",
+                    "blocks": {
+                        "main": {
+                            "params": [],
+                            "ops": [],
+                            "term": {
+                                "op": "effect",
+                                "tool": "create_file",
+                                "args": {"path": "summary.json", "content": "{}"},
+                                "resume": "done",
+                                "bind": "receipt",
+                                "capture": {},
+                            },
+                        },
+                        "done": {
+                            "params": ["receipt"],
+                            "ops": [],
+                            "term": {
+                                "op": "effect",
+                                "tool": "read_file",
+                                "args": {"path": "summary.json"},
+                                "resume": "final",
+                                "bind": "readback",
+                                "capture": {},
+                            },
+                        },
+                        "final": {
+                            "params": ["readback"],
+                            "ops": [],
+                            "term": {"op": "return", "value": "summary.json"},
+                        },
+                    },
+                }
+                return ModelResponse(
+                    json.dumps(bundle(program, context["epoch"], context["trace_digest"])), 3, 2
+                )
+
+        def construct(**kwargs):
+            kwargs["provider"], kwargs["session_key"] = Provider(), None
+            if kwargs.get("profile"):
+                kwargs["profile"].pop("provider", None)
+            return GeneralAgent(**kwargs)
+
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch("tests.live_reliability_probe.GeneralAgent", side_effect=construct),
+            patch("builtins.print"),
+        ):
+            args = self.options(Path(tmp) / "evaluation")
+            args.models, args.cases = "deepseek-fixture", "write"
+            args.resume_attempts, args.reopen_after_write = 1, True
+            row = evaluate(args, "fixture-only")[0]
+            self.assertEqual(len(calls), 1)
+            self.assertEqual(row["status"], "completed", row)
+            self.assertTrue(row["reopen_recovery"]["receipts_preserved"])
+            self.assertTrue(row["reopen_recovery"]["budget_counters_preserved"])
+            self.assertEqual(row["grade"]["tool_calls"], ["create_file", "read_file"])
+            # Recovery does not turn an intentionally wrong publication into a pass.
+            self.assertFalse(row["grade"]["passed"])
+
     def test_configuration_view_records_only_typed_operational_choices(self):
         marker = "must-not-be-recorded"
         profile = {
