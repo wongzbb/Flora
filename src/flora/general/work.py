@@ -12,12 +12,20 @@ from flora.support.errors import ValidationError
 
 from .storage import atomic_json
 
+TASK_OBLIGATION_ID = "task"
+TASK_OBLIGATION_GOAL = (
+    "Complete the current user task in work.task, or explicitly record its unresolved limitations."
+)
+
 
 class WorkLedger:
     def __init__(self, owner):
         self.owner = owner
         self.path = owner.directory / "work.json"
         self.lock = threading.RLock()
+        self.require_task_completion = owner.profile["general"].get(
+            "require_task_completion", False
+        )
         from .agent import read_profile
 
         self.state = read_profile(self.path, max_bytes=1048576) if self.path.exists() else {}
@@ -25,6 +33,17 @@ class WorkLedger:
     def begin(self, task_key, task):
         with self.lock:
             self.state = {"task_key": task_key, "task": task, "revision": 0, "steps": []}
+            if self.require_task_completion:
+                self.state["steps"] = [
+                    {
+                        "id": TASK_OBLIGATION_ID,
+                        "goal": TASK_OBLIGATION_GOAL,
+                        "status": "pending",
+                        "required": True,
+                        "evidence": [],
+                        "note": "",
+                    }
+                ]
             atomic_json(self.path, self.state)
 
     def read_work(self) -> dict:
@@ -111,6 +130,10 @@ class WorkLedger:
             required = {s["id"] for s in self.state["steps"] if s["required"]}
             if not required <= {s["id"] for s in clean if s["required"]}:
                 raise ValidationError("Existing required steps must be retained as required")
+            if self.require_task_completion:
+                prior = {s["id"]: s for s in self.state["steps"] if s["required"]}
+                if any(s["id"] in prior and s["goal"] != prior[s["id"]]["goal"] for s in clean):
+                    raise ValidationError("Required goal text is immutable within this task")
             proposed = {**self.state, "revision": expected_revision + 1, "steps": clean}
             if len(__import__("json").dumps(proposed).encode()) > 1048576:
                 raise ValidationError("Work state exceeds its storage bound")
@@ -120,11 +143,24 @@ class WorkLedger:
 
     def completion(self):
         with self.lock:
+            # task.json and work.json are separate durable writes. An interruption
+            # between them must not let the preceding task's completion authorize
+            # the new task. Do not silently relabel or discard that older state.
+            task_binding_valid = (
+                not self.owner.task.get("key") and not self.state.get("task_key")
+            ) or (
+                self.state.get("task_key") == self.owner.task.get("key")
+                and self.state.get("task") == self.owner.task.get("task")
+            )
             pending = [
                 s["id"]
                 for s in self.state.get("steps", [])
                 if s["required"] and s["status"] in {"pending", "running"}
             ]
+            if self.require_task_completion and not any(
+                s["id"] == TASK_OBLIGATION_ID and s["required"] for s in self.state.get("steps", [])
+            ):
+                pending.append(TASK_OBLIGATION_ID)
             stale = []
             limitations = []
             for step in self.state.get("steps", []):
@@ -136,7 +172,14 @@ class WorkLedger:
                     except (OSError, ValidationError):
                         stale.append(step["id"])
             return {
-                "ready": not pending and not stale,
+                "ready": task_binding_valid and not pending and not stale,
+                "task_binding_valid": task_binding_valid,
+                "recovery_required": None
+                if task_binding_valid
+                else (
+                    "Saved work belongs to a different task. Preserve it and inspect the "
+                    "session; start the new task again only when no unfinished kernel turn exists."
+                ),
                 "pending_steps": pending,
                 "stale_evidence": stale,
                 "limitations": limitations,

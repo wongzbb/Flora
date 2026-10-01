@@ -1,3 +1,5 @@
+This historical recovery snapshot is superseded for the pending runtime change by [TASK_COMPLETION_CHECKPOINT.md](TASK_COMPLETION_CHECKPOINT.md), which records its completed validation and portable evidence.
+
 # Engineering recovery checkpoint — 2026-10-01
 
 This checkpoint supersedes older statements that the comparison, diagnostic probe, consumer recovery, or release audit is still running. No new live call was made during recovery. Current process inspection found no active live probe or unittest process; old PTY IDs 80294 and 18641 are no longer registered.

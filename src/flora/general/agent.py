@@ -191,6 +191,7 @@ def _normalize(profile):
         "skills",
         "allow_commands",
         "require_report",
+        "require_task_completion",
         "instructions",
         "storage_bytes",
         "subagents",
@@ -210,9 +211,14 @@ def _normalize(profile):
         "general-v4",
     ):
         raise ValidationError("protocol must be general-v1, general-v2, general-v3 or general-v4")
-    for key in ("allow_commands", "require_report"):
+    for key in ("allow_commands", "require_report", "require_task_completion"):
         if key in general and type(general[key]) is not bool:
             raise ValidationError(key + " must be boolean")
+    if (
+        general.get("require_task_completion")
+        and general.get("protocol", "general-v4") != "general-v4"
+    ):
+        raise ValidationError("require_task_completion requires general-v4 durable work")
     for key in ("network", "search", "services", "mcp", "browser"):
         if key in general and not isinstance(general[key], dict):
             raise ValidationError(key + " must be an object")
@@ -425,6 +431,22 @@ class GeneralAgent:
                 "general-v4": INSTRUCTIONS_V4,
             }[general.get("protocol", "general-v1")]
             instructions = base_instructions + "\n" + general.get("instructions", "")
+            if general.get("require_task_completion"):
+                instructions += """
+TASK COMPLETION CONTRACT (durable state, not an automatic correctness verdict):
+read_work starts with required step 'task' pending, bound to this whole user task.
+A local return does not complete that obligation. Retain it in every update_work.
+Declare your own required substeps for multi-stage work before treating any phase
+as complete; required goal text cannot be silently changed or made optional.
+Compile a small executable phase against actual available observations. Persist
+its progress with update_work; use replan with actual state when the next phase
+needs reasoning. Do not regenerate an entire future workflow merely to continue.
+Only explicitly mark 'task' completed after all user obligations and required
+substeps are fulfilled and checked against real evidence. Keep unresolved steps
+pending/running, or blocked with a concrete limitation. Existing successful effects
+remain committed across these phases. The host checks state and reference integrity;
+it does not infer the task's decomposition or verify the truth of completion claims.
+"""
             if any(value is None for value in self.profile.get("budget", {}).values()):
                 instructions += (
                     "\nA null cumulative budget limit means unlimited, not zero or unknown. "
