@@ -34,6 +34,39 @@ from flora.support.resources import (
 from flora.support.values import canonical_json, clone, digest
 
 
+def _migration_failure(boundary, receipt_count):
+    """Disclose structural failure only; VM messages may contain arbitrary data."""
+    details = {"boundary_kind": boundary.kind, "receipt_count": receipt_count}
+    code = boundary.details.get("code")
+    if code in {
+        "TYPE_ERROR",
+        "MISSING_KEY",
+        "VALUE_LIMIT",
+        "JSON_PARSE_ERROR",
+        "ASSERTION_FAILED",
+        "OPAQUE_VALUE",
+        "RECEIPT_UNAVAILABLE",
+        "RECEIPT_UNSETTLED",
+        "MEMORY_UNAVAILABLE",
+        "ARITHMETIC_ERROR",
+        "FUEL_EXHAUSTED",
+        "UNKNOWN_OPERATION",
+        "UNKNOWN_TERMINATOR",
+    }:
+        details["fault_code"] = code
+    if boundary.kind == "return":
+        details["return_type"] = {
+            type(None): "null",
+            bool: "boolean",
+            int: "integer",
+            float: "number",
+            str: "string",
+            list: "array",
+            dict: "object",
+        }.get(type(boundary.value), "unknown")
+    return details
+
+
 @dataclass(frozen=True)
 class RuntimeConfig:
     max_steps: int | None = 200
@@ -559,6 +592,7 @@ class Runtime:
                         "verdict": "UNKNOWN",
                         "reason": "migration_did_not_return_inputs",
                         "context": context.id,
+                        "migration_failure": _migration_failure(migrated, len(context.receipts)),
                     }
                 )
                 continue
@@ -616,6 +650,7 @@ class Runtime:
             if migrated.kind != "return" or not isinstance(migrated.value, dict):
                 accepted = report["accepted"] = False
                 report["reason"] = "current_migration_unavailable"
+                report["migration_failure"] = _migration_failure(migrated, len(self.trace.records))
             else:
                 try:
                     mapped_current = new_machine(program, migrated.value)

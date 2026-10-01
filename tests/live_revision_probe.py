@@ -214,7 +214,9 @@ def assess(world, result, receipts, events, activations, seed_result):
     }
 
 
-def run_case(provider, compiler_options, sizes, directory, *, key=""):
+def run_case(provider, compiler_options, sizes, directory, *, key="", resume_attempts=0):
+    if type(resume_attempts) is not int or not 0 <= resume_attempts <= 2:
+        raise ValueError("resume_attempts must be an integer from 0 to 2")
     world = PageWorld(sizes)
     events, activations, proposals = [], [], []
     monitor = AccessFailureMonitor(events)
@@ -272,13 +274,42 @@ def run_case(provider, compiler_options, sizes, directory, *, key=""):
     runtime.compiler = None
     seed = legacy_seed()
     result, seed_result, exception = {}, {}, None
+    attempts = []
     started = time.monotonic()
     try:
         seed_result = runtime.run(task_text(), bundle=seed).to_dict()
         if seed_result["status"] != "needs_program" or len(world.calls) != 2:
             raise RuntimeError("Legacy fixture did not reach its required actual two-page fault")
         runtime.compiler = compiler
-        result = runtime.run(task_text()).to_dict()
+        for _ in range(resume_attempts + 1):
+            if monitor.status is not None:
+                break
+            event_start = len(events)
+            try:
+                result = runtime.run(task_text()).to_dict()
+            except Exception as exc:
+                result = {
+                    "status": "exception",
+                    "reason": dialogue.clean(str(exc)),
+                    "budget": clone(runtime.budget.to_dict()),
+                }
+                attempts.append(clone(result))
+                raise
+            attempts.append(clone(result))
+            # Only this actual gate refusal is resumable. Do not consult the
+            # task oracle or reset Runtime history, candidates or budget.
+            rejected = any(
+                event.get("kind") == "revision_checked" and event.get("accepted") is False
+                for event in events[event_start:]
+            )
+            if not (
+                monitor.status is None
+                and result.get("status") == "needs_program"
+                and result.get("reason")
+                == "All incoming programs failed their declared revision gates"
+                and rejected
+            ):
+                break
     except Exception as exc:
         exception = {"type": type(exc).__name__, "message": dialogue.clean(str(exc))}
     finally:
@@ -299,6 +330,8 @@ def run_case(provider, compiler_options, sizes, directory, *, key=""):
         "seed": seed,
         "seed_result": seed_result,
         "result": result,
+        "attempts": attempts,
+        "resume_attempts": resume_attempts,
         "exception": exception,
         "access_rejected": monitor.status,
         "grade": grade,
@@ -320,6 +353,7 @@ def main():
     parser.add_argument("--profile", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--rounds", type=int, choices=range(1, 4), default=1)
+    parser.add_argument("--resume-attempts", type=int, choices=range(3), default=0)
     args = parser.parse_args()
     if args.base_url.rstrip("/") != "https://api.deepseek.com":
         parser.error("Only the explicitly authorized official HTTPS endpoint is allowed")
@@ -355,6 +389,7 @@ def main():
             "source": source_provenance(),
             "model": args.model,
             "rounds": args.rounds,
+            "resume_attempts": args.resume_attempts,
             "configuration": configuration_view(
                 {"provider": provider_options, "compiler": compiler_options}
             ),
@@ -381,7 +416,12 @@ def main():
             signal.alarm(660)
             try:
                 row = run_case(
-                    provider, compiler_options, (repeat + 2, repeat + 3), directory, key=key
+                    provider,
+                    compiler_options,
+                    (repeat + 2, repeat + 3),
+                    directory,
+                    key=key,
+                    resume_attempts=args.resume_attempts,
                 )
             finally:
                 signal.alarm(0)

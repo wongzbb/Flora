@@ -153,7 +153,10 @@ REVISIONS (optional, max 3, at most one per existing target):
  "mode":"PRESERVE"|"EXTEND"|"CHANGE"}
 Targets must exist in previous_programs, not invented history. Migration is PURE IR,
 no tools, with exactly one entry param context = {inputs:old_registers,
-receipts:actual_records,memory:current_memory}; returns new entry-parameter object.
+receipts:actual_records,memory:checkpoint_memory}; returns new entry-parameter object.
+Each historical check has its own registers, receipt prefix and memory, not the
+current faulted state. Later registers/receipts may not exist there. Inspect actual
+revision_state checkpoint shapes/counts; the separate current check uses current state.
 Propose representation and consumer together. PRESERVE asserts local recorded
 compatibility; EXTEND preserves covered cases while extending; CHANGE claims no
 benefit. Runtime checks actual retained contexts: assertions never waive gates or
@@ -459,8 +462,11 @@ Optional revisions, <=3, one per existing target:
 {"id":"r","target_candidate":"existing_id","program":PROGRAM,"migration":PROGRAM,
 "mode":"PRESERVE"|"EXTEND"|"CHANGE"}. Target must exist in previous_programs.
 Migration is PURE, no tools, entry param exactly context; receives
-{inputs:old_registers,receipts:actual_records,memory:current_memory} and returns
+{inputs:old_registers,receipts:actual_records,memory:checkpoint_memory} and returns
 the new entry-param object. Propose representation AND consumer together.
+Each historical check has its own registers, receipt prefix and memory, not the
+current faulted state. Later registers/receipts may not exist there. Inspect actual
+revision_state checkpoint shapes/counts; the separate current check uses current state.
 PRESERVE asserts local recorded boundary compatibility; EXTEND preserves covered
 cases while adding behavior; CHANGE claims no benefit. Retained ACTUAL consumer
 contexts determine PASS/FAIL/UNKNOWN; model assertions/witnesses never waive gates.
@@ -476,6 +482,27 @@ Valid full bundle examples follow. Illustrative data ONLY: adapt tools, values a
 CURRENT anchors. Small pure returns remain valid; complex programs retain the same
 full language, diagnostics, contracts and validation rules.
 """
+
+
+def phased_prompt(syntax="block-list-v3"):
+    """Opt-in compilation organization; no task splitter or execution-policy change."""
+    return focused_prompt(syntax).replace(
+        "Replan only for NEW semantic reasoning: nonempty reason and object state retain\n"
+        "actual local facts for remaining work. It saves state then charges a new model call,\n"
+        "replaces the program/stack, and appears in memory.__openharness_continuation__.",
+        "Compile a bounded executable phase of the remaining task. Keep predictable pure\n"
+        "consumers together; do not encode the entire workflow when that requires a large\n"
+        "web of captures. Replan is also a phase handoff, not only new semantic reasoning.\n"
+        "Choose phase boundaries yourself after useful work; a handoff alone provides no\n"
+        "new evidence or information gain. Export actual values needed later in object\n"
+        "state with a nonempty reason. Preserve their JSON types; retain unresolved goals\n"
+        "and real receipt references. Replan saves this state, replaces the program/stack,\n"
+        "then charges a new model call. Read memory.__openharness_continuation__ to continue.\n"
+        "A phase is not task completion: only return when the whole task is fulfilled or\n"
+        "its remaining limitations are explicit. Do not repeat committed effects or\n"
+        "recompile without changed state or a concrete remaining phase. Keep meaningful\n"
+        "alternatives, diagnostics and synthesized contracts within and across phases.",
+    )
 
 
 def focused_prompt(syntax="block-list-v2"):

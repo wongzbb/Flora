@@ -201,9 +201,14 @@ def _normalize(profile):
         raise ValidationError("Unknown general configuration field")
     if "tool_schema_version" in general and (
         type(general["tool_schema_version"]) is not int
-        or general["tool_schema_version"] not in (1, 2, 3)
+        or general["tool_schema_version"] not in (1, 2, 3, 4)
     ):
-        raise ValidationError("tool_schema_version must be 1, 2 or 3")
+        raise ValidationError("tool_schema_version must be 1, 2, 3 or 4")
+    if (
+        general.get("tool_schema_version") == 4
+        and general.get("protocol", "general-v4") != "general-v4"
+    ):
+        raise ValidationError("tool_schema_version 4 requires general-v4 durable work")
     if general.get("protocol", "general-v1") not in (
         "general-v1",
         "general-v2",
@@ -376,6 +381,8 @@ class GeneralAgent:
                 functions.append(self.workspace_context)
             if self.work:
                 functions.extend([self.work.read_work, self.work.update_work])
+                if self.work.refinement_enabled:
+                    functions.extend([self.work.refine_work, self.work.read_work_history])
             if general.get("services"):
                 functions.append(self.web.http_request)
             file_specs = self.files.specs()
@@ -430,6 +437,12 @@ class GeneralAgent:
                 "general-v3": INSTRUCTIONS_V3,
                 "general-v4": INSTRUCTIONS_V4,
             }[general.get("protocol", "general-v1")]
+            if compiler.get("prompt_style") == "compact-v3":
+                base_instructions = base_instructions.replace(
+                    "Replan only when new semantic reasoning is needed, not after every tool call.",
+                    "Replan for new semantic reasoning or a bounded executable phase handoff; "
+                    "keep predictable consumers together, not a new compilation after every tool call.",
+                )
             instructions = base_instructions + "\n" + general.get("instructions", "")
             if general.get("require_task_completion"):
                 instructions += """
@@ -446,6 +459,24 @@ substeps are fulfilled and checked against real evidence. Keep unresolved steps
 pending/running, or blocked with a concrete limitation. Existing successful effects
 remain committed across these phases. The host checks state and reference integrity;
 it does not infer the task's decomposition or verify the truth of completion claims.
+"""
+                if compiler.get("prompt_style") == "compact-v3":
+                    instructions = instructions.replace(
+                        "use replan with actual state when the next phase\nneeds reasoning.",
+                        "use replan with actual state for the next bounded phase or new reasoning.",
+                    )
+            if self.work and self.work.refinement_enabled:
+                instructions += """
+EXPLICIT WORK REFINEMENT:
+The exact user task and its 'task' anchor remain fixed. Your own decomposition is
+revisable: use refine_work with fresh successor IDs, a reason and optional observed
+evidence when new information invalidates an assumption or changes the plan.
+Required steps need required successors, initially pending/running. Preserve every
+user obligation in the revised plan; the host checks lineage, not semantic coverage.
+read_work shows at most 64 current steps and history_count; read_work_history pages
+through superseded snapshots. Historical claims do not gate current completion.
+Use explicit refinement to carry completed phases into the next phase without
+discarding their history. Updating work does not roll back successful effects.
 """
             if any(value is None for value in self.profile.get("budget", {}).values()):
                 instructions += (
@@ -475,6 +506,7 @@ it does not infer the task's decomposition or verify the truth of completion cla
                         collaboration=self.work is not None
                         and general.get("tool_schema_version", 1) >= 2,
                         structured_results=general.get("tool_schema_version", 1) >= 3,
+                        work_refinement=self.work is not None and self.work.refinement_enabled,
                     )
                 ),
                 session_dir=self.directory / "kernel",

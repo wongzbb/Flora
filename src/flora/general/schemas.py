@@ -7,7 +7,14 @@ from copy import deepcopy
 from dataclasses import replace
 
 
-def bounded_specs(specs, *, describe_results=False, collaboration=False, structured_results=False):
+def bounded_specs(
+    specs,
+    *,
+    describe_results=False,
+    collaboration=False,
+    structured_results=False,
+    work_refinement=False,
+):
     result = []
     result_notes = {
         "read_file": " Successful VALUE is an object: {path,content:string,size_bytes,offset,next_offset,read_bytes,truncated,has_more,sha256,partial_sha256}. Extract content before parse_json. Check has_more/truncated before treating it as a whole document. Errors are raised, not a content string. A missing file raises FileNotFoundError (the error.type class name), not a not_found code.",
@@ -45,6 +52,16 @@ def bounded_specs(specs, *, describe_results=False, collaboration=False, structu
         "http_request": {
             "method": {"enum": ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"], "default": "GET"}
         },
+        "read_work_history": {
+            "offset": {"minimum": 0, "default": 0},
+            "limit": {"minimum": 1, "maximum": 20, "default": 20},
+        },
+        "refine_work": {
+            "superseded_ids": {"minItems": 1, "maxItems": 64, "uniqueItems": True},
+            "reason": {"minLength": 1, "maxLength": 4000},
+            "evidence": {"maxItems": 64},
+            "expected_revision": {"minimum": 0},
+        },
     }
     if structured_results:
         result_notes["read_agent"] = (
@@ -65,6 +82,22 @@ def bounded_specs(specs, *, describe_results=False, collaboration=False, structu
             "Keep exact decimal strings unless the requested output explicitly needs a number."
         )
     for spec in specs:
+        if work_refinement and spec.name == "read_work":
+            spec = replace(
+                spec,
+                description=spec.description
+                + (
+                    " Returns current steps and history_count; use read_work_history for superseded snapshots."
+                ),
+            )
+        if work_refinement and spec.name == "update_work":
+            spec = replace(
+                spec,
+                description=spec.description
+                + (
+                    " Required goals cannot be silently rewritten; use refine_work to explicitly revise model-authored plans. Superseded IDs cannot be reused."
+                ),
+            )
         if describe_results and spec.name in result_notes:
             spec = replace(spec, description=spec.description + result_notes[spec.name])
         schema = deepcopy(spec.input_schema)
@@ -76,6 +109,32 @@ def bounded_specs(specs, *, describe_results=False, collaboration=False, structu
             properties[name].update(details)
         if collaboration:
             _collaboration_bounds(spec.name, properties)
+        if work_refinement and spec.name in {"update_work", "refine_work"}:
+            properties["steps" if spec.name == "update_work" else "replacements"] = {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 64,
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["id", "goal", "status", "required", "evidence", "note"],
+                    "properties": {
+                        "id": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$"},
+                        "goal": {"type": "string", "minLength": 1, "maxLength": 2000},
+                        "status": {
+                            "type": "string",
+                            "enum": (
+                                ["pending", "running"]
+                                if spec.name == "refine_work"
+                                else ["pending", "running", "completed", "blocked"]
+                            ),
+                        },
+                        "required": {"type": "boolean"},
+                        "evidence": {"type": "array", "items": {"type": "object"}, "maxItems": 64},
+                        "note": {"type": "string", "maxLength": 4000},
+                    },
+                },
+            }
         if spec.name == "table_query":
             properties["filters"] = {
                 "type": ["array", "null"],

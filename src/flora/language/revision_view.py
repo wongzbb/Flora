@@ -26,14 +26,18 @@ def _shape(machine):
 
 def revision_state(candidate, contexts, *, epoch, trace_digest):
     samples = [item for item in contexts if item["candidate_id"] == candidate.id]
-    shapes, seen = [], set()
-    for item in samples:
-        shape = _shape(item["context"]["reference_machine"])
-        key = canonical_json(shape)
-        if key not in seen:
-            seen.add(key)
-            if len(shapes) < 4:
-                shapes.append(shape)
+    # Equal register shapes can have different observed histories. Preserve each
+    # displayed checkpoint's identity rather than merging those distinct inputs.
+    shapes = []
+    for item in samples[:4]:
+        context = item["context"]
+        shapes.append(
+            {
+                **_shape(context["reference_machine"]),
+                "context_id": context["id"],
+                "receipt_count": len(context["receipts"]),
+            }
+        )
     # Read only current structure; don't clone registers or opaque payloads.
     machine = candidate.machine
     current = _shape(
@@ -47,10 +51,12 @@ def revision_state(candidate, contexts, *, epoch, trace_digest):
         "machine_status": machine.status,
         "retained_context_count": len(samples),
         "checkpoint_shapes": shapes,
-        "shapes_omitted": len(seen) - len(shapes),
+        "shapes_omitted": len(samples) - len(shapes),
+        "checkpoints_omitted": len(samples) - len(shapes),
         "scope": "actual state shapes only; no compatibility verdict or proposed migration",
     }
     while len(canonical_json(view).encode("utf-8")) > 8192 and shapes:
         shapes.pop()
         view["shapes_omitted"] += 1
+        view["checkpoints_omitted"] += 1
     return view

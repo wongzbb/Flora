@@ -112,7 +112,11 @@ Optional "revisions" is a list of at most 3 proposals. Each proposal has exactly
 The target must be an existing candidate named in previous_programs, not an
 invented past program. At most one revision per target. Migration is PURE IR
 with exactly one entry parameter named context. That input contains
-{inputs: old_registers, receipts: actual_records, memory: current_memory}.
+{inputs: old_registers, receipts: actual_records, memory: checkpoint_memory}.
+Each historical check uses its own registers, receipt prefix and memory; these
+can differ from the current faulted state. A register computed after a checkpoint
+or a later receipt is unavailable there. The separate current check uses current
+state. Read the actual revision_state checkpoint shapes and receipt counts.
 Migration must return an object matching the new program's entry params.
 Propose memory/state representation and its consumer together. PRESERVE asserts
 local recorded boundary compatibility, EXTEND preserves covered cases while
@@ -561,8 +565,10 @@ class LLMCompiler:
             or compilation_timeout <= 0
         ):
             raise ValidationError("compilation_timeout must be positive and finite or None")
-        if prompt_style not in ("full-v1", "compact-v1", "compact-v2"):
-            raise ValidationError("prompt_style must be full-v1, compact-v1 or compact-v2")
+        if prompt_style not in ("full-v1", "compact-v1", "compact-v2", "compact-v3"):
+            raise ValidationError(
+                "prompt_style must be full-v1, compact-v1, compact-v2 or compact-v3"
+            )
         if prompt_style.startswith("compact-") and syntax == "ir-v1":
             raise ValidationError("compact prompts require observe-v1 or block-list syntax")
         if syntax in (
@@ -634,7 +640,7 @@ class LLMCompiler:
             "memory_omitted": False,
             "note": "Indexed views only. Omitted content is unknown to the compiler, not empty or fabricated.",
         }
-        if self.prompt_style == "compact-v2":
+        if self.prompt_style in {"compact-v2", "compact-v3"}:
             # Delivery-only projections: the journal and runtime read_receipt keep
             # the full values and original indices. Never synthesize shortened VALUEs.
             omitted_payloads = []
@@ -724,11 +730,13 @@ class LLMCompiler:
             end = system.index("parse_json(string)", begin)
             system = system[:begin] + OBSERVE_GUIDANCE + "\n" + system[end:]
         content = canonical_json(view)
-        if self.prompt_style in {"compact-v1", "compact-v2"}:
-            from flora.language.prompts import compact_prompt, focused_prompt
+        if self.prompt_style in {"compact-v1", "compact-v2", "compact-v3"}:
+            from flora.language.prompts import compact_prompt, focused_prompt, phased_prompt
 
             system = (
-                focused_prompt(self.syntax)
+                phased_prompt(self.syntax)
+                if self.prompt_style == "compact-v3"
+                else focused_prompt(self.syntax)
                 if self.prompt_style == "compact-v2"
                 else compact_prompt(self.syntax)
             )
@@ -1030,7 +1038,12 @@ class LLMCompiler:
                                         "Correct the stated error and check every delimiter and escaped string. "
                                         "Use line breaks between blocks and keep each term inside its block, after ops. "
                                         "Compile the next closed phase, including known pure result consumers and branches. "
-                                        "Use replan only when new semantic reasoning is necessary. Keep meaningful alternatives "
+                                        + (
+                                            "Use replan for a bounded phase handoff or new semantic reasoning. "
+                                            if self.prompt_style == "compact-v3"
+                                            else "Use replan only when new semantic reasoning is necessary. "
+                                        )
+                                        + "Keep meaningful alternatives "
                                         "and diagnostics. Preserve the task, exact anchor and tool capabilities."
                                     ),
                                 }

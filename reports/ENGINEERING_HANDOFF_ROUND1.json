@@ -1,0 +1,2130 @@
+{
+  "experiments": [
+    {
+      "experiment": "revision-flash-01",
+      "directory": "/workspace/scratch/flora-handoff-revision-flash-01",
+      "provenance": {
+        "source": {
+          "git_head": "f83000c7b910547f31a200e3f571d318553fd969",
+          "tracked_dirty": false,
+          "python_source_sha256": {
+            "src/flora/__init__.py": "6fa8224f769a9cdbf7acb62d7f3964740035d4d8cdfc62667f9cad9236723702",
+            "src/flora/__main__.py": "a61af76c1f8982845d2686806caa8e918158e971351525d554449d0d33de0a2e",
+            "src/flora/_compat.py": "b17929e2abe50aa7041deeffbcd9e5eec5935f8a2526336dcd6687f02b69fdff",
+            "src/flora/agent/__init__.py": "aee96306f8a6c1ec11a5d12600aef688d03c03e904afbe92807907b44d437d2b",
+            "src/flora/agent/api.py": "78b0b5211319bc44fb102cc65966471db2afefdfc56a57944e0971cce67fb3f8",
+            "src/flora/checks/__init__.py": "beabe2b2603c63a606be7e1152d645072a2728932909a6f81811dbbd249c597d",
+            "src/flora/checks/contracts.py": "dae0ebfb87ea3bbcad5c12f6a16e8927049474e215a67fda42ae0152229f80f3",
+            "src/flora/checks/diagnostics.py": "8a0eaede3fd158441b5f24a81e786a3c68b04ed3162636e1e9d6d529edd6fb09",
+            "src/flora/checks/reuse.py": "5bb0ff9f6bf22158e218f60bf8106da59685d5b4548641a5e6b34f6982421c3c",
+            "src/flora/coding/__init__.py": "8d5d1145004efe24d71472f01447e60ab5e18ff7e918f3ad05915d6b021ba642",
+            "src/flora/coding/agent.py": "2b3d478aca3ce38083a7f17ecf2845387708b63eaa42793e566e610a5a2df32b",
+            "src/flora/coding/cli.py": "7c9223ba5a3af973156dea85a0b54eba53aac66975cb1de8c5191c69d2e98320",
+            "src/flora/coding/navigation.py": "d2ba1a99b9873f59e24445dc5de03ba10d84546d936402ad751bbc7e5d00e61e",
+            "src/flora/coding/project.py": "0c30975b0690e5a3c477dfd8e5ef86e709a1e7309a7a7aa1f889bb9d5fe63bd0",
+            "src/flora/engine/__init__.py": "dbb18fbb73378f8bad9fa95c2f6c575be961a4850f17d1b65af6cf3ce377abcf",
+            "src/flora/engine/budget.py": "fb6d38be8107652025d3f6cee881720dc3e4965ca950be0c99eb09a790989119",
+            "src/flora/engine/effects.py": "a292f15947c1d058805c9884cabd8e6e2d6d614dac0a93d7ab2e74b9ab8b4206",
+            "src/flora/engine/replay.py": "ce2dcbaa27be4867c1ba7db3b3338f1a8b4875831aac7eb9a22dd64b96b060c2",
+            "src/flora/engine/runtime.py": "a61a45ab481706064b4310b93b464b0800c2ad6076b204db26e4079bfe480b21",
+            "src/flora/engine/scheduler.py": "63d307ce1d94e02dd1fed49a2a94cffeb57248f1a65e200d21519f3e947462ae",
+            "src/flora/examples/__init__.py": "53aab38fa6253273cc714e251c86478d258c30fdabea3378d6ca4aa3014dc049",
+            "src/flora/general/__init__.py": "4d3e62b5da8cc2a93b727d4f768496ae973f99bf10ad0f0199052049ceb9ffef",
+            "src/flora/general/_document_process.py": "1eca1aa862d08fce7e3da3c122a93cebc010cf61a0aef25f64a7e1dd33695c42",
+            "src/flora/general/_document_worker.py": "c8bffc74c28679546b2d39da06c5ea624fcff39e488739b4d2808b846f52a8b1",
+            "src/flora/general/agent.py": "f886d7ca8560dafd1c6f58f32e360fd15a76fd3dc3879b0333861048ec37f052",
+            "src/flora/general/browser.py": "cc728046c793ad9bc330e412c1e80101a5cc0027508f58f20813a0312ff24931",
+            "src/flora/general/budgets.py": "55b96973a5f3b8c0d6e44835b6d234dbb2cb04c92f7ea1292ced6fd5be156934",
+            "src/flora/general/cli.py": "c7d97cd104f08a32a2a0c320d6fc0af4df5f7f077c0191cc23a1e9be113a408e",
+            "src/flora/general/coordinator.py": "043cb8dd4eb2e6e73760ff67d6b46e00c1fb67dd4cf45909baa1bb0cb5b0ebcf",
+            "src/flora/general/delegation.py": "d22b6709cffe3509e77a94f10b159e4d84b16fd37c2bd795b0c0fdf772242585",
+            "src/flora/general/documents.py": "e37b75c6040f46f8595e918f0f1e0db3a9b92409da354caf72e0624b37a27473",
+            "src/flora/general/mcp.py": "01b2313b3cdcb97ef36f757c0e93abecc7ae30b0532d3268d5c046454e2455fe",
+            "src/flora/general/network.py": "2856f2c0b43d419a33b17dd20eb6d81fa4a647289e378f3944f03f8f03797b8c",
+            "src/flora/general/observability.py": "1790946cb59964cbbd797b941afa4f7a2de6863f3da129b9c99ddbfacb19bd15",
+            "src/flora/general/reliability.py": "d2a57bd15f98687eed7b053176514d6cc4d9fce708184f3c030ad96af975da4b",
+            "src/flora/general/schemas.py": "fc1b244c94c2492d5635c3e9c827c4ed3ea3a03ef106c6b1eb6726de5929ef32",
+            "src/flora/general/skills.py": "c587183e065e5ac45c431497b49c0659cf6eeda358d4787e03f5dc988f845012",
+            "src/flora/general/storage.py": "e59141a772d1f57039d42c9f1f534e649eef85b544c7210736d962aefb210071",
+            "src/flora/general/web.py": "9daf56f85359fa5bc7004dcd3434ef7ddb407f4733183985a4ba0c60a2988034",
+            "src/flora/general/work.py": "67820c9acee123673fad547ab595baa85d2b7e96b28d673356cfd3661243da76",
+            "src/flora/integrations/__init__.py": "3d3b516c614ac17bec8ec0da36812652458b48ca08a6f5cc6ac074295c0e4241",
+            "src/flora/integrations/adapters.py": "e30227c2791b3ae4005109c5a5d5969f1a458a69d8e528779fc7318a8d79cc88",
+            "src/flora/integrations/binding.py": "8ba73bcc93b9649c911aa555aebdbe6bb2ef1f0fbe21d5c211b1a68652ebef73",
+            "src/flora/integrations/providers.py": "ff11d32a7fa16493c0e997bdb6148a87e4399a41de6e0ae640baa3289729385b",
+            "src/flora/integrations/streaming.py": "d2fd1a6fb64a4881024acf7a6ddf6193f492eeb3dbddeba303b9c7678161b6c4",
+            "src/flora/integrations/tools.py": "416e40b413fce1930c9a2aa3b353057b79b83c15ebdd55e1dffd8c65b6342d3f",
+            "src/flora/integrations/workspace.py": "aab0dbbd77a4a10c40c4e3a17842a76c1742b375fbf6a0061a3330d9876c2127",
+            "src/flora/interface/__init__.py": "48137e4917cddcb17d1709e250a9c023160d2e4f194d69223011f2e6865b80ce",
+            "src/flora/interface/cli.py": "bc01b39359df269de8b3dcca680ce53244be7d011d8aaf785e3cb14a1ab36e48",
+            "src/flora/interface/console.py": "e3ac935a2c35ba6c3b97a646517034788fe9f8e7aad2215e91f3c8131eaa8bc9",
+            "src/flora/interface/settings.py": "f5a8804fe085ac219dc48b540b54b1d936e8afe5fc3379dbf6415813fcd11d30",
+            "src/flora/language/__init__.py": "b03fdec5a46300085ec77e6250c54cb705a8c7c33bfbb067d53529a351eae016",
+            "src/flora/language/compiler.py": "fff38aa43646b06f0f252a93828cfec1d9ed460b227680fce16911c4349e89a9",
+            "src/flora/language/expressions.py": "d0d3c09843971dfbf0d78eecc62911401bf949d615e34a2922ac3a4e61c12a55",
+            "src/flora/language/frontend.py": "550f689e616ac98bb84f89c0313120426936b5a04e40deb961570c1db17278c2",
+            "src/flora/language/ir.py": "257a63cb6e359e935a0ec430a291aebeeb66fb30358182a8a5858a62f85d450f",
+            "src/flora/language/prompts.py": "7a427232ce4caf1e22790d5491ea208d988a01d888d657f0cbab94144bbbbd0b",
+            "src/flora/language/recovery.py": "5c5d29ef04c55ee5dcc2080f38c4f4ba3c7ec2776ede8fe1b2e17450dbe02790",
+            "src/flora/language/revision_view.py": "f492e5965fe3f1dcd1732026ecec07ab1552b8fe8bbfe418a6dfc1f38163e056",
+            "src/flora/language/toolcheck.py": "5bafec7a2ed262900c3fa5ce3bed51c541a57b0076bfe70435836fa410f49aaa",
+            "src/flora/language/vm.py": "c44068c1e8ec358c1d2ad03322c737e64488d0bbe059c0ae25b4ab673418e3b8",
+            "src/flora/state/__init__.py": "a43f9a44e343c72187f94318d216ce0dbdcfb501e4fd1a901a66daf29d09a7aa",
+            "src/flora/state/opaque.py": "5391c9da33ea3a140699711aa33774b66925adaa07b4357438bd178b676c04a5",
+            "src/flora/state/session.py": "388289b94798cc45c13e0f12b72efa7a14c0b81b00b43d3725016e2be817e96f",
+            "src/flora/state/trace.py": "ba32ec67dc53060acbec72ca63e3275f6e726ab847ccbcda36d1aa0680f68832",
+            "src/flora/support/__init__.py": "5a7aa00ab50cccb2589af43d86bb0e3a7e792bb0b6ca4a1ebf46bd01470f374d",
+            "src/flora/support/errors.py": "156c5b22197a0a55dd4120a717c4008e7a33b3f51eacd8fc6d9f0a8b013f0e71",
+            "src/flora/support/resources.py": "a9c123494bbe9f72ccdebb11f175827603e505d491d05711673e5b19e9a09249",
+            "src/flora/support/values.py": "50aedca5b44a20f4ae7b275748d0a4883f018dea3f3a35c60ce88aae7da9db87",
+            "src/flora/terminal/__init__.py": "f4026f7fae55f22652d1bc4dca0f6e352c3686abdc35a653470854ef17a7da1a",
+            "src/flora/terminal/cli.py": "50d7dc7c36201b67cc6c38a6f2bb5459f731f8d78a1a57e455de800a2cb6827d",
+            "src/flora/terminal/connection.py": "d8b9685ff5e8df72b623c05b45f3620011e42fae3578dddb410ec231175cebad",
+            "src/flora/terminal/sessions.py": "0e1b56f83f6332311ea140f785e55702042da600ec27d6df4ceec0030ce2c30e",
+            "src/flora/terminal/ui.py": "2262738a397c0b9741c8fc009846309f49c00c5ee9fa468797df2098fe62a088",
+            "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tests/helpers.py": "0084c00533b7f0603cf0f9a4510481544e348d7bf0df110930d80110a5c4e987",
+            "tests/live_consumer_recovery_probe.py": "1d618896559f434fc9edf67c1ef2c8d4f4a09ab45c021d6a73ca796b686fcfbf",
+            "tests/live_general_probe.py": "edcc959642d85c9cf7e982b863a6d6644c86be5ca78a2681c8d174adf90c7485",
+            "tests/live_mechanism_probe.py": "020e3ccf0431ffccb66eaef79a16bcd42d39a02f20f609f5d99659f6e804914b",
+            "tests/live_reliability_probe.py": "0c4aac713a267b1fd2d1feb7118177c1b94ab81eec525790e231bde69129e19d",
+            "tests/live_revision_probe.py": "8ac18f635ba93c07eac3f8c753bf9340b738930d643f5bb1a95710450f6a43f8",
+            "tests/live_terminal_probe.py": "685e282186c7a79c0a15dfa9af59209b100084094c3dbdbc7f85e05016805162",
+            "tests/stress_cases.py": "7418e7c85255e171e39650b92c7823117753404bce2a0af710ff1ae6d1c74cd5",
+            "tests/test_collaboration.py": "8e0bb31b35edc1fe68898fd2a74860f046226999a05a12e5dcb96337e83f34c7",
+            "tests/test_compact.py": "b4429b497eabd310156cee03b0b034ae4667f11fb32d63c848f723120b3cfe66",
+            "tests/test_compiler_advisory.py": "c8e5195b215eb69570e1d697cf468ec6af53f3cddc60a19534470188132033ff",
+            "tests/test_consumer_recovery.py": "f44f8c27c2bb2249c039121d025e90b4bf13db2b60fe8ce30fdbf758409096ef",
+            "tests/test_coordinator_recovery.py": "69c6ace577ae8a3dcfeec38aa7596071d1ca3d035724a012f2fa7b64fa9d06ca",
+            "tests/test_documents.py": "0001a1f43f54ee49331ba89824dc7609d2317797e96dd8e325f5fd58129b9ce6",
+            "tests/test_effect_finalization.py": "f13f857d5aa5fdd26581f82993bdbf21e82522c9f253091a459002c611d5b357",
+            "tests/test_expressions.py": "977ffc663e3ff40a28a95fef8d1d3b2649f0d9c709a1b220b284768fae90f871",
+            "tests/test_file_modes.py": "ad0614fbd43753a913d84fe9d1abf0151856fc4b2ac2059b5c33b565394700fe",
+            "tests/test_frontend.py": "a8a7e68009458dbccb894a873aa3228f37b111325283932b231c051e25d9bfe0",
+            "tests/test_general.py": "0f23a5a124ae03a35e54b8f076dc2b65bcfb0976541c6624e833134b4e7e26a2",
+            "tests/test_kernel_invariants.py": "e9aa45324d3904f8f0197c714e7befda6d4601da049bf0f52ad323ce4bf19794",
+            "tests/test_live_oracles.py": "9b9bff75f6985e00f8064064ecba089c04be9a848f64f262f0c16188110760ad",
+            "tests/test_live_revision_probe.py": "3a7f18ff3ee78fd7d6ca25d0e1ee1d24b4a043eb64a64336b497f80d9ec2ab3e",
+            "tests/test_long_tasks.py": "cb17ff818aae2750152749b7d9d9174abf0744d01a52b0d003f71a522a2ebe10",
+            "tests/test_mechanism_probe.py": "62bfaaedf8f8876094fb44ee20b01fb0a930e0120c40dfb69ffea038998f4c56",
+            "tests/test_network_policy.py": "cd9f8b530fbfde2bfce4c4ed70231f364edf2e0322b3534167b5fff6328d6289",
+            "tests/test_network_recovery.py": "ae6e0c89c37159af90775ac550b0828e4ac7a36b31875c34ddbed9f4fff3d52f",
+            "tests/test_probe_access_monitor.py": "aa65f9023022cc50b00f09418b88d61bb4a798d4ac4dcdd73350cce246c555f3",
+            "tests/test_projected_observe.py": "48215b4d2333f33246d9f77c4f1c6dab211cd9551dbd5c13abbdcdffa22c17d1",
+            "tests/test_recovery.py": "c9945cc3338d6cbf9566db1686e673911813d633fed250184d0ae8b479ef9517",
+            "tests/test_recovery_accounting.py": "c0cee97a8886f73e86543b3416b1c710c598d4a3643d0c22d5aa4e08e98700c9",
+            "tests/test_reliability_integration.py": "e46a786760a6f72acdd7eec64171bd8074b5230ccb7d50e43eab3c822460d497",
+            "tests/test_retention_performance.py": "7ad93a12595cf9bda1211bd8624ccf3f0a9a2bd8ea1fb944001b3cb73bc43803",
+            "tests/test_revision_opportunities.py": "962d98a0e8790ce9c5ddfba248e07ab7914e2f98f4d20248426c20baa17fd2b0",
+            "tests/test_serialization.py": "153a2c4c48f6ad1b6fd6614554c7708d638306f03ac4de21df7cc82b8ddf25d7",
+            "tests/test_streaming.py": "386547d2d8563ee9f73ced8c9c139eb6934226aa4b1046299300aee330a9aa1f",
+            "tests/test_stress_evaluation.py": "4e661c69cc7de6b2ee2431ec7671f0f82e034842ffa243c84ffb9b995757db42",
+            "tests/test_task_completion.py": "a4eebb816cb2f198c774101c91d6035ca48eda68f26185ef6a04bd9c7416e834",
+            "tests/test_terminal_probe.py": "eafcff9441982d98ada640de09405993376fa68335205e8b35cd9aa6ce4b74b6",
+            "tests/test_toolcheck.py": "ba194cc32e90ca7274ca64c6fde7411bb4e51e2b005bb6a6e592a06d93667f48",
+            "tests/test_trace_performance.py": "030de1e815d54596133ac545892cf7d3c42f28beb12712f801eba854708a343d"
+          }
+        },
+        "model": "deepseek-flash",
+        "rounds": 1,
+        "configuration": {
+          "provider": {
+            "timeout": 60,
+            "total_timeout": 300,
+            "progress_timeout": 60,
+            "first_program_timeout": 240,
+            "max_response_bytes": 4194304,
+            "max_stream_bytes": 67108864,
+            "max_json_whitespace": 2048,
+            "stream": true,
+            "stream_fallback": true,
+            "allow_insecure_http": false,
+            "reasoning_effort": "low",
+            "thinking": "enabled",
+            "response_format": "json_object"
+          },
+          "compiler": {
+            "max_output_tokens": 24000,
+            "max_repairs": 1,
+            "compilation_timeout": 300,
+            "syntax": "block-list-v2",
+            "prompt_style": "compact-v2"
+          },
+          "tool_schema_version": null
+        },
+        "scope": "Explicitly elicited model-authored EXTEND after a host-authored legacy consumer fault. Actual two-page observations and mixed historical/current gates. Not end-to-end generation, spontaneous revision, general correctness or causal-benefit evidence.",
+        "planned_cases": 1
+      },
+      "results": [
+        {
+          "round": 1,
+          "seconds": 26.044,
+          "grade": {
+            "task_passed": false,
+            "mechanism_passed": false,
+            "linked_mixed_history_revisions": [],
+            "scope": "Explicitly elicited model-authored EXTEND after a host-authored legacy consumer fault. Actual two-page observations and mixed historical/current gates. Not end-to-end generation, spontaneous revision, general correctness or causal-benefit evidence.",
+            "spontaneous_synthesis_verified": false
+          },
+          "access_rejected": null,
+          "exception": null,
+          "resume_attempts": null,
+          "result": {
+            "status": "needs_program",
+            "reason": "All incoming programs failed their declared revision gates",
+            "value": null,
+            "budget": {
+              "limits": {
+                "max_tool_calls": 4,
+                "max_model_calls": 4,
+                "max_input_tokens": 200000,
+                "max_output_tokens": 96000,
+                "max_wall_seconds": 600
+              },
+              "tool_calls": 2,
+              "model_calls": 1,
+              "input_tokens": 6571,
+              "output_tokens": 6364,
+              "unknown_usage_calls": 0,
+              "reserved_output": 0,
+              "elapsed_seconds": 26.04237680099999
+            }
+          },
+          "revisions": [
+            {
+              "accepted": false,
+              "epoch": 2,
+              "id": "rev_main",
+              "kind": "revision_checked",
+              "mode": "EXTEND",
+              "results": [
+                {
+                  "context": "main@1:0",
+                  "reason": "migration_did_not_return_inputs",
+                  "verdict": "UNKNOWN"
+                },
+                {
+                  "context": "main@2:1",
+                  "relation": "DEFINED_PREFIX",
+                  "verdict": "PASS",
+                  "witness": {
+                    "candidate": {
+                      "kind": "return",
+                      "value": 5
+                    },
+                    "context_id": "main@2:1",
+                    "program_digest": "2141c9c5960b62c17ec8bd2326c64ed4dbabb179be55777016697d049bc1aed5",
+                    "reason": "candidate_reached_defined_frontier",
+                    "scope": "this_input_and_first_pure_frontier_only"
+                  }
+                }
+              ],
+              "target": "main",
+              "task_improvement": "UNMEASURED"
+            }
+          ],
+          "activations": [],
+          "host_calls": [
+            {
+              "args": {
+                "acknowledged_count": 0,
+                "page": 0
+              },
+              "tool": "read_page"
+            },
+            {
+              "args": {
+                "acknowledged_count": 2,
+                "page": 1
+              },
+              "tool": "read_page"
+            }
+          ],
+          "attempt_count": 1
+        }
+      ]
+    },
+    {
+      "experiment": "revision-pro-01",
+      "directory": "/workspace/scratch/flora-handoff-revision-pro-01",
+      "provenance": {
+        "source": {
+          "git_head": "f83000c7b910547f31a200e3f571d318553fd969",
+          "tracked_dirty": false,
+          "python_source_sha256": {
+            "src/flora/__init__.py": "6fa8224f769a9cdbf7acb62d7f3964740035d4d8cdfc62667f9cad9236723702",
+            "src/flora/__main__.py": "a61af76c1f8982845d2686806caa8e918158e971351525d554449d0d33de0a2e",
+            "src/flora/_compat.py": "b17929e2abe50aa7041deeffbcd9e5eec5935f8a2526336dcd6687f02b69fdff",
+            "src/flora/agent/__init__.py": "aee96306f8a6c1ec11a5d12600aef688d03c03e904afbe92807907b44d437d2b",
+            "src/flora/agent/api.py": "78b0b5211319bc44fb102cc65966471db2afefdfc56a57944e0971cce67fb3f8",
+            "src/flora/checks/__init__.py": "beabe2b2603c63a606be7e1152d645072a2728932909a6f81811dbbd249c597d",
+            "src/flora/checks/contracts.py": "dae0ebfb87ea3bbcad5c12f6a16e8927049474e215a67fda42ae0152229f80f3",
+            "src/flora/checks/diagnostics.py": "8a0eaede3fd158441b5f24a81e786a3c68b04ed3162636e1e9d6d529edd6fb09",
+            "src/flora/checks/reuse.py": "5bb0ff9f6bf22158e218f60bf8106da59685d5b4548641a5e6b34f6982421c3c",
+            "src/flora/coding/__init__.py": "8d5d1145004efe24d71472f01447e60ab5e18ff7e918f3ad05915d6b021ba642",
+            "src/flora/coding/agent.py": "2b3d478aca3ce38083a7f17ecf2845387708b63eaa42793e566e610a5a2df32b",
+            "src/flora/coding/cli.py": "7c9223ba5a3af973156dea85a0b54eba53aac66975cb1de8c5191c69d2e98320",
+            "src/flora/coding/navigation.py": "d2ba1a99b9873f59e24445dc5de03ba10d84546d936402ad751bbc7e5d00e61e",
+            "src/flora/coding/project.py": "0c30975b0690e5a3c477dfd8e5ef86e709a1e7309a7a7aa1f889bb9d5fe63bd0",
+            "src/flora/engine/__init__.py": "dbb18fbb73378f8bad9fa95c2f6c575be961a4850f17d1b65af6cf3ce377abcf",
+            "src/flora/engine/budget.py": "fb6d38be8107652025d3f6cee881720dc3e4965ca950be0c99eb09a790989119",
+            "src/flora/engine/effects.py": "a292f15947c1d058805c9884cabd8e6e2d6d614dac0a93d7ab2e74b9ab8b4206",
+            "src/flora/engine/replay.py": "ce2dcbaa27be4867c1ba7db3b3338f1a8b4875831aac7eb9a22dd64b96b060c2",
+            "src/flora/engine/runtime.py": "a61a45ab481706064b4310b93b464b0800c2ad6076b204db26e4079bfe480b21",
+            "src/flora/engine/scheduler.py": "63d307ce1d94e02dd1fed49a2a94cffeb57248f1a65e200d21519f3e947462ae",
+            "src/flora/examples/__init__.py": "53aab38fa6253273cc714e251c86478d258c30fdabea3378d6ca4aa3014dc049",
+            "src/flora/general/__init__.py": "4d3e62b5da8cc2a93b727d4f768496ae973f99bf10ad0f0199052049ceb9ffef",
+            "src/flora/general/_document_process.py": "1eca1aa862d08fce7e3da3c122a93cebc010cf61a0aef25f64a7e1dd33695c42",
+            "src/flora/general/_document_worker.py": "c8bffc74c28679546b2d39da06c5ea624fcff39e488739b4d2808b846f52a8b1",
+            "src/flora/general/agent.py": "f886d7ca8560dafd1c6f58f32e360fd15a76fd3dc3879b0333861048ec37f052",
+            "src/flora/general/browser.py": "cc728046c793ad9bc330e412c1e80101a5cc0027508f58f20813a0312ff24931",
+            "src/flora/general/budgets.py": "55b96973a5f3b8c0d6e44835b6d234dbb2cb04c92f7ea1292ced6fd5be156934",
+            "src/flora/general/cli.py": "c7d97cd104f08a32a2a0c320d6fc0af4df5f7f077c0191cc23a1e9be113a408e",
+            "src/flora/general/coordinator.py": "043cb8dd4eb2e6e73760ff67d6b46e00c1fb67dd4cf45909baa1bb0cb5b0ebcf",
+            "src/flora/general/delegation.py": "d22b6709cffe3509e77a94f10b159e4d84b16fd37c2bd795b0c0fdf772242585",
+            "src/flora/general/documents.py": "e37b75c6040f46f8595e918f0f1e0db3a9b92409da354caf72e0624b37a27473",
+            "src/flora/general/mcp.py": "01b2313b3cdcb97ef36f757c0e93abecc7ae30b0532d3268d5c046454e2455fe",
+            "src/flora/general/network.py": "2856f2c0b43d419a33b17dd20eb6d81fa4a647289e378f3944f03f8f03797b8c",
+            "src/flora/general/observability.py": "1790946cb59964cbbd797b941afa4f7a2de6863f3da129b9c99ddbfacb19bd15",
+            "src/flora/general/reliability.py": "d2a57bd15f98687eed7b053176514d6cc4d9fce708184f3c030ad96af975da4b",
+            "src/flora/general/schemas.py": "fc1b244c94c2492d5635c3e9c827c4ed3ea3a03ef106c6b1eb6726de5929ef32",
+            "src/flora/general/skills.py": "c587183e065e5ac45c431497b49c0659cf6eeda358d4787e03f5dc988f845012",
+            "src/flora/general/storage.py": "e59141a772d1f57039d42c9f1f534e649eef85b544c7210736d962aefb210071",
+            "src/flora/general/web.py": "9daf56f85359fa5bc7004dcd3434ef7ddb407f4733183985a4ba0c60a2988034",
+            "src/flora/general/work.py": "67820c9acee123673fad547ab595baa85d2b7e96b28d673356cfd3661243da76",
+            "src/flora/integrations/__init__.py": "3d3b516c614ac17bec8ec0da36812652458b48ca08a6f5cc6ac074295c0e4241",
+            "src/flora/integrations/adapters.py": "e30227c2791b3ae4005109c5a5d5969f1a458a69d8e528779fc7318a8d79cc88",
+            "src/flora/integrations/binding.py": "8ba73bcc93b9649c911aa555aebdbe6bb2ef1f0fbe21d5c211b1a68652ebef73",
+            "src/flora/integrations/providers.py": "ff11d32a7fa16493c0e997bdb6148a87e4399a41de6e0ae640baa3289729385b",
+            "src/flora/integrations/streaming.py": "d2fd1a6fb64a4881024acf7a6ddf6193f492eeb3dbddeba303b9c7678161b6c4",
+            "src/flora/integrations/tools.py": "416e40b413fce1930c9a2aa3b353057b79b83c15ebdd55e1dffd8c65b6342d3f",
+            "src/flora/integrations/workspace.py": "aab0dbbd77a4a10c40c4e3a17842a76c1742b375fbf6a0061a3330d9876c2127",
+            "src/flora/interface/__init__.py": "48137e4917cddcb17d1709e250a9c023160d2e4f194d69223011f2e6865b80ce",
+            "src/flora/interface/cli.py": "bc01b39359df269de8b3dcca680ce53244be7d011d8aaf785e3cb14a1ab36e48",
+            "src/flora/interface/console.py": "e3ac935a2c35ba6c3b97a646517034788fe9f8e7aad2215e91f3c8131eaa8bc9",
+            "src/flora/interface/settings.py": "f5a8804fe085ac219dc48b540b54b1d936e8afe5fc3379dbf6415813fcd11d30",
+            "src/flora/language/__init__.py": "b03fdec5a46300085ec77e6250c54cb705a8c7c33bfbb067d53529a351eae016",
+            "src/flora/language/compiler.py": "fff38aa43646b06f0f252a93828cfec1d9ed460b227680fce16911c4349e89a9",
+            "src/flora/language/expressions.py": "d0d3c09843971dfbf0d78eecc62911401bf949d615e34a2922ac3a4e61c12a55",
+            "src/flora/language/frontend.py": "550f689e616ac98bb84f89c0313120426936b5a04e40deb961570c1db17278c2",
+            "src/flora/language/ir.py": "257a63cb6e359e935a0ec430a291aebeeb66fb30358182a8a5858a62f85d450f",
+            "src/flora/language/prompts.py": "7a427232ce4caf1e22790d5491ea208d988a01d888d657f0cbab94144bbbbd0b",
+            "src/flora/language/recovery.py": "5c5d29ef04c55ee5dcc2080f38c4f4ba3c7ec2776ede8fe1b2e17450dbe02790",
+            "src/flora/language/revision_view.py": "f492e5965fe3f1dcd1732026ecec07ab1552b8fe8bbfe418a6dfc1f38163e056",
+            "src/flora/language/toolcheck.py": "5bafec7a2ed262900c3fa5ce3bed51c541a57b0076bfe70435836fa410f49aaa",
+            "src/flora/language/vm.py": "c44068c1e8ec358c1d2ad03322c737e64488d0bbe059c0ae25b4ab673418e3b8",
+            "src/flora/state/__init__.py": "a43f9a44e343c72187f94318d216ce0dbdcfb501e4fd1a901a66daf29d09a7aa",
+            "src/flora/state/opaque.py": "5391c9da33ea3a140699711aa33774b66925adaa07b4357438bd178b676c04a5",
+            "src/flora/state/session.py": "388289b94798cc45c13e0f12b72efa7a14c0b81b00b43d3725016e2be817e96f",
+            "src/flora/state/trace.py": "ba32ec67dc53060acbec72ca63e3275f6e726ab847ccbcda36d1aa0680f68832",
+            "src/flora/support/__init__.py": "5a7aa00ab50cccb2589af43d86bb0e3a7e792bb0b6ca4a1ebf46bd01470f374d",
+            "src/flora/support/errors.py": "156c5b22197a0a55dd4120a717c4008e7a33b3f51eacd8fc6d9f0a8b013f0e71",
+            "src/flora/support/resources.py": "a9c123494bbe9f72ccdebb11f175827603e505d491d05711673e5b19e9a09249",
+            "src/flora/support/values.py": "50aedca5b44a20f4ae7b275748d0a4883f018dea3f3a35c60ce88aae7da9db87",
+            "src/flora/terminal/__init__.py": "f4026f7fae55f22652d1bc4dca0f6e352c3686abdc35a653470854ef17a7da1a",
+            "src/flora/terminal/cli.py": "50d7dc7c36201b67cc6c38a6f2bb5459f731f8d78a1a57e455de800a2cb6827d",
+            "src/flora/terminal/connection.py": "d8b9685ff5e8df72b623c05b45f3620011e42fae3578dddb410ec231175cebad",
+            "src/flora/terminal/sessions.py": "0e1b56f83f6332311ea140f785e55702042da600ec27d6df4ceec0030ce2c30e",
+            "src/flora/terminal/ui.py": "2262738a397c0b9741c8fc009846309f49c00c5ee9fa468797df2098fe62a088",
+            "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tests/helpers.py": "0084c00533b7f0603cf0f9a4510481544e348d7bf0df110930d80110a5c4e987",
+            "tests/live_consumer_recovery_probe.py": "1d618896559f434fc9edf67c1ef2c8d4f4a09ab45c021d6a73ca796b686fcfbf",
+            "tests/live_general_probe.py": "edcc959642d85c9cf7e982b863a6d6644c86be5ca78a2681c8d174adf90c7485",
+            "tests/live_mechanism_probe.py": "020e3ccf0431ffccb66eaef79a16bcd42d39a02f20f609f5d99659f6e804914b",
+            "tests/live_reliability_probe.py": "0c4aac713a267b1fd2d1feb7118177c1b94ab81eec525790e231bde69129e19d",
+            "tests/live_revision_probe.py": "8ac18f635ba93c07eac3f8c753bf9340b738930d643f5bb1a95710450f6a43f8",
+            "tests/live_terminal_probe.py": "685e282186c7a79c0a15dfa9af59209b100084094c3dbdbc7f85e05016805162",
+            "tests/stress_cases.py": "7418e7c85255e171e39650b92c7823117753404bce2a0af710ff1ae6d1c74cd5",
+            "tests/test_collaboration.py": "8e0bb31b35edc1fe68898fd2a74860f046226999a05a12e5dcb96337e83f34c7",
+            "tests/test_compact.py": "b4429b497eabd310156cee03b0b034ae4667f11fb32d63c848f723120b3cfe66",
+            "tests/test_compiler_advisory.py": "c8e5195b215eb69570e1d697cf468ec6af53f3cddc60a19534470188132033ff",
+            "tests/test_consumer_recovery.py": "f44f8c27c2bb2249c039121d025e90b4bf13db2b60fe8ce30fdbf758409096ef",
+            "tests/test_coordinator_recovery.py": "69c6ace577ae8a3dcfeec38aa7596071d1ca3d035724a012f2fa7b64fa9d06ca",
+            "tests/test_documents.py": "0001a1f43f54ee49331ba89824dc7609d2317797e96dd8e325f5fd58129b9ce6",
+            "tests/test_effect_finalization.py": "f13f857d5aa5fdd26581f82993bdbf21e82522c9f253091a459002c611d5b357",
+            "tests/test_expressions.py": "977ffc663e3ff40a28a95fef8d1d3b2649f0d9c709a1b220b284768fae90f871",
+            "tests/test_file_modes.py": "ad0614fbd43753a913d84fe9d1abf0151856fc4b2ac2059b5c33b565394700fe",
+            "tests/test_frontend.py": "a8a7e68009458dbccb894a873aa3228f37b111325283932b231c051e25d9bfe0",
+            "tests/test_general.py": "0f23a5a124ae03a35e54b8f076dc2b65bcfb0976541c6624e833134b4e7e26a2",
+            "tests/test_kernel_invariants.py": "e9aa45324d3904f8f0197c714e7befda6d4601da049bf0f52ad323ce4bf19794",
+            "tests/test_live_oracles.py": "9b9bff75f6985e00f8064064ecba089c04be9a848f64f262f0c16188110760ad",
+            "tests/test_live_revision_probe.py": "3a7f18ff3ee78fd7d6ca25d0e1ee1d24b4a043eb64a64336b497f80d9ec2ab3e",
+            "tests/test_long_tasks.py": "cb17ff818aae2750152749b7d9d9174abf0744d01a52b0d003f71a522a2ebe10",
+            "tests/test_mechanism_probe.py": "62bfaaedf8f8876094fb44ee20b01fb0a930e0120c40dfb69ffea038998f4c56",
+            "tests/test_network_policy.py": "cd9f8b530fbfde2bfce4c4ed70231f364edf2e0322b3534167b5fff6328d6289",
+            "tests/test_network_recovery.py": "ae6e0c89c37159af90775ac550b0828e4ac7a36b31875c34ddbed9f4fff3d52f",
+            "tests/test_probe_access_monitor.py": "aa65f9023022cc50b00f09418b88d61bb4a798d4ac4dcdd73350cce246c555f3",
+            "tests/test_projected_observe.py": "48215b4d2333f33246d9f77c4f1c6dab211cd9551dbd5c13abbdcdffa22c17d1",
+            "tests/test_recovery.py": "c9945cc3338d6cbf9566db1686e673911813d633fed250184d0ae8b479ef9517",
+            "tests/test_recovery_accounting.py": "c0cee97a8886f73e86543b3416b1c710c598d4a3643d0c22d5aa4e08e98700c9",
+            "tests/test_reliability_integration.py": "e46a786760a6f72acdd7eec64171bd8074b5230ccb7d50e43eab3c822460d497",
+            "tests/test_retention_performance.py": "7ad93a12595cf9bda1211bd8624ccf3f0a9a2bd8ea1fb944001b3cb73bc43803",
+            "tests/test_revision_opportunities.py": "962d98a0e8790ce9c5ddfba248e07ab7914e2f98f4d20248426c20baa17fd2b0",
+            "tests/test_serialization.py": "153a2c4c48f6ad1b6fd6614554c7708d638306f03ac4de21df7cc82b8ddf25d7",
+            "tests/test_streaming.py": "386547d2d8563ee9f73ced8c9c139eb6934226aa4b1046299300aee330a9aa1f",
+            "tests/test_stress_evaluation.py": "4e661c69cc7de6b2ee2431ec7671f0f82e034842ffa243c84ffb9b995757db42",
+            "tests/test_task_completion.py": "a4eebb816cb2f198c774101c91d6035ca48eda68f26185ef6a04bd9c7416e834",
+            "tests/test_terminal_probe.py": "eafcff9441982d98ada640de09405993376fa68335205e8b35cd9aa6ce4b74b6",
+            "tests/test_toolcheck.py": "ba194cc32e90ca7274ca64c6fde7411bb4e51e2b005bb6a6e592a06d93667f48",
+            "tests/test_trace_performance.py": "030de1e815d54596133ac545892cf7d3c42f28beb12712f801eba854708a343d"
+          }
+        },
+        "model": "deepseek-v4-pro",
+        "rounds": 1,
+        "configuration": {
+          "provider": {
+            "timeout": 60,
+            "total_timeout": 300,
+            "progress_timeout": 60,
+            "first_program_timeout": 240,
+            "max_response_bytes": 4194304,
+            "max_stream_bytes": 67108864,
+            "max_json_whitespace": 2048,
+            "stream": true,
+            "stream_fallback": true,
+            "allow_insecure_http": false,
+            "reasoning_effort": "low",
+            "thinking": "enabled",
+            "response_format": "json_object"
+          },
+          "compiler": {
+            "max_output_tokens": 24000,
+            "max_repairs": 1,
+            "compilation_timeout": 300,
+            "syntax": "block-list-v2",
+            "prompt_style": "compact-v2"
+          },
+          "tool_schema_version": null
+        },
+        "scope": "Explicitly elicited model-authored EXTEND after a host-authored legacy consumer fault. Actual two-page observations and mixed historical/current gates. Not end-to-end generation, spontaneous revision, general correctness or causal-benefit evidence.",
+        "planned_cases": 1
+      },
+      "results": [
+        {
+          "round": 1,
+          "seconds": 74.369,
+          "grade": {
+            "task_passed": false,
+            "mechanism_passed": false,
+            "linked_mixed_history_revisions": [],
+            "scope": "Explicitly elicited model-authored EXTEND after a host-authored legacy consumer fault. Actual two-page observations and mixed historical/current gates. Not end-to-end generation, spontaneous revision, general correctness or causal-benefit evidence.",
+            "spontaneous_synthesis_verified": false
+          },
+          "access_rejected": null,
+          "exception": null,
+          "resume_attempts": null,
+          "result": {
+            "status": "needs_program",
+            "reason": "All incoming programs failed their declared revision gates",
+            "value": null,
+            "budget": {
+              "limits": {
+                "max_tool_calls": 4,
+                "max_model_calls": 4,
+                "max_input_tokens": 200000,
+                "max_output_tokens": 96000,
+                "max_wall_seconds": 600
+              },
+              "tool_calls": 2,
+              "model_calls": 1,
+              "input_tokens": 6543,
+              "output_tokens": 7101,
+              "unknown_usage_calls": 0,
+              "reserved_output": 0,
+              "elapsed_seconds": 74.36606768600001
+            }
+          },
+          "revisions": [
+            {
+              "accepted": false,
+              "epoch": 2,
+              "id": "repair_dual_shape",
+              "kind": "revision_checked",
+              "mode": "EXTEND",
+              "results": [
+                {
+                  "context": "main@1:0",
+                  "reason": "migration_did_not_return_inputs",
+                  "verdict": "UNKNOWN"
+                },
+                {
+                  "context": "main@2:1",
+                  "reason": "migration_did_not_return_inputs",
+                  "verdict": "UNKNOWN"
+                }
+              ],
+              "target": "main",
+              "task_improvement": "UNMEASURED"
+            }
+          ],
+          "activations": [],
+          "host_calls": [
+            {
+              "args": {
+                "acknowledged_count": 0,
+                "page": 0
+              },
+              "tool": "read_page"
+            },
+            {
+              "args": {
+                "acknowledged_count": 2,
+                "page": 1
+              },
+              "tool": "read_page"
+            }
+          ],
+          "attempt_count": 1
+        }
+      ]
+    },
+    {
+      "experiment": "task-flash-01",
+      "directory": "/workspace/scratch/flora-handoff-task-flash-01",
+      "provenance": {
+        "started_at": "2026-10-01T11:03:37.057236+00:00",
+        "source": {
+          "git_head": "f83000c7b910547f31a200e3f571d318553fd969",
+          "tracked_dirty": true,
+          "python_source_sha256": {
+            "src/flora/__init__.py": "6fa8224f769a9cdbf7acb62d7f3964740035d4d8cdfc62667f9cad9236723702",
+            "src/flora/__main__.py": "a61af76c1f8982845d2686806caa8e918158e971351525d554449d0d33de0a2e",
+            "src/flora/_compat.py": "b17929e2abe50aa7041deeffbcd9e5eec5935f8a2526336dcd6687f02b69fdff",
+            "src/flora/agent/__init__.py": "aee96306f8a6c1ec11a5d12600aef688d03c03e904afbe92807907b44d437d2b",
+            "src/flora/agent/api.py": "78b0b5211319bc44fb102cc65966471db2afefdfc56a57944e0971cce67fb3f8",
+            "src/flora/checks/__init__.py": "beabe2b2603c63a606be7e1152d645072a2728932909a6f81811dbbd249c597d",
+            "src/flora/checks/contracts.py": "dae0ebfb87ea3bbcad5c12f6a16e8927049474e215a67fda42ae0152229f80f3",
+            "src/flora/checks/diagnostics.py": "8a0eaede3fd158441b5f24a81e786a3c68b04ed3162636e1e9d6d529edd6fb09",
+            "src/flora/checks/reuse.py": "5bb0ff9f6bf22158e218f60bf8106da59685d5b4548641a5e6b34f6982421c3c",
+            "src/flora/coding/__init__.py": "8d5d1145004efe24d71472f01447e60ab5e18ff7e918f3ad05915d6b021ba642",
+            "src/flora/coding/agent.py": "2b3d478aca3ce38083a7f17ecf2845387708b63eaa42793e566e610a5a2df32b",
+            "src/flora/coding/cli.py": "7c9223ba5a3af973156dea85a0b54eba53aac66975cb1de8c5191c69d2e98320",
+            "src/flora/coding/navigation.py": "d2ba1a99b9873f59e24445dc5de03ba10d84546d936402ad751bbc7e5d00e61e",
+            "src/flora/coding/project.py": "0c30975b0690e5a3c477dfd8e5ef86e709a1e7309a7a7aa1f889bb9d5fe63bd0",
+            "src/flora/engine/__init__.py": "dbb18fbb73378f8bad9fa95c2f6c575be961a4850f17d1b65af6cf3ce377abcf",
+            "src/flora/engine/budget.py": "fb6d38be8107652025d3f6cee881720dc3e4965ca950be0c99eb09a790989119",
+            "src/flora/engine/effects.py": "a292f15947c1d058805c9884cabd8e6e2d6d614dac0a93d7ab2e74b9ab8b4206",
+            "src/flora/engine/replay.py": "ce2dcbaa27be4867c1ba7db3b3338f1a8b4875831aac7eb9a22dd64b96b060c2",
+            "src/flora/engine/runtime.py": "a61a45ab481706064b4310b93b464b0800c2ad6076b204db26e4079bfe480b21",
+            "src/flora/engine/scheduler.py": "63d307ce1d94e02dd1fed49a2a94cffeb57248f1a65e200d21519f3e947462ae",
+            "src/flora/examples/__init__.py": "53aab38fa6253273cc714e251c86478d258c30fdabea3378d6ca4aa3014dc049",
+            "src/flora/general/__init__.py": "4d3e62b5da8cc2a93b727d4f768496ae973f99bf10ad0f0199052049ceb9ffef",
+            "src/flora/general/_document_process.py": "1eca1aa862d08fce7e3da3c122a93cebc010cf61a0aef25f64a7e1dd33695c42",
+            "src/flora/general/_document_worker.py": "c8bffc74c28679546b2d39da06c5ea624fcff39e488739b4d2808b846f52a8b1",
+            "src/flora/general/agent.py": "f886d7ca8560dafd1c6f58f32e360fd15a76fd3dc3879b0333861048ec37f052",
+            "src/flora/general/browser.py": "cc728046c793ad9bc330e412c1e80101a5cc0027508f58f20813a0312ff24931",
+            "src/flora/general/budgets.py": "55b96973a5f3b8c0d6e44835b6d234dbb2cb04c92f7ea1292ced6fd5be156934",
+            "src/flora/general/cli.py": "c7d97cd104f08a32a2a0c320d6fc0af4df5f7f077c0191cc23a1e9be113a408e",
+            "src/flora/general/coordinator.py": "043cb8dd4eb2e6e73760ff67d6b46e00c1fb67dd4cf45909baa1bb0cb5b0ebcf",
+            "src/flora/general/delegation.py": "d22b6709cffe3509e77a94f10b159e4d84b16fd37c2bd795b0c0fdf772242585",
+            "src/flora/general/documents.py": "e37b75c6040f46f8595e918f0f1e0db3a9b92409da354caf72e0624b37a27473",
+            "src/flora/general/mcp.py": "01b2313b3cdcb97ef36f757c0e93abecc7ae30b0532d3268d5c046454e2455fe",
+            "src/flora/general/network.py": "2856f2c0b43d419a33b17dd20eb6d81fa4a647289e378f3944f03f8f03797b8c",
+            "src/flora/general/observability.py": "1790946cb59964cbbd797b941afa4f7a2de6863f3da129b9c99ddbfacb19bd15",
+            "src/flora/general/reliability.py": "d2a57bd15f98687eed7b053176514d6cc4d9fce708184f3c030ad96af975da4b",
+            "src/flora/general/schemas.py": "fc1b244c94c2492d5635c3e9c827c4ed3ea3a03ef106c6b1eb6726de5929ef32",
+            "src/flora/general/skills.py": "c587183e065e5ac45c431497b49c0659cf6eeda358d4787e03f5dc988f845012",
+            "src/flora/general/storage.py": "e59141a772d1f57039d42c9f1f534e649eef85b544c7210736d962aefb210071",
+            "src/flora/general/web.py": "9daf56f85359fa5bc7004dcd3434ef7ddb407f4733183985a4ba0c60a2988034",
+            "src/flora/general/work.py": "67820c9acee123673fad547ab595baa85d2b7e96b28d673356cfd3661243da76",
+            "src/flora/integrations/__init__.py": "3d3b516c614ac17bec8ec0da36812652458b48ca08a6f5cc6ac074295c0e4241",
+            "src/flora/integrations/adapters.py": "e30227c2791b3ae4005109c5a5d5969f1a458a69d8e528779fc7318a8d79cc88",
+            "src/flora/integrations/binding.py": "8ba73bcc93b9649c911aa555aebdbe6bb2ef1f0fbe21d5c211b1a68652ebef73",
+            "src/flora/integrations/providers.py": "ff11d32a7fa16493c0e997bdb6148a87e4399a41de6e0ae640baa3289729385b",
+            "src/flora/integrations/streaming.py": "d2fd1a6fb64a4881024acf7a6ddf6193f492eeb3dbddeba303b9c7678161b6c4",
+            "src/flora/integrations/tools.py": "416e40b413fce1930c9a2aa3b353057b79b83c15ebdd55e1dffd8c65b6342d3f",
+            "src/flora/integrations/workspace.py": "aab0dbbd77a4a10c40c4e3a17842a76c1742b375fbf6a0061a3330d9876c2127",
+            "src/flora/interface/__init__.py": "48137e4917cddcb17d1709e250a9c023160d2e4f194d69223011f2e6865b80ce",
+            "src/flora/interface/cli.py": "bc01b39359df269de8b3dcca680ce53244be7d011d8aaf785e3cb14a1ab36e48",
+            "src/flora/interface/console.py": "e3ac935a2c35ba6c3b97a646517034788fe9f8e7aad2215e91f3c8131eaa8bc9",
+            "src/flora/interface/settings.py": "f5a8804fe085ac219dc48b540b54b1d936e8afe5fc3379dbf6415813fcd11d30",
+            "src/flora/language/__init__.py": "b03fdec5a46300085ec77e6250c54cb705a8c7c33bfbb067d53529a351eae016",
+            "src/flora/language/compiler.py": "fff38aa43646b06f0f252a93828cfec1d9ed460b227680fce16911c4349e89a9",
+            "src/flora/language/expressions.py": "d0d3c09843971dfbf0d78eecc62911401bf949d615e34a2922ac3a4e61c12a55",
+            "src/flora/language/frontend.py": "550f689e616ac98bb84f89c0313120426936b5a04e40deb961570c1db17278c2",
+            "src/flora/language/ir.py": "257a63cb6e359e935a0ec430a291aebeeb66fb30358182a8a5858a62f85d450f",
+            "src/flora/language/prompts.py": "7a427232ce4caf1e22790d5491ea208d988a01d888d657f0cbab94144bbbbd0b",
+            "src/flora/language/recovery.py": "5c5d29ef04c55ee5dcc2080f38c4f4ba3c7ec2776ede8fe1b2e17450dbe02790",
+            "src/flora/language/revision_view.py": "f492e5965fe3f1dcd1732026ecec07ab1552b8fe8bbfe418a6dfc1f38163e056",
+            "src/flora/language/toolcheck.py": "5bafec7a2ed262900c3fa5ce3bed51c541a57b0076bfe70435836fa410f49aaa",
+            "src/flora/language/vm.py": "c44068c1e8ec358c1d2ad03322c737e64488d0bbe059c0ae25b4ab673418e3b8",
+            "src/flora/state/__init__.py": "a43f9a44e343c72187f94318d216ce0dbdcfb501e4fd1a901a66daf29d09a7aa",
+            "src/flora/state/opaque.py": "5391c9da33ea3a140699711aa33774b66925adaa07b4357438bd178b676c04a5",
+            "src/flora/state/session.py": "388289b94798cc45c13e0f12b72efa7a14c0b81b00b43d3725016e2be817e96f",
+            "src/flora/state/trace.py": "ba32ec67dc53060acbec72ca63e3275f6e726ab847ccbcda36d1aa0680f68832",
+            "src/flora/support/__init__.py": "5a7aa00ab50cccb2589af43d86bb0e3a7e792bb0b6ca4a1ebf46bd01470f374d",
+            "src/flora/support/errors.py": "156c5b22197a0a55dd4120a717c4008e7a33b3f51eacd8fc6d9f0a8b013f0e71",
+            "src/flora/support/resources.py": "a9c123494bbe9f72ccdebb11f175827603e505d491d05711673e5b19e9a09249",
+            "src/flora/support/values.py": "50aedca5b44a20f4ae7b275748d0a4883f018dea3f3a35c60ce88aae7da9db87",
+            "src/flora/terminal/__init__.py": "f4026f7fae55f22652d1bc4dca0f6e352c3686abdc35a653470854ef17a7da1a",
+            "src/flora/terminal/cli.py": "50d7dc7c36201b67cc6c38a6f2bb5459f731f8d78a1a57e455de800a2cb6827d",
+            "src/flora/terminal/connection.py": "d8b9685ff5e8df72b623c05b45f3620011e42fae3578dddb410ec231175cebad",
+            "src/flora/terminal/sessions.py": "0e1b56f83f6332311ea140f785e55702042da600ec27d6df4ceec0030ce2c30e",
+            "src/flora/terminal/ui.py": "2262738a397c0b9741c8fc009846309f49c00c5ee9fa468797df2098fe62a088",
+            "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tests/helpers.py": "0084c00533b7f0603cf0f9a4510481544e348d7bf0df110930d80110a5c4e987",
+            "tests/live_consumer_recovery_probe.py": "1d618896559f434fc9edf67c1ef2c8d4f4a09ab45c021d6a73ca796b686fcfbf",
+            "tests/live_general_probe.py": "edcc959642d85c9cf7e982b863a6d6644c86be5ca78a2681c8d174adf90c7485",
+            "tests/live_mechanism_probe.py": "020e3ccf0431ffccb66eaef79a16bcd42d39a02f20f609f5d99659f6e804914b",
+            "tests/live_reliability_probe.py": "27d2508c12b9dfe62359e019f64f1e0eb78103056d169850b4088a385162bc56",
+            "tests/live_revision_probe.py": "8ac18f635ba93c07eac3f8c753bf9340b738930d643f5bb1a95710450f6a43f8",
+            "tests/live_terminal_probe.py": "685e282186c7a79c0a15dfa9af59209b100084094c3dbdbc7f85e05016805162",
+            "tests/stress_cases.py": "7418e7c85255e171e39650b92c7823117753404bce2a0af710ff1ae6d1c74cd5",
+            "tests/test_collaboration.py": "8e0bb31b35edc1fe68898fd2a74860f046226999a05a12e5dcb96337e83f34c7",
+            "tests/test_compact.py": "b4429b497eabd310156cee03b0b034ae4667f11fb32d63c848f723120b3cfe66",
+            "tests/test_compiler_advisory.py": "c8e5195b215eb69570e1d697cf468ec6af53f3cddc60a19534470188132033ff",
+            "tests/test_consumer_recovery.py": "f44f8c27c2bb2249c039121d025e90b4bf13db2b60fe8ce30fdbf758409096ef",
+            "tests/test_coordinator_recovery.py": "69c6ace577ae8a3dcfeec38aa7596071d1ca3d035724a012f2fa7b64fa9d06ca",
+            "tests/test_documents.py": "0001a1f43f54ee49331ba89824dc7609d2317797e96dd8e325f5fd58129b9ce6",
+            "tests/test_effect_finalization.py": "f13f857d5aa5fdd26581f82993bdbf21e82522c9f253091a459002c611d5b357",
+            "tests/test_expressions.py": "977ffc663e3ff40a28a95fef8d1d3b2649f0d9c709a1b220b284768fae90f871",
+            "tests/test_file_modes.py": "ad0614fbd43753a913d84fe9d1abf0151856fc4b2ac2059b5c33b565394700fe",
+            "tests/test_frontend.py": "a8a7e68009458dbccb894a873aa3228f37b111325283932b231c051e25d9bfe0",
+            "tests/test_general.py": "0f23a5a124ae03a35e54b8f076dc2b65bcfb0976541c6624e833134b4e7e26a2",
+            "tests/test_kernel_invariants.py": "e9aa45324d3904f8f0197c714e7befda6d4601da049bf0f52ad323ce4bf19794",
+            "tests/test_live_oracles.py": "9b9bff75f6985e00f8064064ecba089c04be9a848f64f262f0c16188110760ad",
+            "tests/test_live_revision_probe.py": "3a7f18ff3ee78fd7d6ca25d0e1ee1d24b4a043eb64a64336b497f80d9ec2ab3e",
+            "tests/test_long_tasks.py": "cb17ff818aae2750152749b7d9d9174abf0744d01a52b0d003f71a522a2ebe10",
+            "tests/test_mechanism_probe.py": "62bfaaedf8f8876094fb44ee20b01fb0a930e0120c40dfb69ffea038998f4c56",
+            "tests/test_network_policy.py": "cd9f8b530fbfde2bfce4c4ed70231f364edf2e0322b3534167b5fff6328d6289",
+            "tests/test_network_recovery.py": "ae6e0c89c37159af90775ac550b0828e4ac7a36b31875c34ddbed9f4fff3d52f",
+            "tests/test_probe_access_monitor.py": "aa65f9023022cc50b00f09418b88d61bb4a798d4ac4dcdd73350cce246c555f3",
+            "tests/test_projected_observe.py": "48215b4d2333f33246d9f77c4f1c6dab211cd9551dbd5c13abbdcdffa22c17d1",
+            "tests/test_recovery.py": "c9945cc3338d6cbf9566db1686e673911813d633fed250184d0ae8b479ef9517",
+            "tests/test_recovery_accounting.py": "c0cee97a8886f73e86543b3416b1c710c598d4a3643d0c22d5aa4e08e98700c9",
+            "tests/test_reliability_integration.py": "e46a786760a6f72acdd7eec64171bd8074b5230ccb7d50e43eab3c822460d497",
+            "tests/test_retention_performance.py": "7ad93a12595cf9bda1211bd8624ccf3f0a9a2bd8ea1fb944001b3cb73bc43803",
+            "tests/test_revision_opportunities.py": "962d98a0e8790ce9c5ddfba248e07ab7914e2f98f4d20248426c20baa17fd2b0",
+            "tests/test_serialization.py": "153a2c4c48f6ad1b6fd6614554c7708d638306f03ac4de21df7cc82b8ddf25d7",
+            "tests/test_streaming.py": "386547d2d8563ee9f73ced8c9c139eb6934226aa4b1046299300aee330a9aa1f",
+            "tests/test_stress_evaluation.py": "2f9e30935cc95e49fb07992d76420a65e892a16c6c3f9cc2c233d877251b141a",
+            "tests/test_task_completion.py": "a4eebb816cb2f198c774101c91d6035ca48eda68f26185ef6a04bd9c7416e834",
+            "tests/test_terminal_probe.py": "eafcff9441982d98ada640de09405993376fa68335205e8b35cd9aa6ce4b74b6",
+            "tests/test_toolcheck.py": "ba194cc32e90ca7274ca64c6fde7411bb4e51e2b005bb6a6e592a06d93667f48",
+            "tests/test_trace_performance.py": "030de1e815d54596133ac545892cf7d3c42f28beb12712f801eba854708a343d"
+          }
+        },
+        "models": [
+          "deepseek-flash"
+        ],
+        "cases": [
+          "dependency_route"
+        ],
+        "rounds": 1,
+        "seed": 20261005,
+        "resume_attempts": 1,
+        "reopen_after_write": false,
+        "pass_definition": "runtime completion AND independently correct task output AND evidence/mutation/publication integrity; research requires human review"
+      },
+      "results": [
+        {
+          "status": "needs_program",
+          "runtime_status": "needs_program",
+          "failure": {
+            "code": "program_validation",
+            "next_action": "Repair only the program using the reported validation error and existing successful receipts.",
+            "effects_replayed": false
+          },
+          "budget": {
+            "limits": {
+              "max_tool_calls": 80,
+              "max_model_calls": 12,
+              "max_input_tokens": 500000,
+              "max_output_tokens": 180000,
+              "max_wall_seconds": 900
+            },
+            "tool_calls": 0,
+            "model_calls": 4,
+            "input_tokens": 42873,
+            "output_tokens": 32744,
+            "unknown_usage_calls": 0,
+            "reserved_output": 0,
+            "elapsed_seconds": 117.02198296099994
+          },
+          "aggregate_usage": {
+            "model_calls": 4,
+            "tool_calls": 0,
+            "input_tokens": 42873,
+            "output_tokens": 32744,
+            "unknown_usage_calls": 0
+          },
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": false,
+            "answer_correct": false,
+            "evidence_integrity": false,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": []
+          },
+          "fixture_unchanged": true,
+          "first_pass": false,
+          "attempts": [
+            {
+              "attempt": 1,
+              "status": "needs_program",
+              "grade": {
+                "passed": false,
+                "review_required": false,
+                "runtime_completed": false,
+                "answer_correct": false,
+                "evidence_integrity": false,
+                "task_success_distinct": true,
+                "dependency_causal_use_verified": false,
+                "tool_calls": []
+              },
+              "aggregate_usage": {
+                "model_calls": 2,
+                "tool_calls": 0,
+                "input_tokens": 23551,
+                "output_tokens": 27741,
+                "unknown_usage_calls": 0
+              }
+            },
+            {
+              "attempt": 2,
+              "status": "needs_program",
+              "grade": {
+                "passed": false,
+                "review_required": false,
+                "runtime_completed": false,
+                "answer_correct": false,
+                "evidence_integrity": false,
+                "task_success_distinct": true,
+                "dependency_causal_use_verified": false,
+                "tool_calls": []
+              },
+              "aggregate_usage": {
+                "model_calls": 4,
+                "tool_calls": 0,
+                "input_tokens": 42873,
+                "output_tokens": 32744,
+                "unknown_usage_calls": 0
+              }
+            }
+          ],
+          "output_hashes": {
+            "route.json": "d3cceb359115ed992e1d8305a3fded05f0be17742216c537e503ee29d79dec10",
+            "choice-624c38572f56-0.json": "e5dcba9c0155e4d5894bed4306a23c1364e2c77b4d12c847f661e2950d795a29",
+            "choice-624c38572f56-2.json": "6b9b7de8b496133a339e72e9e844e7f68dbcf9aa8ce31428041106cb68163021",
+            "choice-624c38572f56-1.json": "f97c037bfc7d2241a26abee719543e4b73d0d27e8f12b11d0103429c8979b8d7"
+          },
+          "resolved_limits": {
+            "parent": {
+              "max_model_calls": 12,
+              "max_tool_calls": 80,
+              "max_input_tokens": 500000,
+              "max_output_tokens": 180000,
+              "max_wall_seconds": 900
+            },
+            "per_child": {
+              "max_model_calls": 6,
+              "max_tool_calls": 40,
+              "max_input_tokens": 250000,
+              "max_output_tokens": 90000,
+              "max_wall_seconds": 450
+            }
+          },
+          "configuration": {
+            "provider": {
+              "timeout": 60,
+              "total_timeout": 300,
+              "progress_timeout": 60,
+              "first_program_timeout": 240,
+              "max_response_bytes": 4194304,
+              "max_stream_bytes": 67108864,
+              "max_json_whitespace": 2048,
+              "stream": true,
+              "stream_fallback": true,
+              "allow_insecure_http": false,
+              "reasoning_effort": "low",
+              "thinking": "enabled",
+              "response_format": "json_object"
+            },
+            "compiler": {
+              "max_output_tokens": 24000,
+              "max_repairs": 1,
+              "compilation_timeout": 300,
+              "syntax": "block-list-v3",
+              "prompt_style": "compact-v2"
+            },
+            "general": {
+              "require_task_completion": true
+            },
+            "tool_schema_version": 3
+          },
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 0,
+            "revision_checked": 0,
+            "reuse_checked": 0,
+            "diagnostic_inapplicable": 0,
+            "invalid_diagnostic": 0,
+            "multiple_candidate_bundles": 0,
+            "inserted_diagnostic_actions": 0,
+            "accepted_revisions": 0,
+            "rejected_reuse": 0,
+            "omitted_reports": 0,
+            "revision_modes": {
+              "PRESERVE": {
+                "checked": 0,
+                "accepted": 0
+              },
+              "EXTEND": {
+                "checked": 0,
+                "accepted": 0
+              },
+              "CHANGE": {
+                "checked": 0,
+                "accepted": 0
+              }
+            },
+            "history_and_current_pass_revisions": 0,
+            "semantic_or_causal_validation": false
+          },
+          "model": "deepseek-flash",
+          "case": "dependency_route",
+          "trial": 1,
+          "fixture_seed": 439797697076086,
+          "seconds": 117.081
+        }
+      ]
+    },
+    {
+      "experiment": "release-flash-01",
+      "directory": "/workspace/scratch/flora-handoff-release-flash-01",
+      "provenance": {
+        "started_at": "2026-10-01T11:06:57.145008+00:00",
+        "source": {
+          "git_head": "f83000c7b910547f31a200e3f571d318553fd969",
+          "tracked_dirty": true,
+          "python_source_sha256": {
+            "src/flora/__init__.py": "6fa8224f769a9cdbf7acb62d7f3964740035d4d8cdfc62667f9cad9236723702",
+            "src/flora/__main__.py": "a61af76c1f8982845d2686806caa8e918158e971351525d554449d0d33de0a2e",
+            "src/flora/_compat.py": "b17929e2abe50aa7041deeffbcd9e5eec5935f8a2526336dcd6687f02b69fdff",
+            "src/flora/agent/__init__.py": "aee96306f8a6c1ec11a5d12600aef688d03c03e904afbe92807907b44d437d2b",
+            "src/flora/agent/api.py": "78b0b5211319bc44fb102cc65966471db2afefdfc56a57944e0971cce67fb3f8",
+            "src/flora/checks/__init__.py": "beabe2b2603c63a606be7e1152d645072a2728932909a6f81811dbbd249c597d",
+            "src/flora/checks/contracts.py": "dae0ebfb87ea3bbcad5c12f6a16e8927049474e215a67fda42ae0152229f80f3",
+            "src/flora/checks/diagnostics.py": "8a0eaede3fd158441b5f24a81e786a3c68b04ed3162636e1e9d6d529edd6fb09",
+            "src/flora/checks/reuse.py": "5bb0ff9f6bf22158e218f60bf8106da59685d5b4548641a5e6b34f6982421c3c",
+            "src/flora/coding/__init__.py": "8d5d1145004efe24d71472f01447e60ab5e18ff7e918f3ad05915d6b021ba642",
+            "src/flora/coding/agent.py": "2b3d478aca3ce38083a7f17ecf2845387708b63eaa42793e566e610a5a2df32b",
+            "src/flora/coding/cli.py": "7c9223ba5a3af973156dea85a0b54eba53aac66975cb1de8c5191c69d2e98320",
+            "src/flora/coding/navigation.py": "d2ba1a99b9873f59e24445dc5de03ba10d84546d936402ad751bbc7e5d00e61e",
+            "src/flora/coding/project.py": "0c30975b0690e5a3c477dfd8e5ef86e709a1e7309a7a7aa1f889bb9d5fe63bd0",
+            "src/flora/engine/__init__.py": "dbb18fbb73378f8bad9fa95c2f6c575be961a4850f17d1b65af6cf3ce377abcf",
+            "src/flora/engine/budget.py": "fb6d38be8107652025d3f6cee881720dc3e4965ca950be0c99eb09a790989119",
+            "src/flora/engine/effects.py": "a292f15947c1d058805c9884cabd8e6e2d6d614dac0a93d7ab2e74b9ab8b4206",
+            "src/flora/engine/replay.py": "ce2dcbaa27be4867c1ba7db3b3338f1a8b4875831aac7eb9a22dd64b96b060c2",
+            "src/flora/engine/runtime.py": "8d54c8853dc4b19eeac2518733b1477915b9e36970a659130c66785fc129d78f",
+            "src/flora/engine/scheduler.py": "63d307ce1d94e02dd1fed49a2a94cffeb57248f1a65e200d21519f3e947462ae",
+            "src/flora/examples/__init__.py": "53aab38fa6253273cc714e251c86478d258c30fdabea3378d6ca4aa3014dc049",
+            "src/flora/general/__init__.py": "4d3e62b5da8cc2a93b727d4f768496ae973f99bf10ad0f0199052049ceb9ffef",
+            "src/flora/general/_document_process.py": "1eca1aa862d08fce7e3da3c122a93cebc010cf61a0aef25f64a7e1dd33695c42",
+            "src/flora/general/_document_worker.py": "c8bffc74c28679546b2d39da06c5ea624fcff39e488739b4d2808b846f52a8b1",
+            "src/flora/general/agent.py": "f886d7ca8560dafd1c6f58f32e360fd15a76fd3dc3879b0333861048ec37f052",
+            "src/flora/general/browser.py": "cc728046c793ad9bc330e412c1e80101a5cc0027508f58f20813a0312ff24931",
+            "src/flora/general/budgets.py": "55b96973a5f3b8c0d6e44835b6d234dbb2cb04c92f7ea1292ced6fd5be156934",
+            "src/flora/general/cli.py": "c7d97cd104f08a32a2a0c320d6fc0af4df5f7f077c0191cc23a1e9be113a408e",
+            "src/flora/general/coordinator.py": "043cb8dd4eb2e6e73760ff67d6b46e00c1fb67dd4cf45909baa1bb0cb5b0ebcf",
+            "src/flora/general/delegation.py": "d22b6709cffe3509e77a94f10b159e4d84b16fd37c2bd795b0c0fdf772242585",
+            "src/flora/general/documents.py": "e37b75c6040f46f8595e918f0f1e0db3a9b92409da354caf72e0624b37a27473",
+            "src/flora/general/mcp.py": "01b2313b3cdcb97ef36f757c0e93abecc7ae30b0532d3268d5c046454e2455fe",
+            "src/flora/general/network.py": "2856f2c0b43d419a33b17dd20eb6d81fa4a647289e378f3944f03f8f03797b8c",
+            "src/flora/general/observability.py": "1790946cb59964cbbd797b941afa4f7a2de6863f3da129b9c99ddbfacb19bd15",
+            "src/flora/general/reliability.py": "d2a57bd15f98687eed7b053176514d6cc4d9fce708184f3c030ad96af975da4b",
+            "src/flora/general/schemas.py": "fc1b244c94c2492d5635c3e9c827c4ed3ea3a03ef106c6b1eb6726de5929ef32",
+            "src/flora/general/skills.py": "c587183e065e5ac45c431497b49c0659cf6eeda358d4787e03f5dc988f845012",
+            "src/flora/general/storage.py": "e59141a772d1f57039d42c9f1f534e649eef85b544c7210736d962aefb210071",
+            "src/flora/general/web.py": "9daf56f85359fa5bc7004dcd3434ef7ddb407f4733183985a4ba0c60a2988034",
+            "src/flora/general/work.py": "67820c9acee123673fad547ab595baa85d2b7e96b28d673356cfd3661243da76",
+            "src/flora/integrations/__init__.py": "3d3b516c614ac17bec8ec0da36812652458b48ca08a6f5cc6ac074295c0e4241",
+            "src/flora/integrations/adapters.py": "e30227c2791b3ae4005109c5a5d5969f1a458a69d8e528779fc7318a8d79cc88",
+            "src/flora/integrations/binding.py": "8ba73bcc93b9649c911aa555aebdbe6bb2ef1f0fbe21d5c211b1a68652ebef73",
+            "src/flora/integrations/providers.py": "ff11d32a7fa16493c0e997bdb6148a87e4399a41de6e0ae640baa3289729385b",
+            "src/flora/integrations/streaming.py": "d2fd1a6fb64a4881024acf7a6ddf6193f492eeb3dbddeba303b9c7678161b6c4",
+            "src/flora/integrations/tools.py": "416e40b413fce1930c9a2aa3b353057b79b83c15ebdd55e1dffd8c65b6342d3f",
+            "src/flora/integrations/workspace.py": "aab0dbbd77a4a10c40c4e3a17842a76c1742b375fbf6a0061a3330d9876c2127",
+            "src/flora/interface/__init__.py": "48137e4917cddcb17d1709e250a9c023160d2e4f194d69223011f2e6865b80ce",
+            "src/flora/interface/cli.py": "bc01b39359df269de8b3dcca680ce53244be7d011d8aaf785e3cb14a1ab36e48",
+            "src/flora/interface/console.py": "e3ac935a2c35ba6c3b97a646517034788fe9f8e7aad2215e91f3c8131eaa8bc9",
+            "src/flora/interface/settings.py": "f5a8804fe085ac219dc48b540b54b1d936e8afe5fc3379dbf6415813fcd11d30",
+            "src/flora/language/__init__.py": "b03fdec5a46300085ec77e6250c54cb705a8c7c33bfbb067d53529a351eae016",
+            "src/flora/language/compiler.py": "7ac8a3023dcac3c97dd94a59be3f3efa3731377718019ba26e40f7d7ae06c40a",
+            "src/flora/language/expressions.py": "d0d3c09843971dfbf0d78eecc62911401bf949d615e34a2922ac3a4e61c12a55",
+            "src/flora/language/frontend.py": "550f689e616ac98bb84f89c0313120426936b5a04e40deb961570c1db17278c2",
+            "src/flora/language/ir.py": "257a63cb6e359e935a0ec430a291aebeeb66fb30358182a8a5858a62f85d450f",
+            "src/flora/language/prompts.py": "7b68dcbacdd447cd74dd94d15278401a519edfa4bb6cb49c6f01e2f407a185d0",
+            "src/flora/language/recovery.py": "5c5d29ef04c55ee5dcc2080f38c4f4ba3c7ec2776ede8fe1b2e17450dbe02790",
+            "src/flora/language/revision_view.py": "ff273e9b723e84032bdf1daa1fdab55b6c423126575c2dd8f192d627f120cc63",
+            "src/flora/language/toolcheck.py": "5bafec7a2ed262900c3fa5ce3bed51c541a57b0076bfe70435836fa410f49aaa",
+            "src/flora/language/vm.py": "c44068c1e8ec358c1d2ad03322c737e64488d0bbe059c0ae25b4ab673418e3b8",
+            "src/flora/state/__init__.py": "a43f9a44e343c72187f94318d216ce0dbdcfb501e4fd1a901a66daf29d09a7aa",
+            "src/flora/state/opaque.py": "5391c9da33ea3a140699711aa33774b66925adaa07b4357438bd178b676c04a5",
+            "src/flora/state/session.py": "388289b94798cc45c13e0f12b72efa7a14c0b81b00b43d3725016e2be817e96f",
+            "src/flora/state/trace.py": "ba32ec67dc53060acbec72ca63e3275f6e726ab847ccbcda36d1aa0680f68832",
+            "src/flora/support/__init__.py": "5a7aa00ab50cccb2589af43d86bb0e3a7e792bb0b6ca4a1ebf46bd01470f374d",
+            "src/flora/support/errors.py": "156c5b22197a0a55dd4120a717c4008e7a33b3f51eacd8fc6d9f0a8b013f0e71",
+            "src/flora/support/resources.py": "a9c123494bbe9f72ccdebb11f175827603e505d491d05711673e5b19e9a09249",
+            "src/flora/support/values.py": "50aedca5b44a20f4ae7b275748d0a4883f018dea3f3a35c60ce88aae7da9db87",
+            "src/flora/terminal/__init__.py": "f4026f7fae55f22652d1bc4dca0f6e352c3686abdc35a653470854ef17a7da1a",
+            "src/flora/terminal/cli.py": "50d7dc7c36201b67cc6c38a6f2bb5459f731f8d78a1a57e455de800a2cb6827d",
+            "src/flora/terminal/connection.py": "d8b9685ff5e8df72b623c05b45f3620011e42fae3578dddb410ec231175cebad",
+            "src/flora/terminal/sessions.py": "0e1b56f83f6332311ea140f785e55702042da600ec27d6df4ceec0030ce2c30e",
+            "src/flora/terminal/ui.py": "2262738a397c0b9741c8fc009846309f49c00c5ee9fa468797df2098fe62a088",
+            "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tests/helpers.py": "0084c00533b7f0603cf0f9a4510481544e348d7bf0df110930d80110a5c4e987",
+            "tests/live_consumer_recovery_probe.py": "1d618896559f434fc9edf67c1ef2c8d4f4a09ab45c021d6a73ca796b686fcfbf",
+            "tests/live_general_probe.py": "edcc959642d85c9cf7e982b863a6d6644c86be5ca78a2681c8d174adf90c7485",
+            "tests/live_mechanism_probe.py": "020e3ccf0431ffccb66eaef79a16bcd42d39a02f20f609f5d99659f6e804914b",
+            "tests/live_reliability_probe.py": "27d2508c12b9dfe62359e019f64f1e0eb78103056d169850b4088a385162bc56",
+            "tests/live_revision_probe.py": "42a10617867188d41d32f061f10e0f0b05c0b88acaf56f7334e40681751ddd14",
+            "tests/live_terminal_probe.py": "685e282186c7a79c0a15dfa9af59209b100084094c3dbdbc7f85e05016805162",
+            "tests/stress_cases.py": "7418e7c85255e171e39650b92c7823117753404bce2a0af710ff1ae6d1c74cd5",
+            "tests/test_collaboration.py": "8e0bb31b35edc1fe68898fd2a74860f046226999a05a12e5dcb96337e83f34c7",
+            "tests/test_compact.py": "b4429b497eabd310156cee03b0b034ae4667f11fb32d63c848f723120b3cfe66",
+            "tests/test_compiler_advisory.py": "c8e5195b215eb69570e1d697cf468ec6af53f3cddc60a19534470188132033ff",
+            "tests/test_consumer_recovery.py": "f44f8c27c2bb2249c039121d025e90b4bf13db2b60fe8ce30fdbf758409096ef",
+            "tests/test_coordinator_recovery.py": "69c6ace577ae8a3dcfeec38aa7596071d1ca3d035724a012f2fa7b64fa9d06ca",
+            "tests/test_documents.py": "0001a1f43f54ee49331ba89824dc7609d2317797e96dd8e325f5fd58129b9ce6",
+            "tests/test_effect_finalization.py": "f13f857d5aa5fdd26581f82993bdbf21e82522c9f253091a459002c611d5b357",
+            "tests/test_expressions.py": "977ffc663e3ff40a28a95fef8d1d3b2649f0d9c709a1b220b284768fae90f871",
+            "tests/test_file_modes.py": "ad0614fbd43753a913d84fe9d1abf0151856fc4b2ac2059b5c33b565394700fe",
+            "tests/test_frontend.py": "a8a7e68009458dbccb894a873aa3228f37b111325283932b231c051e25d9bfe0",
+            "tests/test_general.py": "0f23a5a124ae03a35e54b8f076dc2b65bcfb0976541c6624e833134b4e7e26a2",
+            "tests/test_kernel_invariants.py": "e9aa45324d3904f8f0197c714e7befda6d4601da049bf0f52ad323ce4bf19794",
+            "tests/test_live_oracles.py": "9b9bff75f6985e00f8064064ecba089c04be9a848f64f262f0c16188110760ad",
+            "tests/test_live_revision_probe.py": "b12495840fbd306d14c21a39c2edf12357c02d0a8fa29740e3081cde8eab9c60",
+            "tests/test_long_tasks.py": "cb17ff818aae2750152749b7d9d9174abf0744d01a52b0d003f71a522a2ebe10",
+            "tests/test_mechanism_probe.py": "62bfaaedf8f8876094fb44ee20b01fb0a930e0120c40dfb69ffea038998f4c56",
+            "tests/test_network_policy.py": "cd9f8b530fbfde2bfce4c4ed70231f364edf2e0322b3534167b5fff6328d6289",
+            "tests/test_network_recovery.py": "ae6e0c89c37159af90775ac550b0828e4ac7a36b31875c34ddbed9f4fff3d52f",
+            "tests/test_probe_access_monitor.py": "aa65f9023022cc50b00f09418b88d61bb4a798d4ac4dcdd73350cce246c555f3",
+            "tests/test_projected_observe.py": "48215b4d2333f33246d9f77c4f1c6dab211cd9551dbd5c13abbdcdffa22c17d1",
+            "tests/test_recovery.py": "c9945cc3338d6cbf9566db1686e673911813d633fed250184d0ae8b479ef9517",
+            "tests/test_recovery_accounting.py": "c0cee97a8886f73e86543b3416b1c710c598d4a3643d0c22d5aa4e08e98700c9",
+            "tests/test_reliability_integration.py": "e46a786760a6f72acdd7eec64171bd8074b5230ccb7d50e43eab3c822460d497",
+            "tests/test_retention_performance.py": "7ad93a12595cf9bda1211bd8624ccf3f0a9a2bd8ea1fb944001b3cb73bc43803",
+            "tests/test_revision_opportunities.py": "f6f5da433bde1632b59015696f313d63bb243a2fe54ded058f368f3f4675a08f",
+            "tests/test_serialization.py": "153a2c4c48f6ad1b6fd6614554c7708d638306f03ac4de21df7cc82b8ddf25d7",
+            "tests/test_streaming.py": "386547d2d8563ee9f73ced8c9c139eb6934226aa4b1046299300aee330a9aa1f",
+            "tests/test_stress_evaluation.py": "2f9e30935cc95e49fb07992d76420a65e892a16c6c3f9cc2c233d877251b141a",
+            "tests/test_task_completion.py": "a4eebb816cb2f198c774101c91d6035ca48eda68f26185ef6a04bd9c7416e834",
+            "tests/test_terminal_probe.py": "eafcff9441982d98ada640de09405993376fa68335205e8b35cd9aa6ce4b74b6",
+            "tests/test_toolcheck.py": "ba194cc32e90ca7274ca64c6fde7411bb4e51e2b005bb6a6e592a06d93667f48",
+            "tests/test_trace_performance.py": "030de1e815d54596133ac545892cf7d3c42f28beb12712f801eba854708a343d"
+          }
+        },
+        "models": [
+          "deepseek-flash"
+        ],
+        "cases": [
+          "release_audit"
+        ],
+        "rounds": 1,
+        "seed": 20261006,
+        "resume_attempts": 2,
+        "reopen_after_write": true,
+        "pass_definition": "runtime completion AND independently correct task output AND evidence/mutation/publication integrity; research requires human review"
+      },
+      "results": [
+        {
+          "status": "completed",
+          "runtime_status": "completed",
+          "failure": null,
+          "budget": {
+            "limits": {
+              "max_tool_calls": 80,
+              "max_model_calls": 12,
+              "max_input_tokens": 500000,
+              "max_output_tokens": 180000,
+              "max_wall_seconds": 900
+            },
+            "tool_calls": 13,
+            "model_calls": 5,
+            "input_tokens": 86347,
+            "output_tokens": 28989,
+            "unknown_usage_calls": 0,
+            "reserved_output": 0,
+            "elapsed_seconds": 148.61916376300007
+          },
+          "aggregate_usage": {
+            "model_calls": 9,
+            "tool_calls": 16,
+            "input_tokens": 120276,
+            "output_tokens": 36109,
+            "unknown_usage_calls": 0
+          },
+          "grade": {
+            "passed": false,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": false,
+            "evidence_integrity": false,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "read_file",
+              "spawn_agent",
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "read_agent",
+              "read_file",
+              "read_file",
+              "read_file",
+              "review_agent",
+              "review_agent",
+              "create_file",
+              "read_file"
+            ]
+          },
+          "fixture_unchanged": true,
+          "first_pass": false,
+          "attempts": [
+            {
+              "attempt": 1,
+              "status": "paused",
+              "grade": {
+                "passed": false,
+                "review_required": false,
+                "runtime_completed": false,
+                "answer_correct": false,
+                "evidence_integrity": false,
+                "task_success_distinct": true,
+                "dependency_causal_use_verified": false,
+                "tool_calls": [
+                  "read_file",
+                  "spawn_agent",
+                  "spawn_agent",
+                  "wait_agents",
+                  "read_agent",
+                  "read_agent",
+                  "read_file",
+                  "read_file",
+                  "read_file",
+                  "review_agent",
+                  "review_agent",
+                  "create_file"
+                ]
+              },
+              "aggregate_usage": {
+                "model_calls": 8,
+                "tool_calls": 15,
+                "input_tokens": 93623,
+                "output_tokens": 29932,
+                "unknown_usage_calls": 0
+              }
+            },
+            {
+              "attempt": 2,
+              "status": "completed",
+              "grade": {
+                "passed": false,
+                "review_required": false,
+                "runtime_completed": true,
+                "answer_correct": false,
+                "evidence_integrity": false,
+                "task_success_distinct": true,
+                "dependency_causal_use_verified": false,
+                "tool_calls": [
+                  "read_file",
+                  "spawn_agent",
+                  "spawn_agent",
+                  "wait_agents",
+                  "read_agent",
+                  "read_agent",
+                  "read_file",
+                  "read_file",
+                  "read_file",
+                  "review_agent",
+                  "review_agent",
+                  "create_file",
+                  "read_file"
+                ]
+              },
+              "aggregate_usage": {
+                "model_calls": 9,
+                "tool_calls": 16,
+                "input_tokens": 120276,
+                "output_tokens": 36109,
+                "unknown_usage_calls": 0
+              }
+            }
+          ],
+          "output_hashes": {
+            "notices-ad8d10e7c3b9-0.json": "2d57162b68908e326de15d36097c86bf521d529c11148e3c581c205367079f19",
+            "audit.json": "5eebc1fc6e3092fb7a9fbd8bf56b4b4023b16eccb15a1aa25094ed6fe34bc221",
+            "notices-ad8d10e7c3b9-1.json": "87e06b261e0bd88c31d11a66079a53c5ff9d7617c9bf08eb5a61240e157df792",
+            "audit-manifest.json": "28d0dffd892d369d345fc60d8666ffe84ce39ff4d934936764487072e2b8887f"
+          },
+          "resolved_limits": {
+            "parent": {
+              "max_model_calls": 12,
+              "max_tool_calls": 80,
+              "max_input_tokens": 500000,
+              "max_output_tokens": 180000,
+              "max_wall_seconds": 900
+            },
+            "per_child": {
+              "max_model_calls": 6,
+              "max_tool_calls": 40,
+              "max_input_tokens": 250000,
+              "max_output_tokens": 90000,
+              "max_wall_seconds": 450
+            }
+          },
+          "configuration": {
+            "provider": {
+              "timeout": 60,
+              "total_timeout": 300,
+              "progress_timeout": 60,
+              "first_program_timeout": 240,
+              "max_response_bytes": 4194304,
+              "max_stream_bytes": 67108864,
+              "max_json_whitespace": 2048,
+              "stream": true,
+              "stream_fallback": true,
+              "allow_insecure_http": false,
+              "reasoning_effort": "low",
+              "thinking": "enabled",
+              "response_format": "json_object"
+            },
+            "compiler": {
+              "max_output_tokens": 24000,
+              "max_repairs": 1,
+              "compilation_timeout": 300,
+              "syntax": "block-list-v3",
+              "prompt_style": "compact-v2"
+            },
+            "general": {},
+            "tool_schema_version": 3
+          },
+          "reopen_recovery": {
+            "receipts_preserved": true,
+            "budget_counters_preserved": true,
+            "before_receipt_count": 12
+          },
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 16,
+            "revision_checked": 0,
+            "reuse_checked": 0,
+            "diagnostic_inapplicable": 0,
+            "invalid_diagnostic": 0,
+            "multiple_candidate_bundles": 0,
+            "inserted_diagnostic_actions": 0,
+            "accepted_revisions": 0,
+            "rejected_reuse": 0,
+            "omitted_reports": 0,
+            "revision_modes": {
+              "PRESERVE": {
+                "checked": 0,
+                "accepted": 0
+              },
+              "EXTEND": {
+                "checked": 0,
+                "accepted": 0
+              },
+              "CHANGE": {
+                "checked": 0,
+                "accepted": 0
+              }
+            },
+            "history_and_current_pass_revisions": 0,
+            "semantic_or_causal_validation": false
+          },
+          "model": "deepseek-flash",
+          "case": "release_audit",
+          "trial": 1,
+          "fixture_seed": 395765991775520,
+          "seconds": 148.698
+        }
+      ]
+    },
+    {
+      "experiment": "revision-flash-02",
+      "directory": "/workspace/scratch/flora-handoff-revision-flash-02",
+      "provenance": {
+        "source": {
+          "git_head": "f83000c7b910547f31a200e3f571d318553fd969",
+          "tracked_dirty": true,
+          "python_source_sha256": {
+            "src/flora/__init__.py": "6fa8224f769a9cdbf7acb62d7f3964740035d4d8cdfc62667f9cad9236723702",
+            "src/flora/__main__.py": "a61af76c1f8982845d2686806caa8e918158e971351525d554449d0d33de0a2e",
+            "src/flora/_compat.py": "b17929e2abe50aa7041deeffbcd9e5eec5935f8a2526336dcd6687f02b69fdff",
+            "src/flora/agent/__init__.py": "aee96306f8a6c1ec11a5d12600aef688d03c03e904afbe92807907b44d437d2b",
+            "src/flora/agent/api.py": "78b0b5211319bc44fb102cc65966471db2afefdfc56a57944e0971cce67fb3f8",
+            "src/flora/checks/__init__.py": "beabe2b2603c63a606be7e1152d645072a2728932909a6f81811dbbd249c597d",
+            "src/flora/checks/contracts.py": "dae0ebfb87ea3bbcad5c12f6a16e8927049474e215a67fda42ae0152229f80f3",
+            "src/flora/checks/diagnostics.py": "8a0eaede3fd158441b5f24a81e786a3c68b04ed3162636e1e9d6d529edd6fb09",
+            "src/flora/checks/reuse.py": "5bb0ff9f6bf22158e218f60bf8106da59685d5b4548641a5e6b34f6982421c3c",
+            "src/flora/coding/__init__.py": "8d5d1145004efe24d71472f01447e60ab5e18ff7e918f3ad05915d6b021ba642",
+            "src/flora/coding/agent.py": "2b3d478aca3ce38083a7f17ecf2845387708b63eaa42793e566e610a5a2df32b",
+            "src/flora/coding/cli.py": "7c9223ba5a3af973156dea85a0b54eba53aac66975cb1de8c5191c69d2e98320",
+            "src/flora/coding/navigation.py": "d2ba1a99b9873f59e24445dc5de03ba10d84546d936402ad751bbc7e5d00e61e",
+            "src/flora/coding/project.py": "0c30975b0690e5a3c477dfd8e5ef86e709a1e7309a7a7aa1f889bb9d5fe63bd0",
+            "src/flora/engine/__init__.py": "dbb18fbb73378f8bad9fa95c2f6c575be961a4850f17d1b65af6cf3ce377abcf",
+            "src/flora/engine/budget.py": "fb6d38be8107652025d3f6cee881720dc3e4965ca950be0c99eb09a790989119",
+            "src/flora/engine/effects.py": "a292f15947c1d058805c9884cabd8e6e2d6d614dac0a93d7ab2e74b9ab8b4206",
+            "src/flora/engine/replay.py": "ce2dcbaa27be4867c1ba7db3b3338f1a8b4875831aac7eb9a22dd64b96b060c2",
+            "src/flora/engine/runtime.py": "977460e995bbc452099f0b894c2f37fe8c3d03f0d305616c1f4d4e715f0bc8a6",
+            "src/flora/engine/scheduler.py": "63d307ce1d94e02dd1fed49a2a94cffeb57248f1a65e200d21519f3e947462ae",
+            "src/flora/examples/__init__.py": "53aab38fa6253273cc714e251c86478d258c30fdabea3378d6ca4aa3014dc049",
+            "src/flora/general/__init__.py": "4d3e62b5da8cc2a93b727d4f768496ae973f99bf10ad0f0199052049ceb9ffef",
+            "src/flora/general/_document_process.py": "1eca1aa862d08fce7e3da3c122a93cebc010cf61a0aef25f64a7e1dd33695c42",
+            "src/flora/general/_document_worker.py": "c8bffc74c28679546b2d39da06c5ea624fcff39e488739b4d2808b846f52a8b1",
+            "src/flora/general/agent.py": "c2902a350dff3b0ba9711ea5630aa3d8c636137b47ae0d30167d97d04bc13f71",
+            "src/flora/general/browser.py": "cc728046c793ad9bc330e412c1e80101a5cc0027508f58f20813a0312ff24931",
+            "src/flora/general/budgets.py": "55b96973a5f3b8c0d6e44835b6d234dbb2cb04c92f7ea1292ced6fd5be156934",
+            "src/flora/general/cli.py": "c7d97cd104f08a32a2a0c320d6fc0af4df5f7f077c0191cc23a1e9be113a408e",
+            "src/flora/general/coordinator.py": "043cb8dd4eb2e6e73760ff67d6b46e00c1fb67dd4cf45909baa1bb0cb5b0ebcf",
+            "src/flora/general/delegation.py": "d22b6709cffe3509e77a94f10b159e4d84b16fd37c2bd795b0c0fdf772242585",
+            "src/flora/general/documents.py": "e37b75c6040f46f8595e918f0f1e0db3a9b92409da354caf72e0624b37a27473",
+            "src/flora/general/mcp.py": "01b2313b3cdcb97ef36f757c0e93abecc7ae30b0532d3268d5c046454e2455fe",
+            "src/flora/general/network.py": "2856f2c0b43d419a33b17dd20eb6d81fa4a647289e378f3944f03f8f03797b8c",
+            "src/flora/general/observability.py": "1790946cb59964cbbd797b941afa4f7a2de6863f3da129b9c99ddbfacb19bd15",
+            "src/flora/general/reliability.py": "d2a57bd15f98687eed7b053176514d6cc4d9fce708184f3c030ad96af975da4b",
+            "src/flora/general/schemas.py": "d2a77409c6c9a32acdf9e60546f72fe02fea23d229e38ab9e1833d4d9b7cea9b",
+            "src/flora/general/skills.py": "c587183e065e5ac45c431497b49c0659cf6eeda358d4787e03f5dc988f845012",
+            "src/flora/general/storage.py": "e59141a772d1f57039d42c9f1f534e649eef85b544c7210736d962aefb210071",
+            "src/flora/general/web.py": "9daf56f85359fa5bc7004dcd3434ef7ddb407f4733183985a4ba0c60a2988034",
+            "src/flora/general/work.py": "bf69c0cc0ed4503183a54ad4603928d4b84d541ec0f4246ae66be8c8ecf433ce",
+            "src/flora/integrations/__init__.py": "3d3b516c614ac17bec8ec0da36812652458b48ca08a6f5cc6ac074295c0e4241",
+            "src/flora/integrations/adapters.py": "e30227c2791b3ae4005109c5a5d5969f1a458a69d8e528779fc7318a8d79cc88",
+            "src/flora/integrations/binding.py": "8ba73bcc93b9649c911aa555aebdbe6bb2ef1f0fbe21d5c211b1a68652ebef73",
+            "src/flora/integrations/providers.py": "ff11d32a7fa16493c0e997bdb6148a87e4399a41de6e0ae640baa3289729385b",
+            "src/flora/integrations/streaming.py": "d2fd1a6fb64a4881024acf7a6ddf6193f492eeb3dbddeba303b9c7678161b6c4",
+            "src/flora/integrations/tools.py": "416e40b413fce1930c9a2aa3b353057b79b83c15ebdd55e1dffd8c65b6342d3f",
+            "src/flora/integrations/workspace.py": "aab0dbbd77a4a10c40c4e3a17842a76c1742b375fbf6a0061a3330d9876c2127",
+            "src/flora/interface/__init__.py": "48137e4917cddcb17d1709e250a9c023160d2e4f194d69223011f2e6865b80ce",
+            "src/flora/interface/cli.py": "bc01b39359df269de8b3dcca680ce53244be7d011d8aaf785e3cb14a1ab36e48",
+            "src/flora/interface/console.py": "e3ac935a2c35ba6c3b97a646517034788fe9f8e7aad2215e91f3c8131eaa8bc9",
+            "src/flora/interface/settings.py": "f5a8804fe085ac219dc48b540b54b1d936e8afe5fc3379dbf6415813fcd11d30",
+            "src/flora/language/__init__.py": "b03fdec5a46300085ec77e6250c54cb705a8c7c33bfbb067d53529a351eae016",
+            "src/flora/language/compiler.py": "75095bfc82a3a321a5719ad28bd0658c19cc646b0097bfc1695549ddb8930f8a",
+            "src/flora/language/expressions.py": "d0d3c09843971dfbf0d78eecc62911401bf949d615e34a2922ac3a4e61c12a55",
+            "src/flora/language/frontend.py": "550f689e616ac98bb84f89c0313120426936b5a04e40deb961570c1db17278c2",
+            "src/flora/language/ir.py": "257a63cb6e359e935a0ec430a291aebeeb66fb30358182a8a5858a62f85d450f",
+            "src/flora/language/prompts.py": "9f513e8583b29827de9f9e447870288b224ffaf10f554946666f396d1b330b2a",
+            "src/flora/language/recovery.py": "5c5d29ef04c55ee5dcc2080f38c4f4ba3c7ec2776ede8fe1b2e17450dbe02790",
+            "src/flora/language/revision_view.py": "7af8cf6d742f7fd2bdddae9cb7e3aee0b2e9fcc4df3ea4e8b3e1a133cf7837a0",
+            "src/flora/language/toolcheck.py": "5bafec7a2ed262900c3fa5ce3bed51c541a57b0076bfe70435836fa410f49aaa",
+            "src/flora/language/vm.py": "c44068c1e8ec358c1d2ad03322c737e64488d0bbe059c0ae25b4ab673418e3b8",
+            "src/flora/state/__init__.py": "a43f9a44e343c72187f94318d216ce0dbdcfb501e4fd1a901a66daf29d09a7aa",
+            "src/flora/state/opaque.py": "5391c9da33ea3a140699711aa33774b66925adaa07b4357438bd178b676c04a5",
+            "src/flora/state/session.py": "388289b94798cc45c13e0f12b72efa7a14c0b81b00b43d3725016e2be817e96f",
+            "src/flora/state/trace.py": "ba32ec67dc53060acbec72ca63e3275f6e726ab847ccbcda36d1aa0680f68832",
+            "src/flora/support/__init__.py": "5a7aa00ab50cccb2589af43d86bb0e3a7e792bb0b6ca4a1ebf46bd01470f374d",
+            "src/flora/support/errors.py": "156c5b22197a0a55dd4120a717c4008e7a33b3f51eacd8fc6d9f0a8b013f0e71",
+            "src/flora/support/resources.py": "a9c123494bbe9f72ccdebb11f175827603e505d491d05711673e5b19e9a09249",
+            "src/flora/support/values.py": "50aedca5b44a20f4ae7b275748d0a4883f018dea3f3a35c60ce88aae7da9db87",
+            "src/flora/terminal/__init__.py": "f4026f7fae55f22652d1bc4dca0f6e352c3686abdc35a653470854ef17a7da1a",
+            "src/flora/terminal/cli.py": "50d7dc7c36201b67cc6c38a6f2bb5459f731f8d78a1a57e455de800a2cb6827d",
+            "src/flora/terminal/connection.py": "d8b9685ff5e8df72b623c05b45f3620011e42fae3578dddb410ec231175cebad",
+            "src/flora/terminal/sessions.py": "0e1b56f83f6332311ea140f785e55702042da600ec27d6df4ceec0030ce2c30e",
+            "src/flora/terminal/ui.py": "2262738a397c0b9741c8fc009846309f49c00c5ee9fa468797df2098fe62a088",
+            "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tests/helpers.py": "0084c00533b7f0603cf0f9a4510481544e348d7bf0df110930d80110a5c4e987",
+            "tests/live_consumer_recovery_probe.py": "1d618896559f434fc9edf67c1ef2c8d4f4a09ab45c021d6a73ca796b686fcfbf",
+            "tests/live_general_probe.py": "edcc959642d85c9cf7e982b863a6d6644c86be5ca78a2681c8d174adf90c7485",
+            "tests/live_mechanism_probe.py": "020e3ccf0431ffccb66eaef79a16bcd42d39a02f20f609f5d99659f6e804914b",
+            "tests/live_reliability_probe.py": "ed24409737876ea9dcf1d6f1f4500551e295426cc138883df492aceaa2d47a0f",
+            "tests/live_revision_probe.py": "e0a3aef762921826f7f2f18eaa39151f60875a87888a3c296fccae0692f0a925",
+            "tests/live_terminal_probe.py": "685e282186c7a79c0a15dfa9af59209b100084094c3dbdbc7f85e05016805162",
+            "tests/stress_cases.py": "7418e7c85255e171e39650b92c7823117753404bce2a0af710ff1ae6d1c74cd5",
+            "tests/test_collaboration.py": "8e0bb31b35edc1fe68898fd2a74860f046226999a05a12e5dcb96337e83f34c7",
+            "tests/test_compact.py": "b4429b497eabd310156cee03b0b034ae4667f11fb32d63c848f723120b3cfe66",
+            "tests/test_compiler_advisory.py": "c8e5195b215eb69570e1d697cf468ec6af53f3cddc60a19534470188132033ff",
+            "tests/test_consumer_recovery.py": "f44f8c27c2bb2249c039121d025e90b4bf13db2b60fe8ce30fdbf758409096ef",
+            "tests/test_coordinator_recovery.py": "69c6ace577ae8a3dcfeec38aa7596071d1ca3d035724a012f2fa7b64fa9d06ca",
+            "tests/test_documents.py": "0001a1f43f54ee49331ba89824dc7609d2317797e96dd8e325f5fd58129b9ce6",
+            "tests/test_effect_finalization.py": "f13f857d5aa5fdd26581f82993bdbf21e82522c9f253091a459002c611d5b357",
+            "tests/test_expressions.py": "977ffc663e3ff40a28a95fef8d1d3b2649f0d9c709a1b220b284768fae90f871",
+            "tests/test_file_modes.py": "ad0614fbd43753a913d84fe9d1abf0151856fc4b2ac2059b5c33b565394700fe",
+            "tests/test_frontend.py": "a8a7e68009458dbccb894a873aa3228f37b111325283932b231c051e25d9bfe0",
+            "tests/test_general.py": "0f23a5a124ae03a35e54b8f076dc2b65bcfb0976541c6624e833134b4e7e26a2",
+            "tests/test_kernel_invariants.py": "e9aa45324d3904f8f0197c714e7befda6d4601da049bf0f52ad323ce4bf19794",
+            "tests/test_live_oracles.py": "9b9bff75f6985e00f8064064ecba089c04be9a848f64f262f0c16188110760ad",
+            "tests/test_live_revision_probe.py": "a674b1c6f7552966e15a1fd500a026a1b635811d64f6e31d9d79576e589fd42a",
+            "tests/test_long_tasks.py": "cb17ff818aae2750152749b7d9d9174abf0744d01a52b0d003f71a522a2ebe10",
+            "tests/test_mechanism_probe.py": "62bfaaedf8f8876094fb44ee20b01fb0a930e0120c40dfb69ffea038998f4c56",
+            "tests/test_network_policy.py": "cd9f8b530fbfde2bfce4c4ed70231f364edf2e0322b3534167b5fff6328d6289",
+            "tests/test_network_recovery.py": "ae6e0c89c37159af90775ac550b0828e4ac7a36b31875c34ddbed9f4fff3d52f",
+            "tests/test_phased_compilation.py": "178194149c58ca1cbdfc8dc83ff0ac8469e15cb566022ebfed378d2ea1cd3441",
+            "tests/test_probe_access_monitor.py": "aa65f9023022cc50b00f09418b88d61bb4a798d4ac4dcdd73350cce246c555f3",
+            "tests/test_projected_observe.py": "48215b4d2333f33246d9f77c4f1c6dab211cd9551dbd5c13abbdcdffa22c17d1",
+            "tests/test_recovery.py": "c9945cc3338d6cbf9566db1686e673911813d633fed250184d0ae8b479ef9517",
+            "tests/test_recovery_accounting.py": "c0cee97a8886f73e86543b3416b1c710c598d4a3643d0c22d5aa4e08e98700c9",
+            "tests/test_reliability_integration.py": "e46a786760a6f72acdd7eec64171bd8074b5230ccb7d50e43eab3c822460d497",
+            "tests/test_retention_performance.py": "7ad93a12595cf9bda1211bd8624ccf3f0a9a2bd8ea1fb944001b3cb73bc43803",
+            "tests/test_revision_opportunities.py": "207e6a2950d0e0c1e5fe4aa467869155a48c3ded4e34c0069ecefe1f69ed9581",
+            "tests/test_serialization.py": "153a2c4c48f6ad1b6fd6614554c7708d638306f03ac4de21df7cc82b8ddf25d7",
+            "tests/test_streaming.py": "386547d2d8563ee9f73ced8c9c139eb6934226aa4b1046299300aee330a9aa1f",
+            "tests/test_stress_evaluation.py": "2f9e30935cc95e49fb07992d76420a65e892a16c6c3f9cc2c233d877251b141a",
+            "tests/test_task_completion.py": "a4eebb816cb2f198c774101c91d6035ca48eda68f26185ef6a04bd9c7416e834",
+            "tests/test_terminal_probe.py": "eafcff9441982d98ada640de09405993376fa68335205e8b35cd9aa6ce4b74b6",
+            "tests/test_toolcheck.py": "ba194cc32e90ca7274ca64c6fde7411bb4e51e2b005bb6a6e592a06d93667f48",
+            "tests/test_trace_performance.py": "030de1e815d54596133ac545892cf7d3c42f28beb12712f801eba854708a343d",
+            "tests/test_work_refinement.py": "00186b7105673ec3e2a295822891eaebf52c231807c0cd83b8533e64cc832630"
+          }
+        },
+        "model": "deepseek-flash",
+        "rounds": 1,
+        "resume_attempts": 1,
+        "configuration": {
+          "provider": {
+            "timeout": 60,
+            "total_timeout": 300,
+            "progress_timeout": 60,
+            "first_program_timeout": 240,
+            "max_response_bytes": 4194304,
+            "max_stream_bytes": 67108864,
+            "max_json_whitespace": 2048,
+            "stream": true,
+            "stream_fallback": true,
+            "allow_insecure_http": false,
+            "reasoning_effort": "low",
+            "thinking": "enabled",
+            "response_format": "json_object"
+          },
+          "compiler": {
+            "max_output_tokens": 24000,
+            "max_repairs": 1,
+            "compilation_timeout": 300,
+            "syntax": "block-list-v2",
+            "prompt_style": "compact-v2"
+          },
+          "general": {},
+          "tool_schema_version": null
+        },
+        "scope": "Explicitly elicited model-authored EXTEND after a host-authored legacy consumer fault. Actual two-page observations and mixed historical/current gates. Not end-to-end generation, spontaneous revision, general correctness or causal-benefit evidence.",
+        "planned_cases": 1
+      },
+      "results": [
+        {
+          "round": 1,
+          "seconds": 44.885,
+          "grade": {
+            "task_passed": true,
+            "mechanism_passed": true,
+            "linked_mixed_history_revisions": [
+              "extend_shape"
+            ],
+            "scope": "Explicitly elicited model-authored EXTEND after a host-authored legacy consumer fault. Actual two-page observations and mixed historical/current gates. Not end-to-end generation, spontaneous revision, general correctness or causal-benefit evidence.",
+            "spontaneous_synthesis_verified": false
+          },
+          "access_rejected": null,
+          "exception": null,
+          "resume_attempts": 1,
+          "result": {
+            "status": "completed",
+            "reason": "",
+            "value": 5,
+            "budget": {
+              "limits": {
+                "max_tool_calls": 4,
+                "max_model_calls": 4,
+                "max_input_tokens": 200000,
+                "max_output_tokens": 96000,
+                "max_wall_seconds": 600
+              },
+              "tool_calls": 2,
+              "model_calls": 1,
+              "input_tokens": 6693,
+              "output_tokens": 9999,
+              "unknown_usage_calls": 0,
+              "reserved_output": 0,
+              "elapsed_seconds": 44.882850598999994
+            }
+          },
+          "revisions": [
+            {
+              "accepted": true,
+              "current_check": {
+                "relation": "DEFINED_PREFIX",
+                "verdict": "PASS",
+                "witness": {
+                  "candidate": {
+                    "kind": "return",
+                    "value": 5
+                  },
+                  "context_id": "extend_shape:current",
+                  "program_digest": "19358f5e1ec6d836073c0611ca94f47cf4a5f6fabef512dd91b9210c456ed6df",
+                  "reason": "candidate_reached_defined_frontier",
+                  "scope": "this_input_and_first_pure_frontier_only"
+                }
+              },
+              "epoch": 2,
+              "id": "extend_shape",
+              "kind": "revision_checked",
+              "mode": "EXTEND",
+              "results": [
+                {
+                  "context": "main@1:0",
+                  "relation": "SAME_BOUNDARY",
+                  "verdict": "PASS",
+                  "witness": {
+                    "candidate": {
+                      "kind": "effect",
+                      "request": {
+                        "args": {
+                          "acknowledged_count": 2,
+                          "page": 1
+                        },
+                        "tool": "read_page"
+                      }
+                    },
+                    "context_id": "main@1:0",
+                    "program_digest": "19358f5e1ec6d836073c0611ca94f47cf4a5f6fabef512dd91b9210c456ed6df",
+                    "reason": "same_boundary",
+                    "reference": {
+                      "kind": "effect",
+                      "request": {
+                        "args": {
+                          "acknowledged_count": 2,
+                          "page": 1
+                        },
+                        "tool": "read_page"
+                      }
+                    },
+                    "scope": "this_input_and_first_pure_frontier_only"
+                  }
+                },
+                {
+                  "context": "main@2:1",
+                  "relation": "DEFINED_PREFIX",
+                  "verdict": "PASS",
+                  "witness": {
+                    "candidate": {
+                      "kind": "return",
+                      "value": 5
+                    },
+                    "context_id": "main@2:1",
+                    "program_digest": "19358f5e1ec6d836073c0611ca94f47cf4a5f6fabef512dd91b9210c456ed6df",
+                    "reason": "candidate_reached_defined_frontier",
+                    "scope": "this_input_and_first_pure_frontier_only"
+                  }
+                }
+              ],
+              "reuse": {
+                "current_check_required": true,
+                "policy": "EXTEND",
+                "routing": {
+                  "guard": {
+                    "args": [
+                      {
+                        "args": [],
+                        "op": "all"
+                      }
+                    ],
+                    "op": "any"
+                  },
+                  "requires_runtime_check": true,
+                  "scope": "empirical_routing_only",
+                  "stats": {
+                    "candidate_atoms": 68,
+                    "conjunctions_examined": 2324,
+                    "covered_positive": 1,
+                    "feature_paths_considered": 16,
+                    "negative": 0,
+                    "positive": 1,
+                    "retained_atoms": 24,
+                    "samples": 1,
+                    "uncovered_positive": 0,
+                    "unknown": 0
+                  },
+                  "status": "covered"
+                },
+                "variant_id": "variant_313c9686301fa4234dcce417"
+              },
+              "target": "main",
+              "task_improvement": "UNMEASURED"
+            }
+          ],
+          "activations": [
+            {
+              "event_index": 305,
+              "target": "main",
+              "revision_id": "extend_shape",
+              "program_digest": "19358f5e1ec6d836073c0611ca94f47cf4a5f6fabef512dd91b9210c456ed6df",
+              "program_matches_revision": true,
+              "final_program_matches": true
+            }
+          ],
+          "host_calls": [
+            {
+              "args": {
+                "acknowledged_count": 0,
+                "page": 0
+              },
+              "tool": "read_page"
+            },
+            {
+              "args": {
+                "acknowledged_count": 2,
+                "page": 1
+              },
+              "tool": "read_page"
+            }
+          ],
+          "attempt_count": 1
+        }
+      ]
+    },
+    {
+      "experiment": "revision-pro-02",
+      "directory": "/workspace/scratch/flora-handoff-revision-pro-02",
+      "provenance": {
+        "source": {
+          "git_head": "f83000c7b910547f31a200e3f571d318553fd969",
+          "tracked_dirty": true,
+          "python_source_sha256": {
+            "src/flora/__init__.py": "6fa8224f769a9cdbf7acb62d7f3964740035d4d8cdfc62667f9cad9236723702",
+            "src/flora/__main__.py": "a61af76c1f8982845d2686806caa8e918158e971351525d554449d0d33de0a2e",
+            "src/flora/_compat.py": "b17929e2abe50aa7041deeffbcd9e5eec5935f8a2526336dcd6687f02b69fdff",
+            "src/flora/agent/__init__.py": "aee96306f8a6c1ec11a5d12600aef688d03c03e904afbe92807907b44d437d2b",
+            "src/flora/agent/api.py": "78b0b5211319bc44fb102cc65966471db2afefdfc56a57944e0971cce67fb3f8",
+            "src/flora/checks/__init__.py": "beabe2b2603c63a606be7e1152d645072a2728932909a6f81811dbbd249c597d",
+            "src/flora/checks/contracts.py": "dae0ebfb87ea3bbcad5c12f6a16e8927049474e215a67fda42ae0152229f80f3",
+            "src/flora/checks/diagnostics.py": "8a0eaede3fd158441b5f24a81e786a3c68b04ed3162636e1e9d6d529edd6fb09",
+            "src/flora/checks/reuse.py": "5bb0ff9f6bf22158e218f60bf8106da59685d5b4548641a5e6b34f6982421c3c",
+            "src/flora/coding/__init__.py": "8d5d1145004efe24d71472f01447e60ab5e18ff7e918f3ad05915d6b021ba642",
+            "src/flora/coding/agent.py": "2b3d478aca3ce38083a7f17ecf2845387708b63eaa42793e566e610a5a2df32b",
+            "src/flora/coding/cli.py": "7c9223ba5a3af973156dea85a0b54eba53aac66975cb1de8c5191c69d2e98320",
+            "src/flora/coding/navigation.py": "d2ba1a99b9873f59e24445dc5de03ba10d84546d936402ad751bbc7e5d00e61e",
+            "src/flora/coding/project.py": "0c30975b0690e5a3c477dfd8e5ef86e709a1e7309a7a7aa1f889bb9d5fe63bd0",
+            "src/flora/engine/__init__.py": "dbb18fbb73378f8bad9fa95c2f6c575be961a4850f17d1b65af6cf3ce377abcf",
+            "src/flora/engine/budget.py": "fb6d38be8107652025d3f6cee881720dc3e4965ca950be0c99eb09a790989119",
+            "src/flora/engine/effects.py": "a292f15947c1d058805c9884cabd8e6e2d6d614dac0a93d7ab2e74b9ab8b4206",
+            "src/flora/engine/replay.py": "ce2dcbaa27be4867c1ba7db3b3338f1a8b4875831aac7eb9a22dd64b96b060c2",
+            "src/flora/engine/runtime.py": "977460e995bbc452099f0b894c2f37fe8c3d03f0d305616c1f4d4e715f0bc8a6",
+            "src/flora/engine/scheduler.py": "63d307ce1d94e02dd1fed49a2a94cffeb57248f1a65e200d21519f3e947462ae",
+            "src/flora/examples/__init__.py": "53aab38fa6253273cc714e251c86478d258c30fdabea3378d6ca4aa3014dc049",
+            "src/flora/general/__init__.py": "4d3e62b5da8cc2a93b727d4f768496ae973f99bf10ad0f0199052049ceb9ffef",
+            "src/flora/general/_document_process.py": "1eca1aa862d08fce7e3da3c122a93cebc010cf61a0aef25f64a7e1dd33695c42",
+            "src/flora/general/_document_worker.py": "c8bffc74c28679546b2d39da06c5ea624fcff39e488739b4d2808b846f52a8b1",
+            "src/flora/general/agent.py": "c2902a350dff3b0ba9711ea5630aa3d8c636137b47ae0d30167d97d04bc13f71",
+            "src/flora/general/browser.py": "cc728046c793ad9bc330e412c1e80101a5cc0027508f58f20813a0312ff24931",
+            "src/flora/general/budgets.py": "55b96973a5f3b8c0d6e44835b6d234dbb2cb04c92f7ea1292ced6fd5be156934",
+            "src/flora/general/cli.py": "c7d97cd104f08a32a2a0c320d6fc0af4df5f7f077c0191cc23a1e9be113a408e",
+            "src/flora/general/coordinator.py": "043cb8dd4eb2e6e73760ff67d6b46e00c1fb67dd4cf45909baa1bb0cb5b0ebcf",
+            "src/flora/general/delegation.py": "d22b6709cffe3509e77a94f10b159e4d84b16fd37c2bd795b0c0fdf772242585",
+            "src/flora/general/documents.py": "e37b75c6040f46f8595e918f0f1e0db3a9b92409da354caf72e0624b37a27473",
+            "src/flora/general/mcp.py": "01b2313b3cdcb97ef36f757c0e93abecc7ae30b0532d3268d5c046454e2455fe",
+            "src/flora/general/network.py": "2856f2c0b43d419a33b17dd20eb6d81fa4a647289e378f3944f03f8f03797b8c",
+            "src/flora/general/observability.py": "1790946cb59964cbbd797b941afa4f7a2de6863f3da129b9c99ddbfacb19bd15",
+            "src/flora/general/reliability.py": "d2a57bd15f98687eed7b053176514d6cc4d9fce708184f3c030ad96af975da4b",
+            "src/flora/general/schemas.py": "8481e493434c36e436fec78e62affc178a1c7770c31c666a37f7aebc01c60742",
+            "src/flora/general/skills.py": "c587183e065e5ac45c431497b49c0659cf6eeda358d4787e03f5dc988f845012",
+            "src/flora/general/storage.py": "e59141a772d1f57039d42c9f1f534e649eef85b544c7210736d962aefb210071",
+            "src/flora/general/web.py": "9daf56f85359fa5bc7004dcd3434ef7ddb407f4733183985a4ba0c60a2988034",
+            "src/flora/general/work.py": "25f5de6854a5e2ce10c980f3a0c66acbc2a974fcf4590512776ef619fb6e316d",
+            "src/flora/integrations/__init__.py": "3d3b516c614ac17bec8ec0da36812652458b48ca08a6f5cc6ac074295c0e4241",
+            "src/flora/integrations/adapters.py": "e30227c2791b3ae4005109c5a5d5969f1a458a69d8e528779fc7318a8d79cc88",
+            "src/flora/integrations/binding.py": "8ba73bcc93b9649c911aa555aebdbe6bb2ef1f0fbe21d5c211b1a68652ebef73",
+            "src/flora/integrations/providers.py": "ff11d32a7fa16493c0e997bdb6148a87e4399a41de6e0ae640baa3289729385b",
+            "src/flora/integrations/streaming.py": "d2fd1a6fb64a4881024acf7a6ddf6193f492eeb3dbddeba303b9c7678161b6c4",
+            "src/flora/integrations/tools.py": "416e40b413fce1930c9a2aa3b353057b79b83c15ebdd55e1dffd8c65b6342d3f",
+            "src/flora/integrations/workspace.py": "aab0dbbd77a4a10c40c4e3a17842a76c1742b375fbf6a0061a3330d9876c2127",
+            "src/flora/interface/__init__.py": "48137e4917cddcb17d1709e250a9c023160d2e4f194d69223011f2e6865b80ce",
+            "src/flora/interface/cli.py": "bc01b39359df269de8b3dcca680ce53244be7d011d8aaf785e3cb14a1ab36e48",
+            "src/flora/interface/console.py": "e3ac935a2c35ba6c3b97a646517034788fe9f8e7aad2215e91f3c8131eaa8bc9",
+            "src/flora/interface/settings.py": "f5a8804fe085ac219dc48b540b54b1d936e8afe5fc3379dbf6415813fcd11d30",
+            "src/flora/language/__init__.py": "b03fdec5a46300085ec77e6250c54cb705a8c7c33bfbb067d53529a351eae016",
+            "src/flora/language/compiler.py": "75095bfc82a3a321a5719ad28bd0658c19cc646b0097bfc1695549ddb8930f8a",
+            "src/flora/language/expressions.py": "d0d3c09843971dfbf0d78eecc62911401bf949d615e34a2922ac3a4e61c12a55",
+            "src/flora/language/frontend.py": "550f689e616ac98bb84f89c0313120426936b5a04e40deb961570c1db17278c2",
+            "src/flora/language/ir.py": "257a63cb6e359e935a0ec430a291aebeeb66fb30358182a8a5858a62f85d450f",
+            "src/flora/language/prompts.py": "9f513e8583b29827de9f9e447870288b224ffaf10f554946666f396d1b330b2a",
+            "src/flora/language/recovery.py": "5c5d29ef04c55ee5dcc2080f38c4f4ba3c7ec2776ede8fe1b2e17450dbe02790",
+            "src/flora/language/revision_view.py": "7af8cf6d742f7fd2bdddae9cb7e3aee0b2e9fcc4df3ea4e8b3e1a133cf7837a0",
+            "src/flora/language/toolcheck.py": "5bafec7a2ed262900c3fa5ce3bed51c541a57b0076bfe70435836fa410f49aaa",
+            "src/flora/language/vm.py": "c44068c1e8ec358c1d2ad03322c737e64488d0bbe059c0ae25b4ab673418e3b8",
+            "src/flora/state/__init__.py": "a43f9a44e343c72187f94318d216ce0dbdcfb501e4fd1a901a66daf29d09a7aa",
+            "src/flora/state/opaque.py": "5391c9da33ea3a140699711aa33774b66925adaa07b4357438bd178b676c04a5",
+            "src/flora/state/session.py": "388289b94798cc45c13e0f12b72efa7a14c0b81b00b43d3725016e2be817e96f",
+            "src/flora/state/trace.py": "ba32ec67dc53060acbec72ca63e3275f6e726ab847ccbcda36d1aa0680f68832",
+            "src/flora/support/__init__.py": "5a7aa00ab50cccb2589af43d86bb0e3a7e792bb0b6ca4a1ebf46bd01470f374d",
+            "src/flora/support/errors.py": "156c5b22197a0a55dd4120a717c4008e7a33b3f51eacd8fc6d9f0a8b013f0e71",
+            "src/flora/support/resources.py": "a9c123494bbe9f72ccdebb11f175827603e505d491d05711673e5b19e9a09249",
+            "src/flora/support/values.py": "50aedca5b44a20f4ae7b275748d0a4883f018dea3f3a35c60ce88aae7da9db87",
+            "src/flora/terminal/__init__.py": "f4026f7fae55f22652d1bc4dca0f6e352c3686abdc35a653470854ef17a7da1a",
+            "src/flora/terminal/cli.py": "50d7dc7c36201b67cc6c38a6f2bb5459f731f8d78a1a57e455de800a2cb6827d",
+            "src/flora/terminal/connection.py": "d8b9685ff5e8df72b623c05b45f3620011e42fae3578dddb410ec231175cebad",
+            "src/flora/terminal/sessions.py": "0e1b56f83f6332311ea140f785e55702042da600ec27d6df4ceec0030ce2c30e",
+            "src/flora/terminal/ui.py": "2262738a397c0b9741c8fc009846309f49c00c5ee9fa468797df2098fe62a088",
+            "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tests/helpers.py": "0084c00533b7f0603cf0f9a4510481544e348d7bf0df110930d80110a5c4e987",
+            "tests/live_consumer_recovery_probe.py": "1d618896559f434fc9edf67c1ef2c8d4f4a09ab45c021d6a73ca796b686fcfbf",
+            "tests/live_general_probe.py": "edcc959642d85c9cf7e982b863a6d6644c86be5ca78a2681c8d174adf90c7485",
+            "tests/live_mechanism_probe.py": "020e3ccf0431ffccb66eaef79a16bcd42d39a02f20f609f5d99659f6e804914b",
+            "tests/live_reliability_probe.py": "c941712230463db9191234423ef129cf3dc24da2995e34cae4dbdad3cab0db12",
+            "tests/live_revision_probe.py": "e0a3aef762921826f7f2f18eaa39151f60875a87888a3c296fccae0692f0a925",
+            "tests/live_terminal_probe.py": "685e282186c7a79c0a15dfa9af59209b100084094c3dbdbc7f85e05016805162",
+            "tests/stress_cases.py": "7418e7c85255e171e39650b92c7823117753404bce2a0af710ff1ae6d1c74cd5",
+            "tests/test_collaboration.py": "8e0bb31b35edc1fe68898fd2a74860f046226999a05a12e5dcb96337e83f34c7",
+            "tests/test_compact.py": "b4429b497eabd310156cee03b0b034ae4667f11fb32d63c848f723120b3cfe66",
+            "tests/test_compiler_advisory.py": "c8e5195b215eb69570e1d697cf468ec6af53f3cddc60a19534470188132033ff",
+            "tests/test_consumer_recovery.py": "f44f8c27c2bb2249c039121d025e90b4bf13db2b60fe8ce30fdbf758409096ef",
+            "tests/test_coordinator_recovery.py": "69c6ace577ae8a3dcfeec38aa7596071d1ca3d035724a012f2fa7b64fa9d06ca",
+            "tests/test_documents.py": "0001a1f43f54ee49331ba89824dc7609d2317797e96dd8e325f5fd58129b9ce6",
+            "tests/test_effect_finalization.py": "f13f857d5aa5fdd26581f82993bdbf21e82522c9f253091a459002c611d5b357",
+            "tests/test_expressions.py": "977ffc663e3ff40a28a95fef8d1d3b2649f0d9c709a1b220b284768fae90f871",
+            "tests/test_file_modes.py": "ad0614fbd43753a913d84fe9d1abf0151856fc4b2ac2059b5c33b565394700fe",
+            "tests/test_frontend.py": "a8a7e68009458dbccb894a873aa3228f37b111325283932b231c051e25d9bfe0",
+            "tests/test_general.py": "0f23a5a124ae03a35e54b8f076dc2b65bcfb0976541c6624e833134b4e7e26a2",
+            "tests/test_kernel_invariants.py": "e9aa45324d3904f8f0197c714e7befda6d4601da049bf0f52ad323ce4bf19794",
+            "tests/test_live_oracles.py": "9b9bff75f6985e00f8064064ecba089c04be9a848f64f262f0c16188110760ad",
+            "tests/test_live_revision_probe.py": "a674b1c6f7552966e15a1fd500a026a1b635811d64f6e31d9d79576e589fd42a",
+            "tests/test_long_tasks.py": "cb17ff818aae2750152749b7d9d9174abf0744d01a52b0d003f71a522a2ebe10",
+            "tests/test_mechanism_probe.py": "62bfaaedf8f8876094fb44ee20b01fb0a930e0120c40dfb69ffea038998f4c56",
+            "tests/test_network_policy.py": "cd9f8b530fbfde2bfce4c4ed70231f364edf2e0322b3534167b5fff6328d6289",
+            "tests/test_network_recovery.py": "ae6e0c89c37159af90775ac550b0828e4ac7a36b31875c34ddbed9f4fff3d52f",
+            "tests/test_phased_compilation.py": "178194149c58ca1cbdfc8dc83ff0ac8469e15cb566022ebfed378d2ea1cd3441",
+            "tests/test_probe_access_monitor.py": "aa65f9023022cc50b00f09418b88d61bb4a798d4ac4dcdd73350cce246c555f3",
+            "tests/test_projected_observe.py": "48215b4d2333f33246d9f77c4f1c6dab211cd9551dbd5c13abbdcdffa22c17d1",
+            "tests/test_recovery.py": "c9945cc3338d6cbf9566db1686e673911813d633fed250184d0ae8b479ef9517",
+            "tests/test_recovery_accounting.py": "c0cee97a8886f73e86543b3416b1c710c598d4a3643d0c22d5aa4e08e98700c9",
+            "tests/test_reliability_integration.py": "e46a786760a6f72acdd7eec64171bd8074b5230ccb7d50e43eab3c822460d497",
+            "tests/test_retention_performance.py": "7ad93a12595cf9bda1211bd8624ccf3f0a9a2bd8ea1fb944001b3cb73bc43803",
+            "tests/test_revision_opportunities.py": "207e6a2950d0e0c1e5fe4aa467869155a48c3ded4e34c0069ecefe1f69ed9581",
+            "tests/test_serialization.py": "153a2c4c48f6ad1b6fd6614554c7708d638306f03ac4de21df7cc82b8ddf25d7",
+            "tests/test_streaming.py": "386547d2d8563ee9f73ced8c9c139eb6934226aa4b1046299300aee330a9aa1f",
+            "tests/test_stress_evaluation.py": "2f9e30935cc95e49fb07992d76420a65e892a16c6c3f9cc2c233d877251b141a",
+            "tests/test_task_completion.py": "a4eebb816cb2f198c774101c91d6035ca48eda68f26185ef6a04bd9c7416e834",
+            "tests/test_terminal_probe.py": "eafcff9441982d98ada640de09405993376fa68335205e8b35cd9aa6ce4b74b6",
+            "tests/test_toolcheck.py": "ba194cc32e90ca7274ca64c6fde7411bb4e51e2b005bb6a6e592a06d93667f48",
+            "tests/test_trace_performance.py": "030de1e815d54596133ac545892cf7d3c42f28beb12712f801eba854708a343d",
+            "tests/test_work_refinement.py": "5b5ee9af140f9128a9f5a6b1a200bdeead905bceda801a324d23a5cfdaa06ba1"
+          }
+        },
+        "model": "deepseek-v4-pro",
+        "rounds": 1,
+        "resume_attempts": 1,
+        "configuration": {
+          "provider": {
+            "timeout": 60,
+            "total_timeout": 300,
+            "progress_timeout": 60,
+            "first_program_timeout": 240,
+            "max_response_bytes": 4194304,
+            "max_stream_bytes": 67108864,
+            "max_json_whitespace": 2048,
+            "stream": true,
+            "stream_fallback": true,
+            "allow_insecure_http": false,
+            "reasoning_effort": "low",
+            "thinking": "enabled",
+            "response_format": "json_object"
+          },
+          "compiler": {
+            "max_output_tokens": 24000,
+            "max_repairs": 1,
+            "compilation_timeout": 300,
+            "syntax": "block-list-v2",
+            "prompt_style": "compact-v2"
+          },
+          "general": {},
+          "tool_schema_version": null
+        },
+        "scope": "Explicitly elicited model-authored EXTEND after a host-authored legacy consumer fault. Actual two-page observations and mixed historical/current gates. Not end-to-end generation, spontaneous revision, general correctness or causal-benefit evidence.",
+        "planned_cases": 1
+      },
+      "results": [
+        {
+          "round": 1,
+          "seconds": 65.46,
+          "grade": {
+            "task_passed": true,
+            "mechanism_passed": true,
+            "linked_mixed_history_revisions": [
+              "extend_items_records"
+            ],
+            "scope": "Explicitly elicited model-authored EXTEND after a host-authored legacy consumer fault. Actual two-page observations and mixed historical/current gates. Not end-to-end generation, spontaneous revision, general correctness or causal-benefit evidence.",
+            "spontaneous_synthesis_verified": false
+          },
+          "access_rejected": null,
+          "exception": null,
+          "resume_attempts": 1,
+          "result": {
+            "status": "completed",
+            "reason": "",
+            "value": 5,
+            "budget": {
+              "limits": {
+                "max_tool_calls": 4,
+                "max_model_calls": 4,
+                "max_input_tokens": 200000,
+                "max_output_tokens": 96000,
+                "max_wall_seconds": 600
+              },
+              "tool_calls": 2,
+              "model_calls": 1,
+              "input_tokens": 6665,
+              "output_tokens": 6351,
+              "unknown_usage_calls": 0,
+              "reserved_output": 0,
+              "elapsed_seconds": 65.45747576600002
+            }
+          },
+          "revisions": [
+            {
+              "accepted": true,
+              "current_check": {
+                "relation": "DEFINED_PREFIX",
+                "verdict": "PASS",
+                "witness": {
+                  "candidate": {
+                    "kind": "return",
+                    "value": 5
+                  },
+                  "context_id": "extend_items_records:current",
+                  "program_digest": "3530cd293ad534a2408fa802c1d1d16633678c3e688f6dbd418efb9cc3116b31",
+                  "reason": "candidate_reached_defined_frontier",
+                  "scope": "this_input_and_first_pure_frontier_only"
+                }
+              },
+              "epoch": 2,
+              "id": "extend_items_records",
+              "kind": "revision_checked",
+              "mode": "EXTEND",
+              "results": [
+                {
+                  "context": "main@1:0",
+                  "relation": "SAME_BOUNDARY",
+                  "verdict": "PASS",
+                  "witness": {
+                    "candidate": {
+                      "kind": "effect",
+                      "request": {
+                        "args": {
+                          "acknowledged_count": 2,
+                          "page": 1
+                        },
+                        "tool": "read_page"
+                      }
+                    },
+                    "context_id": "main@1:0",
+                    "program_digest": "3530cd293ad534a2408fa802c1d1d16633678c3e688f6dbd418efb9cc3116b31",
+                    "reason": "same_boundary",
+                    "reference": {
+                      "kind": "effect",
+                      "request": {
+                        "args": {
+                          "acknowledged_count": 2,
+                          "page": 1
+                        },
+                        "tool": "read_page"
+                      }
+                    },
+                    "scope": "this_input_and_first_pure_frontier_only"
+                  }
+                },
+                {
+                  "context": "main@2:1",
+                  "relation": "DEFINED_PREFIX",
+                  "verdict": "PASS",
+                  "witness": {
+                    "candidate": {
+                      "kind": "return",
+                      "value": 5
+                    },
+                    "context_id": "main@2:1",
+                    "program_digest": "3530cd293ad534a2408fa802c1d1d16633678c3e688f6dbd418efb9cc3116b31",
+                    "reason": "candidate_reached_defined_frontier",
+                    "scope": "this_input_and_first_pure_frontier_only"
+                  }
+                }
+              ],
+              "reuse": {
+                "current_check_required": true,
+                "policy": "EXTEND",
+                "routing": {
+                  "guard": {
+                    "args": [
+                      {
+                        "args": [],
+                        "op": "all"
+                      }
+                    ],
+                    "op": "any"
+                  },
+                  "requires_runtime_check": true,
+                  "scope": "empirical_routing_only",
+                  "stats": {
+                    "candidate_atoms": 68,
+                    "conjunctions_examined": 2324,
+                    "covered_positive": 1,
+                    "feature_paths_considered": 16,
+                    "negative": 0,
+                    "positive": 1,
+                    "retained_atoms": 24,
+                    "samples": 1,
+                    "uncovered_positive": 0,
+                    "unknown": 0
+                  },
+                  "status": "covered"
+                },
+                "variant_id": "variant_0c1acb85dfd5f6296e851750"
+              },
+              "target": "main",
+              "task_improvement": "UNMEASURED"
+            }
+          ],
+          "activations": [
+            {
+              "event_index": 315,
+              "target": "main",
+              "revision_id": "extend_items_records",
+              "program_digest": "3530cd293ad534a2408fa802c1d1d16633678c3e688f6dbd418efb9cc3116b31",
+              "program_matches_revision": true,
+              "final_program_matches": true
+            }
+          ],
+          "host_calls": [
+            {
+              "args": {
+                "acknowledged_count": 0,
+                "page": 0
+              },
+              "tool": "read_page"
+            },
+            {
+              "args": {
+                "acknowledged_count": 2,
+                "page": 1
+              },
+              "tool": "read_page"
+            }
+          ],
+          "attempt_count": 1
+        }
+      ]
+    },
+    {
+      "experiment": "phased-flash-01",
+      "directory": "/workspace/scratch/flora-handoff-phased-flash-01",
+      "provenance": {
+        "started_at": "2026-10-01T11:13:56.938910+00:00",
+        "source": {
+          "git_head": "f83000c7b910547f31a200e3f571d318553fd969",
+          "tracked_dirty": true,
+          "python_source_sha256": {
+            "src/flora/__init__.py": "6fa8224f769a9cdbf7acb62d7f3964740035d4d8cdfc62667f9cad9236723702",
+            "src/flora/__main__.py": "a61af76c1f8982845d2686806caa8e918158e971351525d554449d0d33de0a2e",
+            "src/flora/_compat.py": "b17929e2abe50aa7041deeffbcd9e5eec5935f8a2526336dcd6687f02b69fdff",
+            "src/flora/agent/__init__.py": "aee96306f8a6c1ec11a5d12600aef688d03c03e904afbe92807907b44d437d2b",
+            "src/flora/agent/api.py": "78b0b5211319bc44fb102cc65966471db2afefdfc56a57944e0971cce67fb3f8",
+            "src/flora/checks/__init__.py": "beabe2b2603c63a606be7e1152d645072a2728932909a6f81811dbbd249c597d",
+            "src/flora/checks/contracts.py": "dae0ebfb87ea3bbcad5c12f6a16e8927049474e215a67fda42ae0152229f80f3",
+            "src/flora/checks/diagnostics.py": "8a0eaede3fd158441b5f24a81e786a3c68b04ed3162636e1e9d6d529edd6fb09",
+            "src/flora/checks/reuse.py": "5bb0ff9f6bf22158e218f60bf8106da59685d5b4548641a5e6b34f6982421c3c",
+            "src/flora/coding/__init__.py": "8d5d1145004efe24d71472f01447e60ab5e18ff7e918f3ad05915d6b021ba642",
+            "src/flora/coding/agent.py": "2b3d478aca3ce38083a7f17ecf2845387708b63eaa42793e566e610a5a2df32b",
+            "src/flora/coding/cli.py": "7c9223ba5a3af973156dea85a0b54eba53aac66975cb1de8c5191c69d2e98320",
+            "src/flora/coding/navigation.py": "d2ba1a99b9873f59e24445dc5de03ba10d84546d936402ad751bbc7e5d00e61e",
+            "src/flora/coding/project.py": "0c30975b0690e5a3c477dfd8e5ef86e709a1e7309a7a7aa1f889bb9d5fe63bd0",
+            "src/flora/engine/__init__.py": "dbb18fbb73378f8bad9fa95c2f6c575be961a4850f17d1b65af6cf3ce377abcf",
+            "src/flora/engine/budget.py": "fb6d38be8107652025d3f6cee881720dc3e4965ca950be0c99eb09a790989119",
+            "src/flora/engine/effects.py": "a292f15947c1d058805c9884cabd8e6e2d6d614dac0a93d7ab2e74b9ab8b4206",
+            "src/flora/engine/replay.py": "ce2dcbaa27be4867c1ba7db3b3338f1a8b4875831aac7eb9a22dd64b96b060c2",
+            "src/flora/engine/runtime.py": "977460e995bbc452099f0b894c2f37fe8c3d03f0d305616c1f4d4e715f0bc8a6",
+            "src/flora/engine/scheduler.py": "63d307ce1d94e02dd1fed49a2a94cffeb57248f1a65e200d21519f3e947462ae",
+            "src/flora/examples/__init__.py": "53aab38fa6253273cc714e251c86478d258c30fdabea3378d6ca4aa3014dc049",
+            "src/flora/general/__init__.py": "4d3e62b5da8cc2a93b727d4f768496ae973f99bf10ad0f0199052049ceb9ffef",
+            "src/flora/general/_document_process.py": "1eca1aa862d08fce7e3da3c122a93cebc010cf61a0aef25f64a7e1dd33695c42",
+            "src/flora/general/_document_worker.py": "c8bffc74c28679546b2d39da06c5ea624fcff39e488739b4d2808b846f52a8b1",
+            "src/flora/general/agent.py": "c2902a350dff3b0ba9711ea5630aa3d8c636137b47ae0d30167d97d04bc13f71",
+            "src/flora/general/browser.py": "cc728046c793ad9bc330e412c1e80101a5cc0027508f58f20813a0312ff24931",
+            "src/flora/general/budgets.py": "55b96973a5f3b8c0d6e44835b6d234dbb2cb04c92f7ea1292ced6fd5be156934",
+            "src/flora/general/cli.py": "c7d97cd104f08a32a2a0c320d6fc0af4df5f7f077c0191cc23a1e9be113a408e",
+            "src/flora/general/coordinator.py": "043cb8dd4eb2e6e73760ff67d6b46e00c1fb67dd4cf45909baa1bb0cb5b0ebcf",
+            "src/flora/general/delegation.py": "d22b6709cffe3509e77a94f10b159e4d84b16fd37c2bd795b0c0fdf772242585",
+            "src/flora/general/documents.py": "e37b75c6040f46f8595e918f0f1e0db3a9b92409da354caf72e0624b37a27473",
+            "src/flora/general/mcp.py": "01b2313b3cdcb97ef36f757c0e93abecc7ae30b0532d3268d5c046454e2455fe",
+            "src/flora/general/network.py": "2856f2c0b43d419a33b17dd20eb6d81fa4a647289e378f3944f03f8f03797b8c",
+            "src/flora/general/observability.py": "1790946cb59964cbbd797b941afa4f7a2de6863f3da129b9c99ddbfacb19bd15",
+            "src/flora/general/reliability.py": "d2a57bd15f98687eed7b053176514d6cc4d9fce708184f3c030ad96af975da4b",
+            "src/flora/general/schemas.py": "8481e493434c36e436fec78e62affc178a1c7770c31c666a37f7aebc01c60742",
+            "src/flora/general/skills.py": "c587183e065e5ac45c431497b49c0659cf6eeda358d4787e03f5dc988f845012",
+            "src/flora/general/storage.py": "e59141a772d1f57039d42c9f1f534e649eef85b544c7210736d962aefb210071",
+            "src/flora/general/web.py": "9daf56f85359fa5bc7004dcd3434ef7ddb407f4733183985a4ba0c60a2988034",
+            "src/flora/general/work.py": "25f5de6854a5e2ce10c980f3a0c66acbc2a974fcf4590512776ef619fb6e316d",
+            "src/flora/integrations/__init__.py": "3d3b516c614ac17bec8ec0da36812652458b48ca08a6f5cc6ac074295c0e4241",
+            "src/flora/integrations/adapters.py": "e30227c2791b3ae4005109c5a5d5969f1a458a69d8e528779fc7318a8d79cc88",
+            "src/flora/integrations/binding.py": "8ba73bcc93b9649c911aa555aebdbe6bb2ef1f0fbe21d5c211b1a68652ebef73",
+            "src/flora/integrations/providers.py": "ff11d32a7fa16493c0e997bdb6148a87e4399a41de6e0ae640baa3289729385b",
+            "src/flora/integrations/streaming.py": "d2fd1a6fb64a4881024acf7a6ddf6193f492eeb3dbddeba303b9c7678161b6c4",
+            "src/flora/integrations/tools.py": "416e40b413fce1930c9a2aa3b353057b79b83c15ebdd55e1dffd8c65b6342d3f",
+            "src/flora/integrations/workspace.py": "aab0dbbd77a4a10c40c4e3a17842a76c1742b375fbf6a0061a3330d9876c2127",
+            "src/flora/interface/__init__.py": "48137e4917cddcb17d1709e250a9c023160d2e4f194d69223011f2e6865b80ce",
+            "src/flora/interface/cli.py": "bc01b39359df269de8b3dcca680ce53244be7d011d8aaf785e3cb14a1ab36e48",
+            "src/flora/interface/console.py": "e3ac935a2c35ba6c3b97a646517034788fe9f8e7aad2215e91f3c8131eaa8bc9",
+            "src/flora/interface/settings.py": "f5a8804fe085ac219dc48b540b54b1d936e8afe5fc3379dbf6415813fcd11d30",
+            "src/flora/language/__init__.py": "b03fdec5a46300085ec77e6250c54cb705a8c7c33bfbb067d53529a351eae016",
+            "src/flora/language/compiler.py": "75095bfc82a3a321a5719ad28bd0658c19cc646b0097bfc1695549ddb8930f8a",
+            "src/flora/language/expressions.py": "d0d3c09843971dfbf0d78eecc62911401bf949d615e34a2922ac3a4e61c12a55",
+            "src/flora/language/frontend.py": "550f689e616ac98bb84f89c0313120426936b5a04e40deb961570c1db17278c2",
+            "src/flora/language/ir.py": "257a63cb6e359e935a0ec430a291aebeeb66fb30358182a8a5858a62f85d450f",
+            "src/flora/language/prompts.py": "9f513e8583b29827de9f9e447870288b224ffaf10f554946666f396d1b330b2a",
+            "src/flora/language/recovery.py": "5c5d29ef04c55ee5dcc2080f38c4f4ba3c7ec2776ede8fe1b2e17450dbe02790",
+            "src/flora/language/revision_view.py": "7af8cf6d742f7fd2bdddae9cb7e3aee0b2e9fcc4df3ea4e8b3e1a133cf7837a0",
+            "src/flora/language/toolcheck.py": "5bafec7a2ed262900c3fa5ce3bed51c541a57b0076bfe70435836fa410f49aaa",
+            "src/flora/language/vm.py": "c44068c1e8ec358c1d2ad03322c737e64488d0bbe059c0ae25b4ab673418e3b8",
+            "src/flora/state/__init__.py": "a43f9a44e343c72187f94318d216ce0dbdcfb501e4fd1a901a66daf29d09a7aa",
+            "src/flora/state/opaque.py": "5391c9da33ea3a140699711aa33774b66925adaa07b4357438bd178b676c04a5",
+            "src/flora/state/session.py": "388289b94798cc45c13e0f12b72efa7a14c0b81b00b43d3725016e2be817e96f",
+            "src/flora/state/trace.py": "ba32ec67dc53060acbec72ca63e3275f6e726ab847ccbcda36d1aa0680f68832",
+            "src/flora/support/__init__.py": "5a7aa00ab50cccb2589af43d86bb0e3a7e792bb0b6ca4a1ebf46bd01470f374d",
+            "src/flora/support/errors.py": "156c5b22197a0a55dd4120a717c4008e7a33b3f51eacd8fc6d9f0a8b013f0e71",
+            "src/flora/support/resources.py": "a9c123494bbe9f72ccdebb11f175827603e505d491d05711673e5b19e9a09249",
+            "src/flora/support/values.py": "50aedca5b44a20f4ae7b275748d0a4883f018dea3f3a35c60ce88aae7da9db87",
+            "src/flora/terminal/__init__.py": "f4026f7fae55f22652d1bc4dca0f6e352c3686abdc35a653470854ef17a7da1a",
+            "src/flora/terminal/cli.py": "50d7dc7c36201b67cc6c38a6f2bb5459f731f8d78a1a57e455de800a2cb6827d",
+            "src/flora/terminal/connection.py": "d8b9685ff5e8df72b623c05b45f3620011e42fae3578dddb410ec231175cebad",
+            "src/flora/terminal/sessions.py": "0e1b56f83f6332311ea140f785e55702042da600ec27d6df4ceec0030ce2c30e",
+            "src/flora/terminal/ui.py": "2262738a397c0b9741c8fc009846309f49c00c5ee9fa468797df2098fe62a088",
+            "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tests/helpers.py": "0084c00533b7f0603cf0f9a4510481544e348d7bf0df110930d80110a5c4e987",
+            "tests/live_consumer_recovery_probe.py": "1d618896559f434fc9edf67c1ef2c8d4f4a09ab45c021d6a73ca796b686fcfbf",
+            "tests/live_general_probe.py": "edcc959642d85c9cf7e982b863a6d6644c86be5ca78a2681c8d174adf90c7485",
+            "tests/live_mechanism_probe.py": "020e3ccf0431ffccb66eaef79a16bcd42d39a02f20f609f5d99659f6e804914b",
+            "tests/live_reliability_probe.py": "c941712230463db9191234423ef129cf3dc24da2995e34cae4dbdad3cab0db12",
+            "tests/live_revision_probe.py": "46d644bee4092bf05119b1e043af159a68ef666af8922878fda13c8d196d98c6",
+            "tests/live_terminal_probe.py": "685e282186c7a79c0a15dfa9af59209b100084094c3dbdbc7f85e05016805162",
+            "tests/stress_cases.py": "7418e7c85255e171e39650b92c7823117753404bce2a0af710ff1ae6d1c74cd5",
+            "tests/test_collaboration.py": "8e0bb31b35edc1fe68898fd2a74860f046226999a05a12e5dcb96337e83f34c7",
+            "tests/test_compact.py": "b4429b497eabd310156cee03b0b034ae4667f11fb32d63c848f723120b3cfe66",
+            "tests/test_compiler_advisory.py": "c8e5195b215eb69570e1d697cf468ec6af53f3cddc60a19534470188132033ff",
+            "tests/test_consumer_recovery.py": "f44f8c27c2bb2249c039121d025e90b4bf13db2b60fe8ce30fdbf758409096ef",
+            "tests/test_coordinator_recovery.py": "69c6ace577ae8a3dcfeec38aa7596071d1ca3d035724a012f2fa7b64fa9d06ca",
+            "tests/test_documents.py": "0001a1f43f54ee49331ba89824dc7609d2317797e96dd8e325f5fd58129b9ce6",
+            "tests/test_effect_finalization.py": "f13f857d5aa5fdd26581f82993bdbf21e82522c9f253091a459002c611d5b357",
+            "tests/test_expressions.py": "977ffc663e3ff40a28a95fef8d1d3b2649f0d9c709a1b220b284768fae90f871",
+            "tests/test_file_modes.py": "ad0614fbd43753a913d84fe9d1abf0151856fc4b2ac2059b5c33b565394700fe",
+            "tests/test_frontend.py": "a8a7e68009458dbccb894a873aa3228f37b111325283932b231c051e25d9bfe0",
+            "tests/test_general.py": "0f23a5a124ae03a35e54b8f076dc2b65bcfb0976541c6624e833134b4e7e26a2",
+            "tests/test_kernel_invariants.py": "e9aa45324d3904f8f0197c714e7befda6d4601da049bf0f52ad323ce4bf19794",
+            "tests/test_live_oracles.py": "9b9bff75f6985e00f8064064ecba089c04be9a848f64f262f0c16188110760ad",
+            "tests/test_live_revision_probe.py": "cc0b97cf9685bf44efb62f3dc76c63041772eebe951499956f5d18664c758c46",
+            "tests/test_long_tasks.py": "cb17ff818aae2750152749b7d9d9174abf0744d01a52b0d003f71a522a2ebe10",
+            "tests/test_mechanism_probe.py": "62bfaaedf8f8876094fb44ee20b01fb0a930e0120c40dfb69ffea038998f4c56",
+            "tests/test_network_policy.py": "cd9f8b530fbfde2bfce4c4ed70231f364edf2e0322b3534167b5fff6328d6289",
+            "tests/test_network_recovery.py": "ae6e0c89c37159af90775ac550b0828e4ac7a36b31875c34ddbed9f4fff3d52f",
+            "tests/test_phased_compilation.py": "178194149c58ca1cbdfc8dc83ff0ac8469e15cb566022ebfed378d2ea1cd3441",
+            "tests/test_probe_access_monitor.py": "aa65f9023022cc50b00f09418b88d61bb4a798d4ac4dcdd73350cce246c555f3",
+            "tests/test_projected_observe.py": "48215b4d2333f33246d9f77c4f1c6dab211cd9551dbd5c13abbdcdffa22c17d1",
+            "tests/test_recovery.py": "c9945cc3338d6cbf9566db1686e673911813d633fed250184d0ae8b479ef9517",
+            "tests/test_recovery_accounting.py": "c0cee97a8886f73e86543b3416b1c710c598d4a3643d0c22d5aa4e08e98700c9",
+            "tests/test_reliability_integration.py": "e46a786760a6f72acdd7eec64171bd8074b5230ccb7d50e43eab3c822460d497",
+            "tests/test_retention_performance.py": "7ad93a12595cf9bda1211bd8624ccf3f0a9a2bd8ea1fb944001b3cb73bc43803",
+            "tests/test_revision_opportunities.py": "207e6a2950d0e0c1e5fe4aa467869155a48c3ded4e34c0069ecefe1f69ed9581",
+            "tests/test_serialization.py": "153a2c4c48f6ad1b6fd6614554c7708d638306f03ac4de21df7cc82b8ddf25d7",
+            "tests/test_streaming.py": "386547d2d8563ee9f73ced8c9c139eb6934226aa4b1046299300aee330a9aa1f",
+            "tests/test_stress_evaluation.py": "91c78fe66b7aa5ec72f5f5074d583443d43ceb950737eb186f9bee38b45ecbc4",
+            "tests/test_task_completion.py": "a4eebb816cb2f198c774101c91d6035ca48eda68f26185ef6a04bd9c7416e834",
+            "tests/test_terminal_probe.py": "eafcff9441982d98ada640de09405993376fa68335205e8b35cd9aa6ce4b74b6",
+            "tests/test_toolcheck.py": "ba194cc32e90ca7274ca64c6fde7411bb4e51e2b005bb6a6e592a06d93667f48",
+            "tests/test_trace_performance.py": "030de1e815d54596133ac545892cf7d3c42f28beb12712f801eba854708a343d",
+            "tests/test_work_refinement.py": "5b5ee9af140f9128a9f5a6b1a200bdeead905bceda801a324d23a5cfdaa06ba1"
+          }
+        },
+        "models": [
+          "deepseek-flash"
+        ],
+        "cases": [
+          "dependency_route"
+        ],
+        "rounds": 1,
+        "seed": 20261005,
+        "resume_attempts": 1,
+        "reopen_after_write": false,
+        "pass_definition": "runtime completion AND independently correct task output AND evidence/mutation/publication integrity; research requires human review"
+      },
+      "results": [
+        {
+          "status": "completed",
+          "runtime_status": "completed",
+          "failure": null,
+          "budget": {
+            "limits": {
+              "max_tool_calls": 80,
+              "max_model_calls": 12,
+              "max_input_tokens": 500000,
+              "max_output_tokens": 180000,
+              "max_wall_seconds": 900
+            },
+            "tool_calls": 13,
+            "model_calls": 4,
+            "input_tokens": 64152,
+            "output_tokens": 30979,
+            "unknown_usage_calls": 0,
+            "reserved_output": 0,
+            "elapsed_seconds": 147.36680175200013
+          },
+          "aggregate_usage": {
+            "model_calls": 6,
+            "tool_calls": 15,
+            "input_tokens": 78458,
+            "output_tokens": 32880,
+            "unknown_usage_calls": 0
+          },
+          "grade": {
+            "passed": true,
+            "review_required": false,
+            "runtime_completed": true,
+            "answer_correct": true,
+            "evidence_integrity": true,
+            "task_success_distinct": true,
+            "dependency_causal_use_verified": false,
+            "tool_calls": [
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "review_agent",
+              "read_file",
+              "spawn_agent",
+              "wait_agents",
+              "read_agent",
+              "review_agent",
+              "read_file",
+              "read_file",
+              "read_work",
+              "update_work"
+            ]
+          },
+          "fixture_unchanged": true,
+          "first_pass": true,
+          "attempts": [
+            {
+              "attempt": 1,
+              "status": "completed",
+              "grade": {
+                "passed": true,
+                "review_required": false,
+                "runtime_completed": true,
+                "answer_correct": true,
+                "evidence_integrity": true,
+                "task_success_distinct": true,
+                "dependency_causal_use_verified": false,
+                "tool_calls": [
+                  "spawn_agent",
+                  "wait_agents",
+                  "read_agent",
+                  "review_agent",
+                  "read_file",
+                  "spawn_agent",
+                  "wait_agents",
+                  "read_agent",
+                  "review_agent",
+                  "read_file",
+                  "read_file",
+                  "read_work",
+                  "update_work"
+                ]
+              },
+              "aggregate_usage": {
+                "model_calls": 6,
+                "tool_calls": 15,
+                "input_tokens": 78458,
+                "output_tokens": 32880,
+                "unknown_usage_calls": 0
+              }
+            }
+          ],
+          "output_hashes": {
+            "route.json": "d3cceb359115ed992e1d8305a3fded05f0be17742216c537e503ee29d79dec10",
+            "choice-624c38572f56-0.json": "e5dcba9c0155e4d5894bed4306a23c1364e2c77b4d12c847f661e2950d795a29",
+            "choice-624c38572f56-2.json": "6b9b7de8b496133a339e72e9e844e7f68dbcf9aa8ce31428041106cb68163021",
+            "choice-624c38572f56-1.json": "f97c037bfc7d2241a26abee719543e4b73d0d27e8f12b11d0103429c8979b8d7"
+          },
+          "resolved_limits": {
+            "parent": {
+              "max_model_calls": 12,
+              "max_tool_calls": 80,
+              "max_input_tokens": 500000,
+              "max_output_tokens": 180000,
+              "max_wall_seconds": 900
+            },
+            "per_child": {
+              "max_model_calls": 6,
+              "max_tool_calls": 40,
+              "max_input_tokens": 250000,
+              "max_output_tokens": 90000,
+              "max_wall_seconds": 450
+            }
+          },
+          "configuration": {
+            "provider": {
+              "timeout": 60,
+              "total_timeout": 300,
+              "progress_timeout": 60,
+              "first_program_timeout": 240,
+              "max_response_bytes": 4194304,
+              "max_stream_bytes": 67108864,
+              "max_json_whitespace": 2048,
+              "stream": true,
+              "stream_fallback": true,
+              "allow_insecure_http": false,
+              "reasoning_effort": "low",
+              "thinking": "enabled",
+              "response_format": "json_object"
+            },
+            "compiler": {
+              "max_output_tokens": 24000,
+              "max_repairs": 1,
+              "compilation_timeout": 300,
+              "syntax": "block-list-v3",
+              "prompt_style": "compact-v3"
+            },
+            "general": {
+              "require_task_completion": true
+            },
+            "tool_schema_version": 3
+          },
+          "mechanism_observations": {
+            "diagnostic_evaluated": 0,
+            "forecast_observation": 0,
+            "consumer_check": 15,
+            "revision_checked": 0,
+            "reuse_checked": 0,
+            "diagnostic_inapplicable": 0,
+            "invalid_diagnostic": 0,
+            "multiple_candidate_bundles": 0,
+            "inserted_diagnostic_actions": 0,
+            "accepted_revisions": 0,
+            "rejected_reuse": 0,
+            "omitted_reports": 0,
+            "revision_modes": {
+              "PRESERVE": {
+                "checked": 0,
+                "accepted": 0
+              },
+              "EXTEND": {
+                "checked": 0,
+                "accepted": 0
+              },
+              "CHANGE": {
+                "checked": 0,
+                "accepted": 0
+              }
+            },
+            "history_and_current_pass_revisions": 0,
+            "semantic_or_causal_validation": false
+          },
+          "model": "deepseek-flash",
+          "case": "dependency_route",
+          "trial": 1,
+          "fixture_seed": 439797697076086,
+          "seconds": 147.436
+        }
+      ]
+    }
+  ],
+  "scope": "Sanitized operational evidence. Synthetic task grades and elicited mechanisms are distinct; no causal or general-success claim."
+}

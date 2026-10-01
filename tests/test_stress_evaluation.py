@@ -440,11 +440,40 @@ class ProbeExecutionTests(unittest.TestCase):
         self.assertEqual(view["provider"]["reasoning_effort"], "low")
         self.assertEqual(view["provider"]["total_timeout"], 300)
         self.assertIsNone(view["tool_schema_version"])
-        for value in (True, 1.0, 4, [], {}):
+        for value in (True, 1.0, 5, [], {}):
             profile["general"]["tool_schema_version"] = value
             self.assertIsNone(configuration_view(profile)["tool_schema_version"])
         profile["general"]["tool_schema_version"] = 2
         self.assertEqual(configuration_view(profile)["tool_schema_version"], 2)
+        profile["general"]["tool_schema_version"] = 4
+        self.assertEqual(configuration_view(profile)["tool_schema_version"], 4)
+
+    def test_configuration_view_preserves_disabled_reasoning_and_typed_completion(self):
+        profile = {
+            "provider": {"request_options": {"reasoning_effort": "none"}},
+            "general": {"require_task_completion": True, "extra": "must-not-be-recorded"},
+        }
+        for enabled in (True, False):
+            profile["general"]["require_task_completion"] = enabled
+            view = configuration_view(profile)
+            self.assertEqual(view["provider"], {"reasoning_effort": "none"})
+            self.assertEqual(view["general"], {"require_task_completion": enabled})
+        for invalid in ("must-not-be-recorded", "true", 0, 1, None, [], {}):
+            profile["general"]["require_task_completion"] = invalid
+            profile["provider"]["request_options"]["reasoning_effort"] = invalid
+            with self.subTest(invalid=invalid):
+                view = configuration_view(profile)
+                self.assertEqual(view["general"], {})
+                self.assertEqual(view["provider"], {})
+                self.assertNotIn("must-not-be-recorded", json.dumps(view))
+        self.assertEqual(configuration_view({})["general"], {})
+
+    def test_task_completion_live_profile_only_enables_completion(self):
+        configs = Path(__file__).resolve().parents[1] / "configs"
+        projected = json.loads((configs / "deepseek-live-projected.json").read_text())
+        completion = json.loads((configs / "deepseek-live-task-completion.json").read_text())
+        self.assertIs(completion["general"].pop("require_task_completion"), True)
+        self.assertEqual(completion, projected)
 
     def options(self, output, **changes):
         return Namespace(

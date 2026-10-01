@@ -116,7 +116,7 @@ def configuration_view(profile):
             view[k] = provider[k]
     options = provider.get("request_options", {})
     if isinstance(options, dict):
-        for name, allowed in (("reasoning_effort", {"low", "medium", "high", "max"}),):
+        for name, allowed in (("reasoning_effort", {"none", "low", "medium", "high", "max"}),):
             if isinstance(options.get(name), str) and options[name] in allowed:
                 view[name] = options[name]
         for name, allowed in (
@@ -144,9 +144,13 @@ def configuration_view(profile):
         and (v is None or type(v) in (int, float))
     }
     version = profile.get("general", {}).get("tool_schema_version")
+    general = {}
+    require_task_completion = profile.get("general", {}).get("require_task_completion")
+    if type(require_task_completion) is bool:
+        general["require_task_completion"] = require_task_completion
     for name, allowed in (
         ("syntax", {"ir-v1", "observe-v1", "block-list-v1", "block-list-v2", "block-list-v3"}),
-        ("prompt_style", {"full-v1", "compact-v1", "compact-v2"}),
+        ("prompt_style", {"full-v1", "compact-v1", "compact-v2", "compact-v3"}),
     ):
         value = profile.get("compiler", {}).get(name)
         if isinstance(value, str) and value in allowed:
@@ -154,7 +158,8 @@ def configuration_view(profile):
     return {
         "provider": view,
         "compiler": compiler,
-        "tool_schema_version": version if type(version) is int and version in (1, 2, 3) else None,
+        "general": general,
+        "tool_schema_version": version if type(version) is int and version in (1, 2, 3, 4) else None,
     }
 
 

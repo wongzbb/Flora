@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Host-authored offline revision syntax examples, not live model evidence."""
 
+import copy
 import json
 import unittest
 
@@ -10,6 +11,7 @@ from flora.language.compiler import validate_bundle
 from flora.language.frontend import lower_bundle
 from flora.language.recovery import revision_example
 from flora.language.revision_view import revision_state
+from flora.support.values import canonical_json
 from tests.helpers import block, bundle, pure
 from tests.live_reliability_probe import mechanism_observations
 
@@ -132,6 +134,97 @@ class RevisionOpportunityTests(unittest.TestCase):
             )
         )
         return runtime, calls
+
+    def test_equal_shapes_keep_checkpoint_identity_and_history_length(self):
+        runtime, _ = self.faulted_runtime()
+        sample = runtime.contexts[0]
+        runtime.contexts = []
+        for index in range(6):
+            item = copy.deepcopy(sample)
+            item["context"]["id"] = f"main@{index}:checkpoint"
+            item["context"]["receipts"] *= index + 1
+            runtime.contexts.append(item)
+        view = revision_state(
+            runtime.candidates["main"],
+            runtime.contexts,
+            epoch=runtime.trace.epoch,
+            trace_digest=runtime.trace.digest,
+        )
+        self.assertEqual(view["retained_context_count"], 6)
+        self.assertEqual(view["checkpoints_omitted"], 2)
+        self.assertEqual(view["shapes_omitted"], 2)
+        self.assertEqual([s["receipt_count"] for s in view["checkpoint_shapes"]], [1, 2, 3, 4])
+        self.assertEqual(
+            [s["context_id"] for s in view["checkpoint_shapes"]],
+            [f"main@{index}:checkpoint" for index in range(4)],
+        )
+        self.assertLessEqual(len(canonical_json(view).encode()), 8192)
+        # Individually large descriptors must also be omitted, with exact counts.
+        for item in runtime.contexts:
+            item["context"]["id"] = "x" * 8192
+        bounded = revision_state(
+            runtime.candidates["main"], runtime.contexts, epoch=-1, trace_digest="stale"
+        )
+        self.assertEqual(bounded["checkpoint_shapes"], [])
+        self.assertEqual(bounded["checkpoints_omitted"], 6)
+        self.assertLessEqual(len(canonical_json(bounded).encode()), 8192)
+
+    def test_historical_migration_fault_is_structural_and_keeps_unknown_gate(self):
+        runtime, calls = self.faulted_runtime()
+        epoch, anchor = runtime.trace.epoch, runtime.trace.digest
+        migration = pure({}, params=["context"])
+        migration["blocks"]["main"]["ops"] = [
+            op("get", "receipts", var("context"), "receipts"),
+            op("get", "missing", var("receipts"), 1),
+        ]
+        report = runtime.apply_revision(
+            "main", revised_consumer(), migration=migration, mode="EXTEND"
+        )
+        self.assertFalse(report["accepted"])
+        result = report["results"][0]
+        self.assertEqual(result["verdict"], "UNKNOWN")
+        self.assertEqual(
+            result["migration_failure"],
+            {
+                "boundary_kind": "fault",
+                "receipt_count": 1,
+                "fault_code": "MISSING_KEY",
+            },
+        )
+        self.assertEqual((runtime.trace.epoch, runtime.trace.digest), (epoch, anchor))
+        self.assertEqual(calls, ["read_batch"])
+
+    def test_migration_reports_do_not_copy_assertion_messages_or_return_values(self):
+        for current in (False, True):
+            for fault in (False, True):
+                with self.subTest(current=current, fault=fault):
+                    runtime, calls = self.faulted_runtime()
+                    secret = "private-key-and-value-not-for-diagnostics"
+                    migration = pure(secret, params=["context"])
+                    if fault:
+                        migration["blocks"]["main"]["ops"] = [
+                            op("assert", "checked", False, secret)
+                        ]
+                    # CHANGE without retained samples exercises current migration
+                    # failure; it still must not install an unavailable mapping.
+                    if current:
+                        runtime.contexts = []
+                    report = runtime.apply_revision(
+                        "main",
+                        revised_consumer(),
+                        migration=migration,
+                        mode="CHANGE" if current else "EXTEND",
+                    )
+                    self.assertFalse(report["accepted"])
+                    detail = report if current else report["results"][0]
+                    expected = {"boundary_kind": "fault" if fault else "return", "receipt_count": 1}
+                    expected.update(
+                        {"fault_code": "ASSERTION_FAILED"} if fault else {"return_type": "string"}
+                    )
+                    self.assertEqual(detail["migration_failure"], expected)
+                    self.assertNotIn(secret, json.dumps(report))
+                    self.assertEqual(runtime.candidates["main"].status, "FAULTED")
+                    self.assertEqual(calls, ["read_batch"])
 
     def test_extend_representation_checks_history_and_current_without_repeating_tool(self):
         runtime, calls = self.faulted_runtime()
