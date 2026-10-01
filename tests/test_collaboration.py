@@ -114,13 +114,56 @@ class CollaborationTests(unittest.TestCase):
             self.assertEqual(app.agent._fingerprint, identity)
             self.assertEqual(app.agent.tools.descriptions(), tools)
             self.assertNotIn("tool_schema_version", app.profile["general"])
-        self.assertEqual(self.app.profile["general"]["tool_schema_version"], 2)
+        self.assertEqual(self.app.profile["general"]["tool_schema_version"], 3)
 
     def collect(self, ident):
         row = self.app.delegation.read_agent(ident, limit=24000)
         while row.get("next_offset") is not None:
             row = self.app.delegation.read_agent(ident, offset=row["next_offset"], limit=24000)
         return row["result_digest"]
+
+    def test_structured_result_is_only_in_a_complete_window_and_stays_unverified(self):
+        ident = self.spawn()
+        small = self.app.delegation.read_agent(ident, limit=1)
+        self.assertNotIn("result", small)
+        row = self.app.delegation.read_agent(ident, limit=24000)
+        self.assertEqual(row["result"], json.loads(row["text"]))
+        self.assertFalse(row["result"]["claims_verified"])
+        row["result"]["value"] = "mutated caller copy"
+        again = self.app.delegation.read_agent(ident, limit=24000)
+        self.assertNotEqual(again["result"]["value"], row["result"]["value"])
+        self.assertIsNone(self.app.delegation.records[ident].get("review"))
+
+    def test_saved_schema_v2_retains_tools_and_text_result_shape(self):
+        path = self.root / "schema-v2"
+        with GeneralAgent(
+            session_dir=path,
+            workspace=self.workspace,
+            provider=WorkerProvider(),
+            profile={"general": {"tool_schema_version": 2, "subagents": {"enabled": True}}},
+        ) as app:
+            app.task = {"key": "current", "task": "test"}
+            app.work.begin("current", "test")
+            ident = app.delegation.spawn_agent("Read supplied evidence")["agent_id"]
+            app.delegation.futures[ident].result(timeout=5)
+            identity, descriptions = app.agent._fingerprint, app.agent.tools.descriptions()
+            self.assertNotIn("result", app.delegation.read_agent(ident, limit=24000))
+        with GeneralAgent(session_dir=path, provider=WorkerProvider()) as app:
+            self.assertEqual(app.agent._fingerprint, identity)
+            self.assertEqual(app.agent.tools.descriptions(), descriptions)
+            self.assertNotIn("result", app.delegation.read_agent(ident, limit=24000))
+
+    def test_table_types_describe_source_before_filter_without_coercing_values(self):
+        (self.workspace / "typed.csv").write_text("flag,n\ntrue,1\nfalse,2\n")
+        empty = self.app.documents.table_query(
+            "typed.csv", filters=[{"column": "flag", "op": "eq", "value": True}]
+        )
+        self.assertEqual(empty["rows"], [])
+        self.assertEqual(empty["cell_types"], {"flag": ["string"], "n": ["string"]})
+        selected = self.app.documents.table_query(
+            "typed.csv", filters=[{"column": "flag", "op": "eq", "value": "true"}]
+        )
+        self.assertEqual(selected["rows"], [{"flag": "true", "n": "1"}])
 
     def test_checked_context_handoff_and_child_tool_grants(self):
         source = self.app.store.record(origin="fixture", title="Facts", text="Observed fact")

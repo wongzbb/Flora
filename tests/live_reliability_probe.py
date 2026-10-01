@@ -147,7 +147,7 @@ def configuration_view(profile):
     return {
         "provider": view,
         "compiler": compiler,
-        "tool_schema_version": version if type(version) is int and version in (1, 2) else None,
+        "tool_schema_version": version if type(version) is int and version in (1, 2, 3) else None,
     }
 
 

@@ -282,7 +282,11 @@ and evidence; do not discard required goals to bypass completion checks.
         )
         if self.owner.profile["general"].get("services"):
             tools += list(make_registry([self.http_read])._tools.values())
-        return bounded_specs(tools, describe_results=True)
+        return bounded_specs(
+            tools,
+            describe_results=True,
+            structured_results=self.owner.profile["general"].get("tool_schema_version", 1) >= 3,
+        )
 
     def child_capabilities(self) -> dict:
         """Read available research tools, configured search and GET/HEAD services. No mutation grants."""
@@ -552,6 +556,13 @@ and evidence; do not discard required goals to bypass completion checks.
                 "next_offset": offset + limit if offset + limit < len(text) else None,
                 "total_chars": len(text),
                 "claims_verified": False,
+                **(
+                    {"result": deepcopy(view)}
+                    if self.owner.profile["general"].get("tool_schema_version", 1) >= 3
+                    and offset == 0
+                    and limit >= len(text)
+                    else {}
+                ),
             }
 
     def review_agent(

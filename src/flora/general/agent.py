@@ -125,7 +125,7 @@ def _new_session_defaults(profile, *, builtin_provider):
     if general["protocol"] == "general-v4":
         # New sessions advertise collaboration bounds; saved sessions without
         # this marker retain their exact original tool schemas and identity.
-        general.setdefault("tool_schema_version", 2)
+        general.setdefault("tool_schema_version", 3)
         runtime = profile.setdefault("runtime", {})
         runtime.setdefault("max_steps", None)
         runtime.setdefault("max_compile_cycles", None)
@@ -200,9 +200,9 @@ def _normalize(profile):
         raise ValidationError("Unknown general configuration field")
     if "tool_schema_version" in general and (
         type(general["tool_schema_version"]) is not int
-        or general["tool_schema_version"] not in (1, 2)
+        or general["tool_schema_version"] not in (1, 2, 3)
     ):
-        raise ValidationError("tool_schema_version must be 1 or 2")
+        raise ValidationError("tool_schema_version must be 1, 2 or 3")
     if general.get("protocol", "general-v1") not in (
         "general-v1",
         "general-v2",
@@ -336,7 +336,12 @@ class GeneralAgent:
                 from .work import WorkLedger
 
                 self.work = WorkLedger(self)
-            self.documents = DocumentTools(self.files, self.store, lambda: self.task["key"])
+            self.documents = DocumentTools(
+                self.files,
+                self.store,
+                lambda: self.task["key"],
+                describe_types=general.get("tool_schema_version", 1) >= 3,
+            )
             self.files._published_callback = lambda receipt: self.store.record_artifact(
                 receipt["path"], receipt["sha256"], [], self.task["key"], kind="file"
             )
@@ -446,7 +451,8 @@ class GeneralAgent:
                         specs,
                         describe_results=general.get("protocol") in ("general-v3", "general-v4"),
                         collaboration=self.work is not None
-                        and general.get("tool_schema_version", 1) == 2,
+                        and general.get("tool_schema_version", 1) >= 2,
+                        structured_results=general.get("tool_schema_version", 1) >= 3,
                     )
                 ),
                 session_dir=self.directory / "kernel",

@@ -104,9 +104,10 @@ class DocumentWorkspace(WorkspaceTools):
         if not isinstance(data, bytes) or len(data) > MAX_DOCUMENT:
             raise ValidationError("Binary artifact exceeds the 8 MiB limit")
         parts = self._parts(path)
-        with _publication_guard() as publication, self._directory(
-            parts[:-1], write_lock=True
-        ) as parent:
+        with (
+            _publication_guard() as publication,
+            self._directory(parts[:-1], write_lock=True) as parent,
+        ):
             temporary = ".flora-write-" + uuid.uuid4().hex
             fd = os.open(
                 temporary,
@@ -322,7 +323,8 @@ def _read_tables(raw, suffix):
 
 
 class DocumentTools:
-    def __init__(self, files, store, task_key):
+    def __init__(self, files, store, task_key, *, describe_types=False):
+        self.describe_types = describe_types
         self.files, self.store, self.task_key = files, store, task_key
 
     def read_document(self, path: str) -> dict:
@@ -364,6 +366,19 @@ class DocumentTools:
         if any(len(r) != len(names) for r in cells[1:]):
             raise ValidationError("Table has inconsistent row widths")
         rows = [dict(zip(names, row)) for row in cells[1:]]
+        cell_types = None
+        if self.describe_types:
+
+            def json_type(value):
+                if value is None:
+                    return "null"
+                if type(value) is bool:
+                    return "boolean"
+                if type(value) in (int, float):
+                    return "number"
+                return "string"  # Other workbook scalars serialize with default=str.
+
+            cell_types = {name: sorted({json_type(row[name]) for row in rows}) for name in names}
         filters, groups, metrics = filters or [], group_by or [], metrics or []
         if (
             not all(isinstance(x, list) for x in (filters, groups, metrics))
@@ -498,6 +513,7 @@ class DocumentTools:
             "input_sha256": hashlib.sha256(raw).hexdigest(),
             "rows": json.loads(json.dumps(selected_rows, default=str)),
             "rows_in_source": rows_in_source,
+            **({"cell_types": cell_types} if cell_types is not None else {}),
             "matched_rows": matched,
             "total_result_rows": len(output),
             "next_offset": next_offset
@@ -541,7 +557,9 @@ class DocumentTools:
             path, text, expected_sha256=expected_sha256, create=expected_sha256 is None
         )
         try:
-            self.store.record_artifact(result["path"], result["sha256"], source_ids, self.task_key())
+            self.store.record_artifact(
+                result["path"], result["sha256"], source_ids, self.task_key()
+            )
         except Exception as exc:
             raise InterruptedEffect(
                 "Report was published but its artifact receipt could not be persisted; do not retry"

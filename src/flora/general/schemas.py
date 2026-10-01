@@ -7,7 +7,7 @@ from copy import deepcopy
 from dataclasses import replace
 
 
-def bounded_specs(specs, *, describe_results=False, collaboration=False):
+def bounded_specs(specs, *, describe_results=False, collaboration=False, structured_results=False):
     result = []
     result_notes = {
         "read_file": " Successful VALUE is an object: {path,content:string,size_bytes,offset,next_offset,read_bytes,truncated,has_more,sha256,partial_sha256}. Extract content before parse_json. Check has_more/truncated before treating it as a whole document. Errors are raised, not a content string. A missing file raises FileNotFoundError (the error.type class name), not a not_found code.",
@@ -46,6 +46,24 @@ def bounded_specs(specs, *, describe_results=False, collaboration=False):
             "method": {"enum": ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"], "default": "GET"}
         },
     }
+    if structured_results:
+        result_notes["read_agent"] = (
+            " Successful VALUE is a collection window, not the worker answer. When offset=0 "
+            "and next_offset=null, result is the actual structured child view "
+            "{status,value,reason,budget,failure,claims_verified:false}; result.value is its "
+            "unverified answer. Partial windows omit result: concatenate text in order, "
+            "parse_json the complete text, then inspect status and value. Never return the "
+            "collection window in place of the requested answer. Full collection and "
+            "review_agent do not prove factual correctness."
+        )
+        result_notes["table_query"] += (
+            " cell_types maps source column names to observed JSON cell types before filters. "
+            "CSV cells are strings; XLSX cells can differ. eq/ne/contains compare exact string "
+            "representations (boolean true becomes 'True', not 'true'); numeric comparison "
+            "operators and metrics parse bounded decimals. Inspect unknown encodings before "
+            "filtering. A zero match count is not proof that an assumed encoding is correct. "
+            "Keep exact decimal strings unless the requested output explicitly needs a number."
+        )
     for spec in specs:
         if describe_results and spec.name in result_notes:
             spec = replace(spec, description=spec.description + result_notes[spec.name])

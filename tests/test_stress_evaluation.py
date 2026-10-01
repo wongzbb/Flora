@@ -440,7 +440,7 @@ class ProbeExecutionTests(unittest.TestCase):
         self.assertEqual(view["provider"]["reasoning_effort"], "low")
         self.assertEqual(view["provider"]["total_timeout"], 300)
         self.assertIsNone(view["tool_schema_version"])
-        for value in (True, 1.0, 3, [], {}):
+        for value in (True, 1.0, 4, [], {}):
             profile["general"]["tool_schema_version"] = value
             self.assertIsNone(configuration_view(profile)["tool_schema_version"])
         profile["general"]["tool_schema_version"] = 2
