@@ -276,10 +276,40 @@ def examples():
     return bundles
 
 
+def _projected_observe_prompt(prompt):
+    """Only v3 observation targets project captures; core continuation rules stay exact."""
+    prompt = (
+        prompt.replace(
+            "BOTH REQUIRED; their params are exactly capture keys plus bind. Success gets raw\n",
+            "BOTH REQUIRED; each target declares bind plus any subset of capture keys. Success gets raw\n",
+        )
+        .replace(
+            "Each observation's bind name must match BOTH target params exactly. Different bind\n",
+            "Each observation's bind name must appear in BOTH targets' params. Different bind\n",
+        )
+        .replace(
+            "success and raw {type,message} to error; BOTH targets REQUIRED, with params exactly\n"
+            "capture+bind. Never label all errors not-found or invent an observed result field.",
+            "success and raw {type,message} to error; BOTH targets REQUIRED. Each target's params\n"
+            "must include bind and may include any subset of capture keys, independently.\n"
+            "Never label all errors not-found or invent an observed result field.",
+        )
+    )
+    return prompt + (
+        "\nSOURCE block-list-v3: observe forwards only the capture names explicitly declared\n"
+        "by each outcome target, plus the mandatory bind. For capture={context:EXPR},\n"
+        "success params may be [context,v] and error params [v] when bind is v.\n"
+        "ALL capture expressions still evaluate before the effect, including captures\n"
+        "neither target receives. Only the final jump projects values; no liveness inference,\n"
+        "default values, retries or implicit error handling. Ordinary effect/call/alternative\n"
+        "resume signatures and ordinary branch argument rules remain exact.\n"
+    )
+
+
 def compact_prompt(syntax="observe-v1"):
     prompt = COMPACT_PROMPT
     bundles = examples()
-    if syntax in ("block-list-v1", "block-list-v2"):
+    if syntax in ("block-list-v1", "block-list-v2", "block-list-v3"):
         prompt = prompt.replace(
             'PROGRAM = {"version":1,"entry":"main","blocks":{"main":BLOCK,...}}\n'
             'BLOCK = {"params":["x",...],"ops":[OP,...],"term":TERM}',
@@ -297,8 +327,8 @@ def compact_prompt(syntax="observe-v1"):
                 p = item["program"]
                 labels = [p["entry"]] + [k for k in p["blocks"] if k != p["entry"]]
                 item["program"] = [{"label": k, **p["blocks"][k]} for k in labels]
-    if syntax == "block-list-v2":
-        prompt = prompt.replace("block-list-v1", "block-list-v2")
+    if syntax in ("block-list-v2", "block-list-v3"):
+        prompt = prompt.replace("block-list-v1", syntax)
         prompt = prompt.replace(
             'IMPORTANT: {"op":"eq","args":[...]} is NOT an inline expression! Compute every\n'
             'operation in ops with a dest, then use {"var":"dest"} in terms or later operations.',
@@ -315,6 +345,8 @@ def compact_prompt(syntax="observe-v1"):
             "An EXPR object with op/args means a pure computation. To return it as DATA,\n"
             "escape the entire object with {literal:...}. Effects still require explicit terms.",
         )
+    if syntax == "block-list-v3":
+        prompt = _projected_observe_prompt(prompt)
     return prompt + "\n\n".join(json.dumps(e, ensure_ascii=False, indent=2) for e in bundles)
 
 
@@ -448,7 +480,7 @@ full language, diagnostics, contracts and validation rules.
 
 def focused_prompt(syntax="block-list-v2"):
     bundles = examples()
-    if syntax in {"block-list-v1", "block-list-v2"}:
+    if syntax in {"block-list-v1", "block-list-v2", "block-list-v3"}:
         for bundle in bundles:
             for entry in bundle["programs"] + bundle["diagnostics"]:
                 program = entry["program"]
@@ -468,10 +500,12 @@ def focused_prompt(syntax="block-list-v2"):
         'Nested pure {"op":"name","args":[EXPR,...]} expressions lower eagerly to fresh SSA ops.\n'
         "To return an op/args object as DATA escape it with literal. No tools/control flow in EXPR."
     )
-    if syntax != "block-list-v2":
+    if syntax not in ("block-list-v2", "block-list-v3"):
         nested = (
             'No inline op/args expressions: emit explicit ops/dest, then reference {"var":"dest"}.'
         )
+    if syntax == "block-list-v3":
+        prompt = _projected_observe_prompt(prompt)
     return (
         prompt.replace("NESTED_RULE", nested)
         + "\n"

@@ -550,9 +550,10 @@ class LLMCompiler:
             "observe-v1",
             "block-list-v1",
             "block-list-v2",
+            "block-list-v3",
         }:
             raise ValidationError(
-                "syntax must be ir-v1, observe-v1, block-list-v1 or block-list-v2"
+                "syntax must be ir-v1, observe-v1, block-list-v1, block-list-v2 or block-list-v3"
             )
         if compilation_timeout is not None and (
             type(compilation_timeout) not in (int, float)
@@ -564,7 +565,11 @@ class LLMCompiler:
             raise ValidationError("prompt_style must be full-v1, compact-v1 or compact-v2")
         if prompt_style.startswith("compact-") and syntax == "ir-v1":
             raise ValidationError("compact prompts require observe-v1 or block-list syntax")
-        if syntax in ("block-list-v1", "block-list-v2") and not prompt_style.startswith("compact-"):
+        if syntax in (
+            "block-list-v1",
+            "block-list-v2",
+            "block-list-v3",
+        ) and not prompt_style.startswith("compact-"):
             raise ValidationError("block-list syntax requires a compact prompt_style")
         self.prompt_style = prompt_style
         self.syntax, self.compilation_timeout = syntax, compilation_timeout
@@ -681,7 +686,7 @@ class LLMCompiler:
         if self.prompt_style != "full-v1":
             view["compiler_prompt_style"] = self.prompt_style
         while True:
-            if self.syntax == "block-list-v2":
+            if self.syntax in ("block-list-v2", "block-list-v3"):
                 from flora.language.recovery import recovery_view
 
                 # Rebuild after EVERY omission; never smuggle omitted evidence
@@ -935,7 +940,7 @@ class LLMCompiler:
                     raise ValidationError(
                         "compiler output must be strict JSON without duplicates or nonfinite numbers"
                     ) from None
-                if self.syntax in ("observe-v1", "block-list-v1", "block-list-v2"):
+                if self.syntax in ("observe-v1", "block-list-v1", "block-list-v2", "block-list-v3"):
                     from flora.language.frontend import lower_bundle
 
                     bundle = lower_bundle(bundle, syntax=self.syntax)
@@ -946,7 +951,7 @@ class LLMCompiler:
                     max_diagnostics=self.max_diagnostics,
                     max_bytes=self.max_output_bytes,
                 )
-                if self.syntax in ("block-list-v1", "block-list-v2"):
+                if self.syntax in ("block-list-v1", "block-list-v2", "block-list-v3"):
                     from flora.language.toolcheck import validate_effect_arguments
 
                     validate_effect_arguments(validated, snapshot.tools)

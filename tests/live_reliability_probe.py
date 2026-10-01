@@ -145,7 +145,7 @@ def configuration_view(profile):
     }
     version = profile.get("general", {}).get("tool_schema_version")
     for name, allowed in (
-        ("syntax", {"ir-v1", "observe-v1", "block-list-v1", "block-list-v2"}),
+        ("syntax", {"ir-v1", "observe-v1", "block-list-v1", "block-list-v2", "block-list-v3"}),
         ("prompt_style", {"full-v1", "compact-v1", "compact-v2"}),
     ):
         value = profile.get("compiler", {}).get(name)

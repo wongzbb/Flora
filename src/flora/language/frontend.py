@@ -24,7 +24,7 @@ All ordinary IR, candidates, diagnostics and revisions remain available and chec
 """
 
 
-def _observation_signature(block_id, term, blocks):
+def _observation_signature(block_id, term, blocks, *, project_captures=False):
     if set(term) != {"op", "tool", "args", "bind", "capture", "success", "error"}:
         raise ValidationError("observe requires tool, args, bind, capture, success and error")
     bind, capture = term["bind"], term["capture"]
@@ -46,23 +46,36 @@ def _observation_signature(block_id, term, blocks):
             or not isinstance(blocks[target], dict)
             or not isinstance(blocks[target].get("params"), list)
             or any(not isinstance(p, str) for p in blocks[target]["params"])
-            or set(blocks[target]["params"]) != set(params)
+            or (
+                not (
+                    bind in blocks[target]["params"]
+                    and set(blocks[target]["params"]) <= set(params)
+                )
+                if project_captures
+                else set(blocks[target]["params"]) != set(params)
+            )
         ):
             actual = (
                 blocks.get(target, {}).get("params")
                 if isinstance(target, str) and isinstance(blocks.get(target), dict)
                 else None
             )
+            requirement = (
+                f"bind {bind!r} and only an explicitly declared subset of capture keys; "
+                f"allowed params {params!r}"
+                if project_captures
+                else f"capture keys plus bind; expected params {params!r}"
+            )
             errors.append(
                 f"observe in block {block_id!r}: {label} target {target!r} must accept "
-                f"capture keys plus bind; expected params {params!r}, got {actual!r}"
+                f"{requirement}, got {actual!r}"
             )
     if errors:
         raise ValidationError("\n".join(errors))
     return bind, capture, params
 
 
-def lower_program(source: dict) -> dict:
+def lower_program(source: dict, *, project_captures=False) -> dict:
     """Expand explicit observations, preserving expressions, targets and data literals."""
     program = clone(source)
     if not isinstance(program, dict) or not isinstance(program.get("blocks"), dict):
@@ -79,7 +92,9 @@ def lower_program(source: dict) -> dict:
         term = block["term"]
         if term.get("op") != "observe":
             continue
-        bind, capture, params = _observation_signature(block_id, term, blocks)
+        bind, capture, params = _observation_signature(
+            block_id, term, blocks, project_captures=project_captures
+        )
         # Fresh block names and local temporaries cannot capture user identifiers.
         n = 0
         while True:
@@ -115,10 +130,21 @@ def lower_program(source: dict) -> dict:
             (ok, "value", term["success"]),
             (error, "error", term["error"]),
         ):
+            arguments = {**forwarded, bind: var(bind)}
+            if project_captures:
+                # Evaluate and carry EVERY capture exactly as before. Only the
+                # explicit final jump drops values the target did not declare.
+                # Dropping a capture expression before the effect would change
+                # fault/resource behavior and is not this source shorthand.
+                arguments = {
+                    key: value
+                    for key, value in arguments.items()
+                    if key in blocks[target]["params"]
+                }
             blocks[name] = {
                 "params": list(capture) + [reply],
                 "ops": [{"op": "get", "dest": bind, "args": [var(reply), field]}],
-                "term": {"op": "jump", "target": target, "args": {**forwarded, bind: var(bind)}},
+                "term": {"op": "jump", "target": target, "args": arguments},
             }
         if len(blocks) > 512:
             raise ValidationError("expanded observe-v1 program exceeds 512 IR blocks")
@@ -162,7 +188,7 @@ def _check_source_expressions(program):
                     visit(term[field], f"block {label!r} term.{field}")
 
 
-def lower_block_list(source, *, inline_expressions=False) -> dict:
+def lower_block_list(source, *, inline_expressions=False, project_captures=False) -> dict:
     """First labelled block is the entry; no new execution or inferred control flow."""
     if isinstance(source, dict):
         program = source
@@ -190,25 +216,31 @@ def lower_block_list(source, *, inline_expressions=False) -> dict:
             term = block.get("term") if isinstance(block, dict) else None
             if isinstance(term, dict) and term.get("op") == "observe":
                 try:
-                    _observation_signature(label, term, program["blocks"])
+                    _observation_signature(
+                        label, term, program["blocks"], project_captures=project_captures
+                    )
                 except ValidationError as exc:
                     errors.append(str(exc))
                     if len(errors) == 16:
                         break
         if errors:
             raise ValidationError("Source observation errors:\n" + "\n".join(errors))
-    return lower_program(program)
+    return lower_program(program, project_captures=project_captures)
 
 
 def lower_bundle(source: dict, *, syntax="observe-v1") -> dict:
     """Only program-bearing fields are rewritten; never recurse through user data."""
-    if syntax not in ("observe-v1", "block-list-v1", "block-list-v2"):
+    if syntax not in ("observe-v1", "block-list-v1", "block-list-v2", "block-list-v3"):
         raise ValidationError("unsupported frontend syntax")
 
     def lower(program):
         if syntax == "observe-v1":
             return lower_program(program)
-        return lower_block_list(program, inline_expressions=syntax == "block-list-v2")
+        return lower_block_list(
+            program,
+            inline_expressions=syntax in ("block-list-v2", "block-list-v3"),
+            project_captures=syntax == "block-list-v3",
+        )
 
     bundle = clone(source)
     if not isinstance(bundle, dict):
