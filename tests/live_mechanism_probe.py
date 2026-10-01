@@ -1,8 +1,8 @@
-"""Opt-in elicited dual-control probe; no host-authored candidate or diagnostic IR.
+"""Opt-in dual-control probe with explicit or task-level natural elicitation.
 
 The real model authors every program, forecast and witness. Local tools simulate
-one irreversible dispatch commitment. Success demonstrates an explicitly elicited
-mechanism on this fixture, not spontaneous synthesis or causal benefit.
+one irreversible dispatch commitment. The compiler teaches the mechanism in both
+modes; fixture success does not establish spontaneous synthesis or causal benefit.
 """
 
 from __future__ import annotations
@@ -36,7 +36,24 @@ SCOPE = (
     "one-shot commitment. No host-authored candidate/forecast/consumer, no spontaneous "
     "synthesis claim, and no causal-benefit claim."
 )
+NATURAL_SCOPE = (
+    "Task-level unelicited mechanism use: the user task does not request alternatives, "
+    "forecasts or diagnostics, but the compiler still teaches the mechanism. Local "
+    "simulated one-shot commitment; no host-authored candidate/forecast/consumer, "
+    "no spontaneous-synthesis claim, and no causal-benefit claim."
+)
 LEAD_MINUTES = 17
+
+
+def elicitation_metadata(elicitation):
+    if elicitation not in ("explicit", "natural"):
+        raise ValueError("elicitation must be explicit or natural")
+    return {
+        "elicitation": elicitation,
+        "task_level_mechanism_elicited": elicitation == "explicit",
+        "compiler_mechanism_instructions": True,
+        "scope": SCOPE if elicitation == "explicit" else NATURAL_SCOPE,
+    }
 
 
 class DispatchWorld:
@@ -89,25 +106,32 @@ class DispatchWorld:
         ]
 
 
-def task_text(cutoffs):
-    return (
+def task_text(cutoffs, elicitation="explicit"):
+    elicitation_metadata(elicitation)
+    request = (
         f"Dispatch one shipment exactly {LEAD_MINUTES} minutes before the CURRENT cutoff. "
         f"Two credible operations records conflict: record A says {cutoffs[0]} minutes "
         f"after midnight; record B says {cutoffs[1]}. Neither record has a trustworthy "
         "freshness advantage. Independently observe the current cutoff before committing; "
         "do not guess or commit both. Return only the actual commitment receipt object. "
+    )
+    exercise = (
         "This is an explicitly elicited dual-control exercise: retain the two genuinely "
         "different source-based commitment alternatives as normal candidates, and author "
         "an informative diagnostic that observes the independent state before any commitment. "
         "Author your own forecasts, hypothetical witnesses and a consumer that uses the "
         "ACTUAL observation to commit the appropriate departure. Witnesses are hypothetical, "
         "not observed facts. Do not manufacture unrelated alternatives or claim that an "
-        "ordinary conditional branch alone proves diagnostic insertion. All tools affect "
-        "only this local simulation."
+        "ordinary conditional branch alone proves diagnostic insertion. "
+    )
+    return (
+        request
+        + (exercise if elicitation == "explicit" else "")
+        + ("All tools affect only this local simulation.")
     )
 
 
-def assess(world, cutoffs, result, receipts, events, selections):
+def assess(world, cutoffs, result, receipts, events, selections, elicitation="explicit"):
     """External post-run checks; this output is never fed to the compiler."""
     expected = world.cutoff - LEAD_MINUTES
     expected_value = {"committed": True, "departure_minutes": expected}
@@ -167,14 +191,48 @@ def assess(world, cutoffs, result, receipts, events, selections):
         "task_passed": bool(task_passed),
         "mechanism_passed": bool(task_passed and inserted),
         "diagnostic_evidence_linked": bool(inserted),
-        "scope": SCOPE,
+        **elicitation_metadata(elicitation),
         "spontaneous_synthesis_verified": False,
         "causal_benefit_verified": False,
     }
 
 
-def run_case(provider, compiler_options, cutoffs, cutoff, directory, *, key=""):
+def action_trajectory(receipts, selections):
+    """Link observed selections to actual receipts; never execute or infer an action."""
+    trajectory = []
+    for receipt in receipts:
+        matching = [
+            selection
+            for selection in selections
+            if selection.get("epoch") == receipt.get("event_id")
+            and selection.get("trace_digest") == receipt.get("previous_hash")
+            and selection.get("tool") == receipt.get("tool")
+        ]
+        selection = matching[0] if len(matching) == 1 else None
+        trajectory.append(
+            {
+                "event_id": receipt.get("event_id"),
+                "previous_hash": receipt.get("previous_hash"),
+                "request": {"tool": receipt.get("tool"), "args": clone(receipt.get("args"))},
+                "status": receipt.get("status"),
+                **{key: clone(receipt[key]) for key in ("value", "error") if key in receipt},
+                "selection_linked": selection is not None,
+                "selection": None
+                if selection is None
+                else {
+                    key: clone(selection.get(key))
+                    for key in ("candidate", "diagnostic", "shared_with", "normal_frontiers")
+                },
+            }
+        )
+    return trajectory
+
+
+def run_case(
+    provider, compiler_options, cutoffs, cutoff, directory, *, key="", elicitation="explicit"
+):
     """No seed bundle: the compiler/model authors the initial and later programs."""
+    task = task_text(cutoffs, elicitation)
     world = DispatchWorld(cutoff)
     events, selections, bundles = [], [], []
     monitor = AccessFailureMonitor(events)
@@ -206,6 +264,7 @@ def run_case(provider, compiler_options, cutoffs, cutoff, directory, *, key=""):
             selections.append(
                 {
                     **event,
+                    "trace_digest": runtime.trace.digest,
                     "normal_frontiers": [
                         {"id": c.id, "request": clone(c.machine.pending["request"])}
                         for c in runtime.candidates.values()
@@ -236,7 +295,7 @@ def run_case(provider, compiler_options, cutoffs, cutoff, directory, *, key=""):
     started = time.monotonic()
     result, exception = {}, None
     try:
-        result = runtime.run(task_text(cutoffs)).to_dict()
+        result = runtime.run(task).to_dict()
     except Exception as exc:
         exception = {"type": type(exc).__name__, "message": dialogue.clean(str(exc))}
     finally:
@@ -244,11 +303,12 @@ def run_case(provider, compiler_options, cutoffs, cutoff, directory, *, key=""):
         store.close()
         provider.on_event = None
     receipts = clone(runtime.trace.records)
-    grade = assess(world, cutoffs, result, receipts, events, selections)
+    grade = assess(world, cutoffs, result, receipts, events, selections, elicitation)
     if exception is not None or monitor.status is not None:
         grade["task_passed"] = grade["mechanism_passed"] = False
     return {
-        "task": task_text(cutoffs),
+        "task": task,
+        **elicitation_metadata(elicitation),
         "source_cutoffs": list(cutoffs),
         "actual_cutoff_after_run": cutoff,
         "result": result,
@@ -260,6 +320,7 @@ def run_case(provider, compiler_options, cutoffs, cutoff, directory, *, key=""):
         "host_calls": clone(world.calls),
         "model_bundles": bundles,
         "selections": selections,
+        "action_trajectory": action_trajectory(receipts, selections),
         "mechanism_observations": mechanism_observations(events),
         "events": events,
     }
@@ -284,6 +345,7 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--rounds", type=int, choices=range(1, 4), default=1)
     parser.add_argument("--seed", type=int, default=20261001)
+    parser.add_argument("--elicitation", choices=("explicit", "natural"), default="explicit")
     args = parser.parse_args()
     if args.base_url.rstrip("/") != "https://api.deepseek.com":
         parser.error("Only the explicitly authorized official HTTPS endpoint is allowed")
@@ -323,7 +385,7 @@ def main():
             "configuration": configuration_view(
                 {"provider": provider_options, "compiler": compiler_options}
             ),
-            "scope": SCOPE,
+            **elicitation_metadata(args.elicitation),
             "planned_cases": args.rounds * 2,
         },
     )
@@ -335,7 +397,14 @@ def main():
             rng.shuffle(states)
             for variant, cutoff in enumerate(states):
                 if blocked:
-                    rows.append({"round": repeat + 1, "variant": variant + 1, "status": "not_run"})
+                    rows.append(
+                        {
+                            "round": repeat + 1,
+                            "variant": variant + 1,
+                            "status": "not_run",
+                            **elicitation_metadata(args.elicitation),
+                        }
+                    )
                     save(output / "results.json", rows)
                     continue
                 directory = output / f"r{repeat + 1}-v{variant + 1}"
@@ -349,7 +418,15 @@ def main():
                 previous = signal.signal(signal.SIGALRM, deadline)
                 signal.alarm(660)
                 try:
-                    row = run_case(provider, compiler_options, cutoffs, cutoff, directory, key=key)
+                    row = run_case(
+                        provider,
+                        compiler_options,
+                        cutoffs,
+                        cutoff,
+                        directory,
+                        key=key,
+                        elicitation=args.elicitation,
+                    )
                 finally:
                     signal.alarm(0)
                     signal.signal(signal.SIGALRM, previous)

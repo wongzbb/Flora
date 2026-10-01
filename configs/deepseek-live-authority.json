@@ -1,0 +1,50 @@
+{
+  "provider": {
+    "stream": true,
+    "timeout": 60,
+    "total_timeout": 300,
+    "progress_timeout": 60,
+    "first_program_timeout": 240,
+    "max_response_bytes": 4194304,
+    "max_stream_bytes": 67108864,
+    "max_json_whitespace": 2048,
+    "stream_fallback": true,
+    "allow_insecure_http": false,
+    "request_options": {
+      "thinking": {
+        "type": "enabled"
+      },
+      "reasoning_effort": "low",
+      "response_format": {
+        "type": "json_object"
+      }
+    }
+  },
+  "compiler": {
+    "max_output_tokens": 24000,
+    "max_repairs": 1,
+    "compilation_timeout": 300,
+    "syntax": "block-list-v3",
+    "prompt_style": "compact-v3"
+  },
+  "budget": {
+    "max_model_calls": 12,
+    "max_tool_calls": 80,
+    "max_input_tokens": 500000,
+    "max_output_tokens": 180000,
+    "max_wall_seconds": 900
+  },
+  "general": {
+    "subagents": {
+      "budget": {
+        "max_model_calls": 6,
+        "max_tool_calls": 40,
+        "max_input_tokens": 250000,
+        "max_output_tokens": 90000,
+        "max_wall_seconds": 450
+      }
+    },
+    "require_task_completion": true,
+    "tool_schema_version": 4
+  }
+}

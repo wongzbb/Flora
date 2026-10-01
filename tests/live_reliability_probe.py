@@ -22,6 +22,7 @@ import re
 import sqlite3
 import statistics
 import subprocess
+import threading
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -159,7 +160,9 @@ def configuration_view(profile):
         "provider": view,
         "compiler": compiler,
         "general": general,
-        "tool_schema_version": version if type(version) is int and version in (1, 2, 3, 4) else None,
+        "tool_schema_version": version
+        if type(version) is int and version in (1, 2, 3, 4)
+        else None,
     }
 
 
@@ -172,9 +175,44 @@ class AccessFailureMonitor:
         self.status = None
         self.pause_after_write = pause_after_write
         self.write_paused = False
+        self.started = time.monotonic()
+        self._telemetry_lock = threading.Lock()
+        self.first_tool_seconds = None
+        self.program_bytes = {}
+        self.validation_rejections = 0
+        self.replan_count = 0
+
+    def telemetry(self):
+        """Operational counts only; generated text is neither retained nor interpreted."""
+        with self._telemetry_lock:
+            sizes = list(self.program_bytes.values())
+            return {
+                "first_tool_dispatch_seconds": self.first_tool_seconds,
+                "generated_program_text_bytes": sum(sizes),
+                "largest_generated_program_text_bytes": max(sizes, default=0),
+                "generations_with_program_text": len(sizes),
+                "validation_rejections": self.validation_rejections,
+                "replans": self.replan_count,
+                "scope": "Observer wall time and UTF-8 program transcript chunks; not tokens, lowered IR size, or causal evidence",
+            }
 
     def __call__(self, event):
         self.events.append(event)
+        with self._telemetry_lock:
+            if event.get("kind") == "transcript":
+                channel = event.get("channel")
+                if channel == "tool/call" and self.first_tool_seconds is None:
+                    self.first_tool_seconds = round(time.monotonic() - self.started, 3)
+                elif channel == "program":
+                    key = (event.get("actor"), event.get("request"))
+                    self.program_bytes[key] = self.program_bytes.get(key, 0) + len(
+                        event.get("text", "").encode("utf-8")
+                    )
+                elif channel == "compiler_rejected":
+                    self.validation_rejections += 1
+            actual = event.get("event", {}) if event.get("kind") == "subagent_event" else event
+            if actual.get("kind") == "replan_requested":
+                self.replan_count += 1
         if (
             self.pause_after_write
             and not self.write_paused
@@ -974,6 +1012,7 @@ def evaluate(args, key):
         if recovery is not None:
             row["reopen_recovery"] = recovery
         row["mechanism_observations"] = mechanism_observations(events)
+        row["compilation_telemetry"] = monitor.telemetry()
         row.update(
             model=model,
             case=case,
