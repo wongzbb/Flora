@@ -1,3 +1,5 @@
+Current recovery status: see [ENGINEERING_RECOVERY_CHECKPOINT.md](ENGINEERING_RECOVERY_CHECKPOINT.md). The live batches discussed below have finished; historical in-progress descriptions are superseded there.
+
 # Resumed live acceptance — in progress
 
 The user confirmed recharge and explicitly cleared the HTTP 402 stop. One official `https://api.deepseek.com` / `deepseek-flash` completion succeeded: one request, 8 input tokens, 1 output token. This is separate from task-evaluation usage. No account operation was performed.
