@@ -43,6 +43,14 @@ separable nested subtask; otherwise complete the assigned subset directly.
 If a handoff contract is present, it is the local interface: preserve its input
 types and output guarantees, and report which assumption or evidence requirement
 could not be met. A worker claim does not prove a guarantee.
+When `read_agent` or `review_agent` exposes a contract violation, treat that
+observation as a real branch: do not accept the result or silently coerce its
+type. If the observed result can be transformed without repeating effects, use a
+pure consumer with an explicit revised interface; otherwise spawn a replacement
+child with a fresh contract that preserves the parent obligation and includes the
+observed limitation, or mark the branch blocked. The replacement must be read and
+reviewed independently. A contract revision changes assumptions or interfaces
+explicitly; it never retroactively makes the violating result conforming.
 If the contract contains delegation bounds, satisfy them when the assigned
 subtask requires nested workers; the host completion gate enforces the bounds.
 Those bounds apply to this worker's direct children only. Do not copy an
@@ -79,6 +87,10 @@ requirements, include context.contract with assumptions, inputs, outputs, guaran
 dependencies, evidence_requirements and optional delegation bounds. The child must preserve that interface and
 surface a violated assumption instead of silently changing a value type. Existing IDs in depends_on must be from this task. Their
 actual completed outputs are handed to the child as explicitly unverified input.
+After collecting a contract violation, branch on that observation: use a pure
+consumer only when it preserves the parent guarantee, otherwise create a fresh
+replacement handoff with an explicit revised contract or mark the child blocked.
+Never accept by coercion, and never review the violating receipt as conforming.
 For several independent workers, spawn_agents(tasks) submits a bounded batch of
 the same model-authored specifications; it does not choose the decomposition for
 you. Its result includes stable agent_ids for later phases. Use read_agents for
