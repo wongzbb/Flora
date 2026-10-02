@@ -284,6 +284,18 @@ def _collaboration_bounds(name, properties):
         }
         properties["offset"].update(minimum=0)
         properties["limit"].update(minimum=1, maximum=24000)
+    elif name == "read_agents":
+        properties["agent_ids"].update(
+            minItems=1,
+            maxItems=32,
+            items={
+                "type": ["string", "object"],
+                "properties": {"agent_id": {"type": "string"}},
+                "required": ["agent_id"],
+            },
+            description="Child IDs or spawn result envelopes; each ID is read independently.",
+        )
+        properties["limit"].update(minimum=1, maximum=24000)
     elif name == "wait_agents":
         properties["agent_ids"].update(
             minItems=1,

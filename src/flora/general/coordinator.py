@@ -81,7 +81,10 @@ surface a violated assumption instead of silently changing a value type. Existin
 actual completed outputs are handed to the child as explicitly unverified input.
 For several independent workers, spawn_agents(tasks) submits a bounded batch of
 the same model-authored specifications; it does not choose the decomposition for
-you. Collect and review every returned worker before finalizing.
+you. Its result includes stable agent_ids for later phases. Use read_agents for
+one bounded window per child when the assignments are independent; follow each
+returned next_offset to collect complete results, then review every child
+individually before finalizing.
 Do not split trivial tasks. Use parallel workers for separable work, and dependencies
 only when a worker genuinely needs another's result. No recursive delegation or
 child writes/shell/browser/service mutations. agent_status lists live state.
@@ -390,7 +393,12 @@ and evidence; do not discard required goals to bypass completion checks.
                     item.get("required", True),
                 )
             )
-        return {"agents": results, "count": len(results), "claims_verified": False}
+        return {
+            "agents": results,
+            "agent_ids": [row["agent_id"] for row in results],
+            "count": len(results),
+            "claims_verified": False,
+        }
 
     def _submit(self, ident):
         # A logical future covers both dependency waiting and worker execution.
@@ -1024,6 +1032,7 @@ and evidence; do not discard required goals to bypass completion checks.
             self.agent_status,
             self.wait_agents,
             self.read_agent,
+            self.read_agents,
             self.resume_agent,
             self.review_agent,
         ]

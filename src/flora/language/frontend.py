@@ -205,6 +205,41 @@ def lower_block_list(source, *, inline_expressions=False, project_captures=False
                 extras = set(block) - {"label", "params", "ops", "term"}
                 control = {"resume", "bind", "capture", "success", "error", "target", "args", "branches"}
                 term = block.get("term")
+                control_ops = {
+                    "return",
+                    "replan",
+                    "jump",
+                    "branch",
+                    "call",
+                    "alternative",
+                    "effect",
+                    "observe",
+                }
+                if (
+                    isinstance(term, dict)
+                    and isinstance(term.get("op"), str)
+                    and term.get("op") not in control_ops
+                    and {"resume", "bind", "capture"} <= set(term)
+                    and "tool" not in term
+                ):
+                    # Accept a generic tool-term shorthand only when its
+                    # continuation metadata is complete. Tool arguments remain
+                    # data and are validated unchanged by the normal frontend.
+                    tool_name = term["op"]
+                    args = {
+                        key: value
+                        for key, value in term.items()
+                        if key not in {"op", "resume", "bind", "capture"}
+                    }
+                    term = {
+                        "op": "effect",
+                        "tool": tool_name,
+                        "args": args,
+                        "resume": term["resume"],
+                        "bind": term["bind"],
+                        "capture": term["capture"],
+                    }
+                    block = {**block, "term": term}
                 if (
                     isinstance(term, dict)
                     and set(term)

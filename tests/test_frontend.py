@@ -260,6 +260,28 @@ class FrontendTests(unittest.TestCase):
         lowered = lower_bundle(source, syntax="block-list-v3")
         self.assertEqual(lowered["programs"][0]["program"]["blocks"]["main"]["term"]["op"], "effect")
 
+    def test_block_list_normalizes_generic_tool_term_shorthand(self):
+        source = bundle(
+            [
+                {
+                    "label": "main",
+                    "params": [],
+                    "ops": [],
+                    "term": {
+                        "op": "read_value",
+                        "value": 7,
+                        "resume": "after",
+                        "bind": "reply",
+                        "capture": {},
+                    },
+                },
+                {"label": "after", "params": ["reply"], "ops": [], "term": {"op": "return", "value": {"var": "reply"}}},
+            ]
+        )
+        lowered = lower_bundle(source, syntax="block-list-v3")
+        term = lowered["programs"][0]["program"]["blocks"]["main"]["term"]
+        self.assertEqual((term["op"], term["tool"], term["args"]), ("effect", "read_value", {"value": 7}))
+
     def test_capabilities_anchors_and_migration_purity_not_bypassed(self):
         expanded = lower_bundle(bundle(observe()))
         with self.assertRaises(ValidationError):

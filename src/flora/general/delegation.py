@@ -434,6 +434,13 @@ delegate. The parent must inspect your result; never claim it has been verified.
             "total_chars": len(text),
         }
 
+    def read_agents(self, agent_ids: list, limit: int = 24000) -> dict:
+        """Read one bounded window for each selected child without changing review requirements."""
+        if type(limit) is not int or not 1 <= limit <= 24000:
+            raise ValidationError("Read limit must be between 1 and 24000")
+        ids = self._ids(agent_ids)
+        return {"agents": [self.read_agent(agent_id, limit=limit) for agent_id in ids]}
+
     def resume_agent(self, agent_id: str) -> dict:
         """Explicitly resume an interrupted child using its original budget and effect journal."""
         agent_id = self._id(agent_id)
@@ -497,6 +504,7 @@ delegate. The parent must inspect your result; never claim it has been verified.
                     self.agent_status,
                     self.wait_agents,
                     self.read_agent,
+                    self.read_agents,
                     self.resume_agent,
                 ]
             )._tools.values()

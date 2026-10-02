@@ -101,6 +101,7 @@ class CollaborationTests(unittest.TestCase):
         )
         self.assertEqual(rows["count"], 2)
         ids = [row["agent_id"] for row in rows["agents"]]
+        self.assertEqual(rows["agent_ids"], ids)
         for ident in ids:
             self.app.delegation.futures[ident].result(timeout=5)
         self.assertEqual({self.app.delegation.records[i]["status"] for i in ids}, {"completed"})
@@ -116,6 +117,18 @@ class CollaborationTests(unittest.TestCase):
         self.assertEqual(row["agent_id"], ident)
         with self.assertRaises(ValidationError):
             self.app.delegation.read_agent({"status": "completed"})
+
+    def test_batch_read_preserves_individual_result_digests(self):
+        rows = self.app.delegation.spawn_agents(
+            [{"task": "first"}, {"task": "second"}]
+        )
+        ids = rows["agent_ids"]
+        for ident in ids:
+            self.app.delegation.futures[ident].result(timeout=5)
+        batch = self.app.delegation.read_agents(rows["agents"], limit=24000)
+        self.assertEqual([item["agent_id"] for item in batch["agents"]], ids)
+        self.assertTrue(all(item["result_available"] for item in batch["agents"]))
+        self.assertTrue(all(item["total_chars"] > 0 for item in batch["agents"]))
 
     def test_nested_coordinator_is_available_only_with_a_bounded_depth(self):
         root = self.root / "nested-session"
