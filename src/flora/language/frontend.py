@@ -205,6 +205,18 @@ def lower_block_list(source, *, inline_expressions=False, project_captures=False
                 extras = set(block) - {"label", "params", "ops", "term"}
                 control = {"resume", "bind", "capture", "success", "error", "target", "args", "branches"}
                 term = block.get("term")
+                if (
+                    isinstance(term, dict)
+                    and set(term)
+                    == {"op", "tool", "args", "bind", "capture", "success", "error"}
+                    and term.get("op") == "effect"
+                ):
+                    # Some model outputs use the ordinary effect name while
+                    # supplying the complete observe-v1 outcome pair. This is
+                    # an unambiguous semantic envelope; normalize its opcode,
+                    # then run the same observe signature and IR checks.
+                    term = {**term, "op": "observe"}
+                    block = {**block, "term": term}
                 if extras and extras <= control and isinstance(term, dict) and "op" in term:
                     if not (extras & set(term)):
                         block = {

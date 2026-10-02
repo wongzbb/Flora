@@ -236,6 +236,30 @@ class FrontendTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             lower_bundle(ambiguous, syntax="block-list-v3")
 
+    def test_block_list_normalizes_effect_with_complete_observe_outcomes(self):
+        source = bundle(
+            [
+                {
+                    "label": "main",
+                    "params": [],
+                    "ops": [],
+                    "term": {
+                        "op": "effect",
+                        "tool": "read_value",
+                        "args": {},
+                        "bind": "value",
+                        "capture": {},
+                        "success": "ok",
+                        "error": "err",
+                    },
+                },
+                {"label": "ok", "params": ["value"], "ops": [], "term": {"op": "return", "value": {"var": "value"}}},
+                {"label": "err", "params": ["value"], "ops": [], "term": {"op": "return", "value": {"var": "value"}}},
+            ]
+        )
+        lowered = lower_bundle(source, syntax="block-list-v3")
+        self.assertEqual(lowered["programs"][0]["program"]["blocks"]["main"]["term"]["op"], "effect")
+
     def test_capabilities_anchors_and_migration_purity_not_bypassed(self):
         expanded = lower_bundle(bundle(observe()))
         with self.assertRaises(ValidationError):
