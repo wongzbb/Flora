@@ -187,6 +187,18 @@ def bounded_specs(
 
 def _collaboration_bounds(name, properties):
     """Versioned metadata for existing host checks, not extra capabilities."""
+    contract_schema = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "assumptions": {"type": "array", "maxItems": 32, "items": {"type": "string", "maxLength": 2000}},
+            "inputs": {"type": "object"},
+            "outputs": {"type": "object"},
+            "guarantees": {"type": "array", "maxItems": 32, "items": {"type": "string", "maxLength": 2000}},
+            "dependencies": {"type": "array", "maxItems": 32, "items": {"type": "string", "maxLength": 2000}},
+            "evidence_requirements": {"type": "array", "maxItems": 32, "items": {"type": "string", "maxLength": 2000}},
+        },
+    }
     if name == "spawn_agent":
         properties["task"].update(minLength=1, maxLength=16000)
         properties["name"].update(minLength=1, maxLength=64)
@@ -209,8 +221,9 @@ def _collaboration_bounds(name, properties):
                         },
                     },
                 },
+                "contract": contract_schema,
             },
-            description="Only guidance, source_ids and files are accepted. Put free-form observed context in guidance; completed dependency outputs are handed over automatically.",
+            description="Context accepts guidance, source_ids, files and a bounded assume-guarantee contract; completed dependency outputs are handed over automatically.",
         )
     elif name == "spawn_agents":
         properties["tasks"].update(
@@ -247,6 +260,7 @@ def _collaboration_bounds(name, properties):
                                 },
                             },
                         },
+                        "contract": contract_schema,
                     },
                 },
                 "depends_on": {"type": "array", "maxItems": 8, "items": {"type": "string"}},

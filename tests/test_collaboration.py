@@ -234,11 +234,23 @@ class CollaborationTests(unittest.TestCase):
                 "guidance": "Use supplied facts",
                 "source_ids": [source["source_id"]],
                 "files": [{"path": "facts.txt", "sha256": sha}],
+                "contract": {
+                    "assumptions": ["facts.txt is UTF-8 text"],
+                    "inputs": {"kind": "text"},
+                    "outputs": {"type": "object", "numeric_fields": ["total"]},
+                    "guarantees": ["preserve numeric values as numbers"],
+                    "dependencies": ["facts.txt"],
+                    "evidence_requirements": ["read the complete file before reporting"],
+                },
             }
         )
         value = self.app.delegation._result_view(ident)["value"]
         data = value["handoff"]
         self.assertEqual(data["handoff"]["evidence"][0]["source_id"], source["source_id"])
+        self.assertEqual(
+            data["handoff"]["contract"]["guarantees"],
+            ["preserve numeric values as numbers"],
+        )
         self.assertEqual(data["parent_task"], "Parent research task")
         self.assertFalse(data["claims_verified"])
         self.assertTrue(
@@ -253,6 +265,14 @@ class CollaborationTests(unittest.TestCase):
     def test_invented_context_is_rejected_before_worker_dispatch(self):
         with self.assertRaisesRegex(ValidationError, "Unknown source"):
             self.app.delegation.spawn_agent("research", context={"source_ids": ["src-999999"]})
+        self.assertEqual(self.provider.calls, 0)
+        self.assertFalse(self.app.delegation.records)
+
+    def test_invalid_contract_is_rejected_before_worker_dispatch(self):
+        with self.assertRaisesRegex(ValidationError, "contract.guarantees"):
+            self.app.delegation.spawn_agent(
+                "research", context={"contract": {"guarantees": ["ok", 3]}}
+            )
         self.assertEqual(self.provider.calls, 0)
         self.assertFalse(self.app.delegation.records)
 
