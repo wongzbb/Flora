@@ -108,6 +108,15 @@ class CollaborationTests(unittest.TestCase):
         descriptions = {item["name"] for item in self.app.agent.tools.descriptions()}
         self.assertIn("spawn_agents", descriptions)
 
+    def test_spawn_result_envelope_can_be_passed_to_single_agent_tools(self):
+        envelope = self.app.delegation.spawn_agent("Inspect one result")
+        ident = envelope["agent_id"]
+        self.app.delegation.futures[ident].result(timeout=5)
+        row = self.app.delegation.read_agent(envelope, limit=24000)
+        self.assertEqual(row["agent_id"], ident)
+        with self.assertRaises(ValidationError):
+            self.app.delegation.read_agent({"status": "completed"})
+
     def test_nested_coordinator_is_available_only_with_a_bounded_depth(self):
         root = self.root / "nested-session"
         with GeneralAgent(
@@ -237,8 +246,8 @@ class CollaborationTests(unittest.TestCase):
                 "contract": {
                     "assumptions": ["facts.txt is UTF-8 text"],
                     "inputs": {"kind": "text"},
-                    "outputs": {"type": "object", "numeric_fields": ["total"]},
-                    "guarantees": ["preserve numeric values as numbers"],
+                    "outputs": {"finding": "string"},
+                    "guarantees": ["preserve observed text as a string"],
                     "dependencies": ["facts.txt"],
                     "evidence_requirements": ["read the complete file before reporting"],
                 },
@@ -249,7 +258,7 @@ class CollaborationTests(unittest.TestCase):
         self.assertEqual(data["handoff"]["evidence"][0]["source_id"], source["source_id"])
         self.assertEqual(
             data["handoff"]["contract"]["guarantees"],
-            ["preserve numeric values as numbers"],
+            ["preserve observed text as a string"],
         )
         self.assertEqual(data["parent_task"], "Parent research task")
         self.assertFalse(data["claims_verified"])
@@ -260,6 +269,31 @@ class CollaborationTests(unittest.TestCase):
         self.assertFalse(
             {"create_file", "update_file", "run_command", "spawn_agent", "http_request"}
             & self.provider.child_tools
+        )
+
+    def test_contract_type_violation_blocks_accepted_review(self):
+        ident = self.spawn(
+            context={"contract": {"outputs": {"result": "number"}}}
+        )
+        fingerprint = self.collect(ident)
+        observed = self.app.delegation.read_agent(ident, limit=24000)
+        self.assertEqual(observed["contract_check"]["status"], "violation")
+        with self.assertRaisesRegex(ValidationError, "Contract output guarantee"):
+            self.app.delegation.review_agent(
+                ident, fingerprint, "accepted", "The child result was reviewed"
+            )
+        rejected = self.app.delegation.review_agent(
+            ident, fingerprint, "rejected", "Result omitted the required numeric field"
+        )
+        self.assertEqual(rejected["review"]["contract_check"]["status"], "violation")
+
+    def test_contract_type_labels_accept_bounded_human_readable_aliases(self):
+        self.assertEqual(
+            self.app.delegation._contract_observation(
+                {"outputs": {"result": "JSON number, not a string"}},
+                {"result": 42},
+            )["status"],
+            "pass",
         )
 
     def test_invented_context_is_rejected_before_worker_dispatch(self):

@@ -268,6 +268,12 @@ def _collaboration_bounds(name, properties):
             },
         }
     elif name == "read_agent":
+        properties["agent_id"] = {
+            "type": ["string", "object"],
+            "properties": {"agent_id": {"type": "string"}},
+            "required": ["agent_id"],
+            "description": "Child ID or an untrusted spawn result envelope; only agent_id is used.",
+        }
         properties["offset"].update(minimum=0)
         properties["limit"].update(minimum=1, maximum=24000)
     elif name == "wait_agents":
@@ -283,6 +289,19 @@ def _collaboration_bounds(name, properties):
         )
         properties["timeout"].update(minimum=0, maximum=60)
     elif name == "review_agent":
+        properties["agent_id"] = {
+            "type": ["string", "object"],
+            "properties": {"agent_id": {"type": "string"}},
+            "required": ["agent_id"],
+            "description": "Child ID or an untrusted spawn result envelope; only agent_id is used.",
+        }
         properties["disposition"].update(enum=["accepted", "blocked", "rejected"])
         properties["note"].update(minLength=1, maxLength=4000)
         properties["evidence"].update(maxItems=64)
+    elif name == "resume_agent":
+        properties["agent_id"] = {
+            "type": ["string", "object"],
+            "properties": {"agent_id": {"type": "string"}},
+            "required": ["agent_id"],
+            "description": "Child ID or an untrusted spawn result envelope; only agent_id is used.",
+        }

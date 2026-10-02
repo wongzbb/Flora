@@ -351,6 +351,10 @@ delegate. The parent must inspect your result; never claim it has been verified.
                 raise ValidationError("Unknown child ID")
         return list(dict.fromkeys(normalized))
 
+    def _id(self, agent_id):
+        """Normalize one spawn result envelope at the tool boundary."""
+        return self._ids([agent_id])[0]
+
     def wait_agents(self, agent_ids: list[str], timeout: int = 30) -> dict:
         """Wait up to 60 seconds for selected children and return their actual status and result previews."""
         if type(timeout) is not int or not 0 <= timeout <= 60:
@@ -367,7 +371,7 @@ delegate. The parent must inspect your result; never claim it has been verified.
 
     def read_agent(self, agent_id: str, offset: int = 0, limit: int = 6000) -> dict:
         """Read a bounded character window of a child's actual result; follow next_offset."""
-        self._ids([agent_id])
+        agent_id = self._id(agent_id)
         if (
             type(offset) is not int
             or offset < 0
@@ -397,7 +401,7 @@ delegate. The parent must inspect your result; never claim it has been verified.
 
     def resume_agent(self, agent_id: str) -> dict:
         """Explicitly resume an interrupted child using its original budget and effect journal."""
-        self._ids([agent_id])
+        agent_id = self._id(agent_id)
         with self.lock:
             if self.closed or self.stop.is_set():
                 raise ValidationError("Subagents are paused or closed")

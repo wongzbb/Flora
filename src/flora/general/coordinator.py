@@ -247,6 +247,69 @@ and evidence; do not discard required goals to bypass completion checks.
             if not isinstance(value, dict) or len(value) > 64:
                 raise ValidationError(f"contract.{key} must be a bounded object")
 
+    @staticmethod
+    def _contract_type(descriptor):
+        """Map bounded human-readable type labels to JSON primitive types."""
+        if not isinstance(descriptor, str):
+            return None
+        label = descriptor.strip().lower()
+        if label in {"null", "boolean", "number", "string", "object", "array"}:
+            return label
+        aliases = {
+            "null": ("null", "none"),
+            "boolean": ("boolean", "bool"),
+            "number": ("number", "numeric", "integer", "float", "decimal"),
+            "string": ("string", "text"),
+            "object": ("object", "mapping", "dict"),
+            "array": ("array", "list"),
+        }
+        for kind, words in aliases.items():
+            if any(word in label for word in words):
+                return kind
+        return None
+
+    @staticmethod
+    def _contract_observation(contract, value):
+        """Check only declared JSON primitive output types, preserving unknowns."""
+        outputs = contract.get("outputs", {}) if isinstance(contract, dict) else {}
+        if not outputs:
+            return {"status": "not_applicable", "violations": [], "unknown": []}
+        if not isinstance(outputs, dict) or not isinstance(value, dict):
+            return {
+                "status": "violation",
+                "violations": ["outputs requires an object result"],
+                "unknown": [],
+            }
+        violations, unknown = [], []
+        for field, expected in outputs.items():
+            expected_type = Coordinator._contract_type(expected)
+            if expected_type is None:
+                unknown.append(field)
+                continue
+            if field not in value:
+                violations.append(f"missing output {field}")
+                continue
+            actual_value = value[field]
+            if actual_value is None:
+                actual = "null"
+            elif type(actual_value) is bool:
+                actual = "boolean"
+            elif isinstance(actual_value, (int, float)):
+                actual = "number"
+            elif isinstance(actual_value, str):
+                actual = "string"
+            elif isinstance(actual_value, dict):
+                actual = "object"
+            elif isinstance(actual_value, list):
+                actual = "array"
+            else:
+                unknown.append(field)
+                continue
+            if actual != expected_type:
+                violations.append(f"output {field} is {actual}, expected {expected}")
+        status = "violation" if violations else ("unknown" if unknown else "pass")
+        return {"status": status, "violations": violations, "unknown": unknown}
+
     def spawn_agents(self, tasks: list[dict]) -> dict:
         """Start several independent workers from one bounded planning action.
 
@@ -676,7 +739,7 @@ and evidence; do not discard required goals to bypass completion checks.
 
     def read_agent(self, agent_id: str, offset: int = 0, limit: int = 6000) -> dict:
         """Read the actual child answer as paginated JSON. Follow next_offset; result_digest is required by review_agent. Reading is not acceptance or factual verification."""
-        self._ids([agent_id])
+        agent_id = self._id(agent_id)
         if (
             type(offset) is not int
             or offset < 0
@@ -731,6 +794,15 @@ and evidence; do not discard required goals to bypass completion checks.
                 "total_chars": len(text),
                 "claims_verified": False,
                 **(
+                    {
+                        "contract_check": self._contract_observation(
+                            row.get("context", {}).get("contract", {}), view.get("value")
+                        )
+                    }
+                    if row.get("context", {}).get("contract") and view is not None
+                    else {}
+                ),
+                **(
                     {"result": deepcopy(view)}
                     if self.owner.profile["general"].get("tool_schema_version", 1) >= 3
                     and offset == 0
@@ -748,7 +820,7 @@ and evidence; do not discard required goals to bypass completion checks.
         evidence: list[dict] | None = None,
     ) -> dict:
         """Review a fully collected current-task result. disposition is accepted/blocked/rejected. Supply its actual result_digest, a substantive note, and checked source/file evidence; this checks integrity, not truth."""
-        self._ids([agent_id])
+        agent_id = self._id(agent_id)
         if (
             not isinstance(disposition, str)
             or disposition not in {"accepted", "blocked", "rejected"}
@@ -783,6 +855,15 @@ and evidence; do not discard required goals to bypass completion checks.
                 row["status"] != "completed" or view is None or view["status"] != "completed"
             ):
                 raise ValidationError("An unfinished child cannot be accepted as completed")
+            contract_check = self._contract_observation(
+                row.get("context", {}).get("contract", {}),
+                view.get("value") if view is not None else None,
+            )
+            if disposition == "accepted" and contract_check["status"] == "violation":
+                raise ValidationError(
+                    "Contract output guarantee not met; revise the handoff or reject the result: "
+                    + "; ".join(contract_check["violations"])
+                )
             review = {
                 "disposition": disposition,
                 "note": note,
@@ -790,6 +871,7 @@ and evidence; do not discard required goals to bypass completion checks.
                 "result_digest": result_digest,
                 "state_digest": state,
                 "claims_verified": False,
+                "contract_check": contract_check,
             }
             row["review"] = review
             self._save()
@@ -801,7 +883,7 @@ and evidence; do not discard required goals to bypass completion checks.
 
     def resume_agent(self, agent_id: str) -> dict:
         """Explicitly resume the same current-task worker with its original trace and budget. Unknown outcomes require external evidence; completed workers return their saved answer."""
-        self._ids([agent_id])
+        agent_id = self._id(agent_id)
         with self.lock:
             row = self.records[agent_id]
             if row.get("task_key") != self.owner.task["key"]:
