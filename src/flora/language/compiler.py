@@ -542,7 +542,10 @@ def validate_bundle(
     ids = set()
     for item in normals:
         if not isinstance(item, dict) or set(item) != {"id", "program", "inputs"}:
-            raise ValidationError("normal program requires exactly id, program, inputs")
+            raise ValidationError(
+                "normal program requires exactly id, program, inputs; candidate metadata "
+                "must stay outside program, and program must be the array of labelled blocks"
+            )
         if not _identifier(item["id"]) or item["id"] in ids:
             raise ValidationError("program IDs must be valid and unique")
         ids.add(item["id"])

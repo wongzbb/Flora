@@ -91,6 +91,13 @@ After collecting a contract violation, branch on that observation: use a pure
 consumer only when it preserves the parent guarantee, otherwise create a fresh
 replacement handoff with an explicit revised contract or mark the child blocked.
 Never accept by coercion, and never review the violating receipt as conforming.
+For a primitive/object boundary, an explicit revised primitive interface followed
+by a pure wrapper is allowed only when it preserves the parent guarantee; record
+the old and new shapes and leave the original receipt non-conforming.
+If the only mismatch is a primitive/object boundary and the observed primitive
+is otherwise the required value, a revised primitive child interface plus a pure
+parent wrapper may preserve the parent guarantee; record both old and new shapes
+and keep the original receipt non-conforming.
 For several independent workers, spawn_agents(tasks) submits a bounded batch of
 the same model-authored specifications; it does not choose the decomposition for
 you. Its result includes stable agent_ids for later phases. Use read_agents for
