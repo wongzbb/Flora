@@ -9,7 +9,11 @@ from flora.engine.runtime import Runtime
 from flora.integrations.providers import ModelResponse, OpenAICompatibleProvider, TransportError
 from flora.integrations.streaming import StreamFailure
 from flora.integrations.tools import ToolRegistry
-from flora.language.compiler import LLMCompiler, _single_extra_delimiter_bundle
+from flora.language.compiler import (
+    LLMCompiler,
+    _single_extra_delimiter_bundle,
+    _single_missing_delimiter_bundle,
+)
 from flora.support.errors import CompilerError, StaleAnchor, ValidationError
 from tests.helpers import Clock, Response, bundle, context, frame, sse
 
@@ -115,6 +119,22 @@ class RecoveryTests(unittest.TestCase):
         self.assertIsNotNone(repaired)
         self.assertEqual(repaired[0], bundle())
         self.assertIsNone(_single_extra_delimiter_bundle('{"programs":[}]}'))
+
+    def test_single_missing_closer_is_repaired_only_when_candidate_is_complete(self):
+        source = json.dumps(
+            {
+                "programs": [{"id": "x"}],
+                "incumbent": "main",
+                "diagnostics": [],
+                "expected_epoch": 0,
+                "expected_digest": "",
+            }
+        )
+        malformed = source.replace("], \"incumbent\"", "}, \"incumbent\"", 1)
+        repaired = _single_missing_delimiter_bundle(malformed)
+        self.assertIsNotNone(repaired)
+        self.assertEqual(repaired[0], json.loads(source))
+        self.assertIsNone(_single_missing_delimiter_bundle('{"programs":[}]}'))
 
     def test_reasoning_fallback_requires_explicit_different_profile(self):
         p = self.provider(

@@ -108,6 +108,62 @@ def _single_extra_delimiter_bundle(text):
     return value, mismatch
 
 
+def _single_missing_delimiter_bundle(text):
+    """Repair one unambiguous missing closer before the observed closer.
+
+    A model can emit ``...}}]`` where the array closer was omitted before the
+    object closer. Insert the lexically expected closer at the first mismatch,
+    require the entire candidate to parse as a bundle, and leave all IR and
+    capability validation unchanged. Multiple mismatches, truncation and
+    ambiguous candidates remain hard failures.
+    """
+    stack = []
+    quoted = escaped = False
+    mismatch = None
+    expected = None
+    for offset, char in enumerate(text):
+        if quoted:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                quoted = False
+        elif char == '"':
+            quoted = True
+        elif char in "[{":
+            stack.append((char, offset))
+        elif char in "]}":
+            wanted = {"[": "]", "{": "}"}[stack[-1][0]] if stack else None
+            if char != wanted:
+                if mismatch is not None:
+                    return None
+                mismatch, expected = offset, wanted
+                break
+                continue
+            if stack:
+                stack.pop()
+            else:
+                return None
+    if mismatch is None or quoted or expected is None:
+        return None
+    candidates = (
+        text[:mismatch] + expected + text[mismatch + 1 :],
+        text[:mismatch] + expected + text[mismatch:],
+    )
+    required = {"programs", "incumbent", "diagnostics", "expected_epoch", "expected_digest"}
+    for candidate in candidates:
+        if _delimiter_error(candidate) is not None:
+            continue
+        try:
+            value = _strict_json_loads(candidate)
+        except (json.JSONDecodeError, ValueError, RecursionError):
+            continue
+        if isinstance(value, dict) and required.issubset(value):
+            return value, mismatch
+    return None
+
+
 def _quoted_local_references(bundle):
     """Find a syntactic ambiguity, never infer that literal data is incorrect."""
     found = []
@@ -986,12 +1042,16 @@ class LLMCompiler:
                     bundle = _strict_json_loads(response.text)
                 except json.JSONDecodeError as exc:
                     repaired = _single_extra_delimiter_bundle(response.text)
+                    repair_kind = "remove_single_extra_closer"
+                    if repaired is None:
+                        repaired = _single_missing_delimiter_bundle(response.text)
+                        repair_kind = "insert_single_missing_closer"
                     if repaired is not None:
                         bundle, offset = repaired
                         self._emit(
                             {
                                 "kind": "compiler_syntax_repaired",
-                                "repair": "remove_single_extra_closer",
+                                "repair": repair_kind,
                                 "offset": offset,
                             }
                         )
