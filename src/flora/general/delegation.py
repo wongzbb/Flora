@@ -10,6 +10,7 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor, wait
 from copy import deepcopy
 from datetime import UTC, datetime
+from threading import Lock
 
 from flora.agent.api import Agent
 from flora.integrations.binding import make_registry
@@ -25,15 +26,25 @@ def validate_options(options):
         "enabled",
         "max_children",
         "max_parallel",
+        "max_depth",
+        "max_total_children",
         "budget",
     }:
-        raise ValidationError("subagents accepts enabled, max_children, max_parallel and budget")
+        raise ValidationError(
+            "subagents accepts enabled, max_children, max_parallel, max_depth, max_total_children and budget"
+        )
     if type(options.get("enabled", False)) is not bool:
         raise ValidationError("subagents.enabled must be boolean")
-    for key, default, maximum in (("max_children", 8, 32), ("max_parallel", 3, 4)):
+    for key, default, maximum in (
+        ("max_children", 8, 32),
+        ("max_parallel", 3, 4),
+        ("max_depth", 0, 8),
+        ("max_total_children", 64, 256),
+    ):
         value = options.get(key, default)
-        if type(value) is not int or not 1 <= value <= maximum:
-            raise ValidationError(f"subagents.{key} must be between 1 and {maximum}")
+        lower = 0 if key == "max_depth" else 1
+        if type(value) is not int or not lower <= value <= maximum:
+            raise ValidationError(f"subagents.{key} must be between {lower} and {maximum}")
     if "budget" in options:
         from .budgets import unlimited_defaults
 
@@ -73,9 +84,13 @@ delegate. The parent must inspect your result; never claim it has been verified.
         "max_wall_seconds": 600,
     }
 
-    def __init__(self, owner, options, *, provider=None):
+    def __init__(self, owner, options, *, provider=None, root=None, depth=0, shared_budget=None):
         validate_options(options)
         self.owner, self.options, self.provider = owner, options, provider
+        if type(depth) is not int or depth < 0 or depth > options.get("max_depth", 0):
+            raise ValidationError("invalid subagent nesting depth")
+        self.depth = depth
+        self.shared_budget = shared_budget or {"count": 0, "lock": Lock()}
         if "budget" in options:
             from .budgets import unlimited_defaults
 
@@ -88,7 +103,7 @@ delegate. The parent must inspect your result; never claim it has been verified.
                     "\nA null cumulative budget limit means unlimited, not zero or unknown. "
                     "Usage is still recorded. Per-response output limits and runtime checks still apply."
                 )
-        self.root = owner.directory / "subagents"
+        self.root = owner.directory / "subagents" if root is None else root
         if self.root.is_symlink():
             raise ValidationError("Subagent directory cannot be a symbolic link")
         self.root.mkdir(mode=0o700, exist_ok=True)
@@ -134,6 +149,9 @@ delegate. The parent must inspect your result; never claim it has been verified.
             "read_only": True,
             "max_children_per_session": self.options.get("max_children", 8),
             "max_parallel": self.options.get("max_parallel", 3),
+            "max_depth": self.options.get("max_depth", 0),
+            "depth": self.depth,
+            "max_total_children": self.options.get("max_total_children", 64),
             "budget_per_child": dict(self.child_limits),
             "recursive_delegation": False,
         }
@@ -154,6 +172,11 @@ delegate. The parent must inspect your result; never claim it has been verified.
                 raise ValidationError("Subagents are paused or closed")
             if len(self.records) >= self.options.get("max_children", 8):
                 raise ValidationError("Session subagent quota reached; reuse existing child IDs")
+            with self.shared_budget["lock"]:
+                limit = self.options.get("max_total_children", 64)
+                if self.shared_budget["count"] >= limit:
+                    raise ValidationError("Nested subagent budget reached; collect existing results")
+                self.shared_budget["count"] += 1
             ident = "a-" + uuid.uuid4().hex[:12]
             (self.root / ident).mkdir(mode=0o700)
             self.records[ident] = {
@@ -316,10 +339,17 @@ delegate. The parent must inspect your result; never claim it has been verified.
     def _ids(self, agent_ids):
         if not isinstance(agent_ids, list) or not agent_ids or len(agent_ids) > 32:
             raise ValidationError("Select 1–32 child IDs")
+        # Batch spawn returns durable identity envelopes. Accepting those
+        # envelopes here is a transport normalization only: the host consumes
+        # their agent_id field and ignores every other untrusted result field.
+        normalized = [
+            x.get("agent_id") if isinstance(x, dict) and set(x) >= {"agent_id"} else x
+            for x in agent_ids
+        ]
         with self.lock:
-            if any(not isinstance(x, str) or x not in self.records for x in agent_ids):
+            if any(not isinstance(x, str) or x not in self.records for x in normalized):
                 raise ValidationError("Unknown child ID")
-        return list(dict.fromkeys(agent_ids))
+        return list(dict.fromkeys(normalized))
 
     def wait_agents(self, agent_ids: list[str], timeout: int = 30) -> dict:
         """Wait up to 60 seconds for selected children and return their actual status and result previews."""

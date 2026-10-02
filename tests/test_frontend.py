@@ -207,6 +207,35 @@ class FrontendTests(unittest.TestCase):
         )
         self.assertEqual(result["programs"][0]["program"]["blocks"]["main"]["term"]["op"], "effect")
 
+    def test_block_list_normalizes_only_unambiguous_control_metadata(self):
+        source = bundle(
+            [
+                {
+                    "label": "main",
+                    "params": [],
+                    "ops": [],
+                    "term": {"op": "effect", "tool": "read_value", "args": {}},
+                    "resume": "after",
+                    "bind": "reply",
+                    "capture": {},
+                },
+                {
+                    "label": "after",
+                    "params": ["reply"],
+                    "ops": [],
+                    "term": {"op": "return", "value": {"var": "reply"}},
+                },
+            ]
+        )
+        lowered = lower_bundle(source, syntax="block-list-v3")
+        term = lowered["programs"][0]["program"]["blocks"]["main"]["term"]
+        self.assertEqual((term["op"], term["resume"], term["bind"]), ("effect", "after", "reply"))
+        ambiguous = copy.deepcopy(source)
+        ambiguous["programs"][0]["program"][0]["resume"] = "other"
+        ambiguous["programs"][0]["program"][0]["term"]["resume"] = "after"
+        with self.assertRaises(ValidationError):
+            lower_bundle(ambiguous, syntax="block-list-v3")
+
     def test_capabilities_anchors_and_migration_purity_not_bypassed(self):
         expanded = lower_bundle(bundle(observe()))
         with self.assertRaises(ValidationError):

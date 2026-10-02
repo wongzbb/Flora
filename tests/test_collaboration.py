@@ -23,8 +23,8 @@ class WorkerProvider:
         self.calls += 1
         context = json.loads(messages[1]["content"])
         tools = {t["name"] for t in context["tools"]}
+        self.child_tools = tools
         if "spawn_agent" not in tools:
-            self.child_tools = tools
             value = {"finding": "Observed handoff", "handoff": context["memory"]["data"]}
         else:
             value = "Done"
@@ -91,6 +91,64 @@ class CollaborationTests(unittest.TestCase):
         validate_effect_arguments(source, tools)
         self.assertEqual(self.provider.calls, 0)
         self.assertFalse(self.app.delegation.records)
+
+    def test_batch_spawn_starts_each_model_authored_worker_and_keeps_review_gate(self):
+        rows = self.app.delegation.spawn_agents(
+            [
+                {"task": "Inspect the first supplied fact", "name": "First"},
+                {"task": "Inspect the second supplied fact", "name": "Second"},
+            ]
+        )
+        self.assertEqual(rows["count"], 2)
+        ids = [row["agent_id"] for row in rows["agents"]]
+        for ident in ids:
+            self.app.delegation.futures[ident].result(timeout=5)
+        self.assertEqual({self.app.delegation.records[i]["status"] for i in ids}, {"completed"})
+        self.assertEqual(self.app.delegation.completion()["unreviewed_workers"], ids)
+        descriptions = {item["name"] for item in self.app.agent.tools.descriptions()}
+        self.assertIn("spawn_agents", descriptions)
+
+    def test_nested_coordinator_is_available_only_with_a_bounded_depth(self):
+        root = self.root / "nested-session"
+        with GeneralAgent(
+            session_dir=root,
+            workspace=self.workspace,
+            provider=self.provider,
+            profile={
+                "general": {
+                    "subagents": {"enabled": True, "max_children": 2, "max_depth": 2}
+                }
+            },
+        ) as app:
+            app.task = {"key": "nested", "task": "Nested parent task"}
+            app.work.begin("nested", "Nested parent task")
+            ident = app.delegation.spawn_agent("Inspect one branch")["agent_id"]
+            app.delegation.futures[ident].result(timeout=5)
+            self.assertIn("spawn_agent", self.provider.child_tools)
+            self.assertTrue((root / "subagents" / ident / "subagents" / "children.json").exists())
+            self.assertEqual(app.delegation.capabilities()["max_depth"], 2)
+
+    def test_shared_nested_budget_stops_cross_level_fanout(self):
+        with GeneralAgent(
+            session_dir=self.root / "budget-session",
+            workspace=self.workspace,
+            provider=self.provider,
+            profile={
+                "general": {
+                    "subagents": {
+                        "enabled": True,
+                        "max_children": 2,
+                        "max_depth": 2,
+                        "max_total_children": 1,
+                    }
+                }
+            },
+        ) as app:
+            app.task = {"key": "budget", "task": "Bounded nested task"}
+            app.work.begin("budget", "Bounded nested task")
+            app.delegation.spawn_agent("First")
+            with self.assertRaisesRegex(ValidationError, "Nested subagent budget"):
+                app.delegation.spawn_agent("Second")
 
     def test_saved_v4_without_schema_version_keeps_its_identity(self):
         from flora.general.agent import _new_session_defaults

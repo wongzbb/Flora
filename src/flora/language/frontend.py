@@ -197,6 +197,20 @@ def lower_block_list(source, *, inline_expressions=False, project_captures=False
             raise ValidationError("block-list-v1 requires 1..512 labelled blocks")
         blocks = {}
         for block in source:
+            if isinstance(block, dict):
+                # A few OpenAI-compatible models place continuation metadata next
+                # to the block instead of inside its control term. Normalize only
+                # this unambiguous envelope variant; no values or branches are
+                # inferred, and ordinary structural validation still follows.
+                extras = set(block) - {"label", "params", "ops", "term"}
+                control = {"resume", "bind", "capture", "success", "error", "target", "args", "branches"}
+                term = block.get("term")
+                if extras and extras <= control and isinstance(term, dict) and "op" in term:
+                    if not (extras & set(term)):
+                        block = {
+                            **{key: value for key, value in block.items() if key not in extras},
+                            "term": {**term, **{key: block[key] for key in extras}},
+                        }
             if not isinstance(block, dict) or set(block) != {"label", "params", "ops", "term"}:
                 raise ValidationError("block-list-v1 blocks require label, params, ops and term")
             label = block["label"]

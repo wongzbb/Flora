@@ -212,11 +212,61 @@ def _collaboration_bounds(name, properties):
             },
             description="Only guidance, source_ids and files are accepted. Put free-form observed context in guidance; completed dependency outputs are handed over automatically.",
         )
+    elif name == "spawn_agents":
+        properties["tasks"].update(
+            minItems=1,
+            maxItems=32,
+            description=(
+                "Model-authored independent worker specifications. Each task is handed off "
+                "with the same evidence, dependency and review rules as spawn_agent."
+            ),
+        )
+        properties["tasks"]["items"] = {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["task"],
+            "properties": {
+                "task": {"type": "string", "minLength": 1, "maxLength": 16000},
+                "name": {"type": "string", "minLength": 1, "maxLength": 64},
+                "context": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "guidance": {"type": "string", "maxLength": 16000},
+                        "source_ids": {"type": "array", "maxItems": 64, "items": {"type": "string"}},
+                        "files": {
+                            "type": "array",
+                            "maxItems": 64,
+                            "items": {
+                                "type": "object",
+                                "required": ["path", "sha256"],
+                                "additionalProperties": False,
+                                "properties": {
+                                    "path": {"type": "string"},
+                                    "sha256": {"type": "string", "minLength": 64, "maxLength": 64},
+                                },
+                            },
+                        },
+                    },
+                },
+                "depends_on": {"type": "array", "maxItems": 8, "items": {"type": "string"}},
+                "required": {"type": "boolean"},
+            },
+        }
     elif name == "read_agent":
         properties["offset"].update(minimum=0)
         properties["limit"].update(minimum=1, maximum=24000)
     elif name == "wait_agents":
-        properties["agent_ids"].update(minItems=1, maxItems=32)
+        properties["agent_ids"].update(
+            minItems=1,
+            maxItems=32,
+            items={
+                "type": ["string", "object"],
+                "properties": {"agent_id": {"type": "string"}},
+                "required": ["agent_id"],
+            },
+            description="Child IDs or untrusted spawn result envelopes containing agent_id; only the ID is used.",
+        )
         properties["timeout"].update(minimum=0, maximum=60)
     elif name == "review_agent":
         properties["disposition"].update(enum=["accepted", "blocked", "rejected"])

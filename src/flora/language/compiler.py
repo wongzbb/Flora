@@ -57,6 +57,57 @@ def _delimiter_error(text):
     return None
 
 
+def _single_extra_delimiter_bundle(text):
+    """Accept one mechanically identifiable extra closer in a complete bundle.
+
+    Providers occasionally emit one extra ``}`` around a large nested program.
+    Removing arbitrary syntax would be unsafe, so this helper only considers the
+    first lexical mismatch, requires that it is the sole mismatch, and accepts the
+    result only when it parses as the complete bundle envelope. IR/schema checks
+    still run unchanged afterward. Missing delimiters, multiple mismatches,
+    duplicate keys and nonfinite values remain hard failures.
+    """
+    stack = []
+    quoted = escaped = False
+    mismatch = None
+    for offset, char in enumerate(text):
+        if quoted:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                quoted = False
+        elif char == '"':
+            quoted = True
+        elif char in "[{":
+            stack.append((char, offset))
+        elif char in "]}":
+            expected = {"[": "]", "{": "}"}[stack[-1][0]] if stack else None
+            if char != expected:
+                if mismatch is not None:
+                    return None
+                mismatch = offset
+                continue
+            stack.pop()
+    if mismatch is None or quoted or stack:
+        return None
+    candidate = text[:mismatch] + text[mismatch + 1 :]
+    try:
+        value = _strict_json_loads(candidate)
+    except (json.JSONDecodeError, ValueError, RecursionError):
+        return None
+    if not isinstance(value, dict) or not {
+        "programs",
+        "incumbent",
+        "diagnostics",
+        "expected_epoch",
+        "expected_digest",
+    }.issubset(value):
+        return None
+    return value, mismatch
+
+
 def _quoted_local_references(bundle):
     """Find a syntactic ambiguity, never infer that literal data is incorrect."""
     found = []
@@ -934,16 +985,27 @@ class LLMCompiler:
                 try:
                     bundle = _strict_json_loads(response.text)
                 except json.JSONDecodeError as exc:
-                    syntax_window = {
-                        "offset": exc.pos,
-                        "start": max(0, exc.pos - 384),
-                        "text": response.text[max(0, exc.pos - 384) : exc.pos + 384],
-                        "delimiter_error": _delimiter_error(response.text),
-                    }
-                    raise ValidationError(
-                        f"compiler output must be strict JSON: {exc.msg} "
-                        f"at line {exc.lineno}, column {exc.colno}"
-                    ) from None
+                    repaired = _single_extra_delimiter_bundle(response.text)
+                    if repaired is not None:
+                        bundle, offset = repaired
+                        self._emit(
+                            {
+                                "kind": "compiler_syntax_repaired",
+                                "repair": "remove_single_extra_closer",
+                                "offset": offset,
+                            }
+                        )
+                    else:
+                        syntax_window = {
+                            "offset": exc.pos,
+                            "start": max(0, exc.pos - 384),
+                            "text": response.text[max(0, exc.pos - 384) : exc.pos + 384],
+                            "delimiter_error": _delimiter_error(response.text),
+                        }
+                        raise ValidationError(
+                            f"compiler output must be strict JSON: {exc.msg} "
+                            f"at line {exc.lineno}, column {exc.colno}"
+                        ) from None
                 except (ValueError, RecursionError):
                     raise ValidationError(
                         "compiler output must be strict JSON without duplicates or nonfinite numbers"

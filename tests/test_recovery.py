@@ -9,7 +9,7 @@ from flora.engine.runtime import Runtime
 from flora.integrations.providers import ModelResponse, OpenAICompatibleProvider, TransportError
 from flora.integrations.streaming import StreamFailure
 from flora.integrations.tools import ToolRegistry
-from flora.language.compiler import LLMCompiler
+from flora.language.compiler import LLMCompiler, _single_extra_delimiter_bundle
 from flora.support.errors import CompilerError, StaleAnchor, ValidationError
 from tests.helpers import Clock, Response, bundle, context, frame, sse
 
@@ -106,6 +106,15 @@ class RecoveryTests(unittest.TestCase):
         rejected = self.compiler(SequenceProvider(ModelResponse(malformed, 1, 1)), max_repairs=0)
         with self.assertRaises(CompilerError):
             rejected.compile(context())
+
+    def test_single_extra_closer_is_repaired_only_for_a_complete_bundle(self):
+        source = json.dumps(bundle())
+        marker = "}}], \"incumbent\""
+        malformed = source.replace(marker, "}}}], \"incumbent\"", 1)
+        repaired = _single_extra_delimiter_bundle(malformed)
+        self.assertIsNotNone(repaired)
+        self.assertEqual(repaired[0], bundle())
+        self.assertIsNone(_single_extra_delimiter_bundle('{"programs":[}]}'))
 
     def test_reasoning_fallback_requires_explicit_different_profile(self):
         p = self.provider(
