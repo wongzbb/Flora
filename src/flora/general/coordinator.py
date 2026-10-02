@@ -88,12 +88,16 @@ individually before finalizing.
 Do not split trivial tasks. Use parallel workers for separable work, and dependencies
 only when a worker genuinely needs another's result. No recursive delegation or
 child writes/shell/browser/service mutations. agent_status lists live state.
-wait_agents waits without new model calls and returns result windows. read_agent
+wait_agents waits without new model calls and returns the same flat per-child read
+view as read_agent (not a record nested inside another result). read_agent
 pages only the actual answer, limitations, source references and usage, not a huge
 internal trace. Follow next_offset until complete, then review_agent with the
 returned result_digest and disposition accepted/blocked/rejected. Inspect actual
 sources before relying on factual claims. Review verifies collection/reference
 integrity, NOT truth. Required children must be reviewed before final return.
+If result_available is false or result is null, the answer is not observed yet;
+use the status and wait again or record the child limitation. Never index into a
+null result and never treat an empty result_digest as review evidence.
 Blocked/rejected work needs an explicit limitation note; do not conceal it in the
 answer. resume_agent continues the SAME unfinished task and budget. Unknown effect
 outcomes require external evidence and are never automatically replayed. Completed
@@ -801,6 +805,8 @@ and evidence; do not discard required goals to bypass completion checks.
                     "agent_id": agent_id,
                     "status": row["status"],
                     "result_available": False,
+                    "result": None,
+                    "result_digest": "",
                     "failure": row.get("failure"),
                     "detail": row.get("detail"),
                     "task_key": row.get("task_key"),

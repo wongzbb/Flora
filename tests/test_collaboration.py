@@ -138,6 +138,16 @@ class CollaborationTests(unittest.TestCase):
         observed = self.app.delegation.read_agents([nested], limit=24000)
         self.assertEqual(observed["agents"][0]["agent_id"], ident)
 
+    def test_wait_agents_uses_the_same_flat_read_view_as_read_agent(self):
+        row = self.app.delegation.spawn_agent("flat wait view")
+        ident = row["agent_id"]
+        self.app.delegation.futures[ident].result(timeout=5)
+        waited = self.app.delegation.wait_agents([ident], timeout=0)["agents"][0]
+        read = self.app.delegation.read_agent(ident, limit=24000)
+        self.assertEqual(waited["agent_id"], read["agent_id"])
+        self.assertEqual(waited["text"], read["text"])
+        self.assertEqual(waited.get("result"), read.get("result"))
+
     def test_nested_coordinator_is_available_only_with_a_bounded_depth(self):
         root = self.root / "nested-session"
         with GeneralAgent(

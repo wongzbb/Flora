@@ -398,7 +398,7 @@ delegate. The parent must inspect your result; never claim it has been verified.
         return self._ids([agent_id])[0]
 
     def wait_agents(self, agent_ids: list[str], timeout: int = 30) -> dict:
-        """Wait up to 60 seconds for selected children and return their actual status and result previews."""
+        """Wait for selected children and return flat per-child read views; review remains required."""
         if type(timeout) is not int or not 0 <= timeout <= 60:
             raise ValidationError("Wait timeout must be between 0 and 60 seconds")
         ids = self._ids(agent_ids)
@@ -407,9 +407,24 @@ delegate. The parent must inspect your result; never claim it has been verified.
         if futures:
             wait(futures, timeout=timeout)
         with self.lock:
-            return {
-                "agents": [{**deepcopy(self.records[x]), "result": self.read_agent(x)} for x in ids]
-            }
+            rows = []
+            for ident in ids:
+                # Keep one public result shape for wait and read. The durable
+                # record contributes status metadata; the read view contributes
+                # the bounded answer, digest and pagination state. This avoids
+                # making callers guess whether result is a record or a read
+                # envelope, while preserving the unverified/review gate.
+                read = self.read_agent(ident, limit=24000)
+                record = deepcopy(self.records[ident])
+                record.pop("result", None)
+                row = {**record, **read}
+                # Wait has a stable per-child shape even while a worker is
+                # pending; read_agent keeps pagination's historical omission
+                # of incomplete structured results.
+                row.setdefault("result", None)
+                row.setdefault("result_digest", "")
+                rows.append(row)
+            return {"agents": rows}
 
     def read_agent(self, agent_id: str, offset: int = 0, limit: int = 6000) -> dict:
         """Read a bounded character window of a child's actual result; follow next_offset."""

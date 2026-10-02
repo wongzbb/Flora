@@ -430,6 +430,7 @@ replaces the program/stack, and appears in memory.__openharness_continuation__.
 Never deliberately fault to obtain a model call. After faults reuse successful
 recorded receipts via read_receipt; repair the consumer, not redo effects.
 Receipts view is INDEXED {trace_index,record}; use trace_index for read_receipt.
+read_receipt is a pure IR operation inside ops, never an observe/effect tool name.
 Visibility discloses omissions; omitted facts are UNKNOWN, not empty. Current
 programs can read original real receipt indices even if omitted from the prompt.
 payload_view.omitted explicitly means a large receipt VALUE was withheld from this
