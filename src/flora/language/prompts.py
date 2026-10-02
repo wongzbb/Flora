@@ -284,24 +284,25 @@ def _projected_observe_prompt(prompt):
     prompt = (
         prompt.replace(
             "BOTH REQUIRED; their params are exactly capture keys plus bind. Success gets raw\n",
-            "BOTH REQUIRED; each target declares bind plus any subset of capture keys. Success gets raw\n",
+            "BOTH REQUIRED; each target declares one result parameter plus any subset of capture keys. Success gets raw\n",
         )
         .replace(
             "Each observation's bind name must match BOTH target params exactly. Different bind\n",
-            "Each observation's bind name must appear in BOTH targets' params. Different bind\n",
+            "Each observation's target has exactly one result parameter outside its capture subset; it may use a local name. Different bind\n",
         )
         .replace(
             "success and raw {type,message} to error; BOTH targets REQUIRED, with params exactly\n"
             "capture+bind. Never label all errors not-found or invent an observed result field.",
             "success and raw {type,message} to error; BOTH targets REQUIRED. Each target's params\n"
-            "must include bind and may include any subset of capture keys, independently.\n"
+            "must include one result parameter and may include any subset of capture keys, independently.\n"
             "Never label all errors not-found or invent an observed result field.",
         )
     )
     return prompt + (
         "\nSOURCE block-list-v3: observe forwards only the capture names explicitly declared\n"
-        "by each outcome target, plus the mandatory bind. For capture={context:EXPR},\n"
-        "success params may be [context,v] and error params [v] when bind is v.\n"
+        "by each outcome target, plus one result parameter. The result parameter may be renamed\n"
+        "locally: for capture={context:EXPR}, success params may be [context,v] and error\n"
+        "params [e], where e receives the raw error even if the observe bind is v.\n"
         "ALL capture expressions still evaluate before the effect, including captures\n"
         "neither target receives. Only the final jump projects values; no liveness inference,\n"
         "default values, retries or implicit error handling. Ordinary effect/call/alternative\n"

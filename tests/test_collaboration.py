@@ -130,6 +130,14 @@ class CollaborationTests(unittest.TestCase):
         self.assertTrue(all(item["result_available"] for item in batch["agents"]))
         self.assertTrue(all(item["total_chars"] > 0 for item in batch["agents"]))
 
+    def test_nested_identity_envelopes_are_unwrapped_only_at_collaboration_boundary(self):
+        row = self.app.delegation.spawn_agent("nested identity")
+        ident = row["agent_id"]
+        self.app.delegation.futures[ident].result(timeout=5)
+        nested = {"agent_id": {"agent_id": ident, "name": "untrusted"}}
+        observed = self.app.delegation.read_agents([nested], limit=24000)
+        self.assertEqual(observed["agents"][0]["agent_id"], ident)
+
     def test_nested_coordinator_is_available_only_with_a_bounded_depth(self):
         root = self.root / "nested-session"
         with GeneralAgent(

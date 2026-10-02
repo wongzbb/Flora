@@ -82,6 +82,26 @@ class ProjectedObserveTests(unittest.TestCase):
         )
         self.assertEqual(actual.value, carrier)
 
+    def test_target_may_alpha_rename_the_raw_result_parameter(self):
+        program = observe(capture={})
+        program["blocks"]["ok"]["params"] = ["value_local"]
+        program["blocks"]["err"]["params"] = ["error_local"]
+        program["blocks"]["ok"]["term"] = {
+            "op": "return",
+            "value": {"var": "value_local"},
+        }
+        program["blocks"]["err"]["term"] = {
+            "op": "return",
+            "value": {"var": "error_local"},
+        }
+        waiting = run_until_boundary(new_machine(lowered(program)))
+        returned = run_until_boundary(resume(waiting.machine, {"status": "returned", "value": 7}))
+        self.assertEqual(returned.value, 7)
+        waiting = run_until_boundary(new_machine(lowered(program)))
+        error = {"type": "ValueError", "message": "observed"}
+        raised = run_until_boundary(resume(waiting.machine, {"status": "raised", "error": error}))
+        self.assertEqual(raised.value, error)
+
     def test_shared_error_handler_accepts_different_declared_capture_sets(self):
         program = observe(capture={"first": 1})
         program["blocks"]["err"]["params"] = ["result"]

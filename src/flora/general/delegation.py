@@ -377,10 +377,17 @@ delegate. The parent must inspect your result; never claim it has been verified.
         # Batch spawn returns durable identity envelopes. Accepting those
         # envelopes here is a transport normalization only: the host consumes
         # their agent_id field and ignores every other untrusted result field.
-        normalized = [
-            x.get("agent_id") if isinstance(x, dict) and set(x) >= {"agent_id"} else x
-            for x in agent_ids
-        ]
+        def unwrap(value):
+            # Models sometimes preserve an identity envelope when passing the
+            # already extracted agent_ids array. Unwrap only the identity
+            # field, with a hard depth bound; no task/result fields are read.
+            for _ in range(4):
+                if not isinstance(value, dict) or "agent_id" not in value:
+                    break
+                value = value["agent_id"]
+            return value
+
+        normalized = [unwrap(x) for x in agent_ids]
         with self.lock:
             if any(not isinstance(x, str) or x not in self.records for x in normalized):
                 raise ValidationError("Unknown child ID")

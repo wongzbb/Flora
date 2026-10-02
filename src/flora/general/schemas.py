@@ -278,7 +278,13 @@ def _collaboration_bounds(name, properties):
     elif name == "read_agent":
         properties["agent_id"] = {
             "type": ["string", "object"],
-            "properties": {"agent_id": {"type": "string"}},
+            "properties": {
+                "agent_id": {
+                    "type": ["string", "object"],
+                    "properties": {"agent_id": {"type": ["string", "object"]}},
+                    "required": ["agent_id"],
+                }
+            },
             "required": ["agent_id"],
             "description": "Child ID or an untrusted spawn result envelope; only agent_id is used.",
         }
@@ -290,7 +296,13 @@ def _collaboration_bounds(name, properties):
             maxItems=32,
             items={
                 "type": ["string", "object"],
-                "properties": {"agent_id": {"type": "string"}},
+                "properties": {
+                    "agent_id": {
+                        "type": ["string", "object"],
+                        "properties": {"agent_id": {"type": ["string", "object"]}},
+                        "required": ["agent_id"],
+                    }
+                },
                 "required": ["agent_id"],
             },
             description="Child IDs or spawn result envelopes; each ID is read independently.",
@@ -302,7 +314,13 @@ def _collaboration_bounds(name, properties):
             maxItems=32,
             items={
                 "type": ["string", "object"],
-                "properties": {"agent_id": {"type": "string"}},
+                "properties": {
+                    "agent_id": {
+                        "type": ["string", "object"],
+                        "properties": {"agent_id": {"type": ["string", "object"]}},
+                        "required": ["agent_id"],
+                    }
+                },
                 "required": ["agent_id"],
             },
             description="Child IDs or untrusted spawn result envelopes containing agent_id; only the ID is used.",
@@ -311,7 +329,13 @@ def _collaboration_bounds(name, properties):
     elif name == "review_agent":
         properties["agent_id"] = {
             "type": ["string", "object"],
-            "properties": {"agent_id": {"type": "string"}},
+                "properties": {
+                    "agent_id": {
+                        "type": ["string", "object"],
+                        "properties": {"agent_id": {"type": ["string", "object"]}},
+                        "required": ["agent_id"],
+                    }
+                },
             "required": ["agent_id"],
             "description": "Child ID or an untrusted spawn result envelope; only agent_id is used.",
         }
@@ -321,7 +345,13 @@ def _collaboration_bounds(name, properties):
     elif name == "resume_agent":
         properties["agent_id"] = {
             "type": ["string", "object"],
-            "properties": {"agent_id": {"type": "string"}},
+            "properties": {
+                "agent_id": {
+                    "type": ["string", "object"],
+                    "properties": {"agent_id": {"type": ["string", "object"]}},
+                    "required": ["agent_id"],
+                }
+            },
             "required": ["agent_id"],
             "description": "Child ID or an untrusted spawn result envelope; only agent_id is used.",
         }

@@ -48,8 +48,7 @@ def _observation_signature(block_id, term, blocks, *, project_captures=False):
             or any(not isinstance(p, str) for p in blocks[target]["params"])
             or (
                 not (
-                    bind in blocks[target]["params"]
-                    and set(blocks[target]["params"]) <= set(params)
+                    len(set(blocks[target]["params"]) - set(capture)) == 1
                 )
                 if project_captures
                 else set(blocks[target]["params"]) != set(params)
@@ -61,7 +60,7 @@ def _observation_signature(block_id, term, blocks, *, project_captures=False):
                 else None
             )
             requirement = (
-                f"bind {bind!r} and only an explicitly declared subset of capture keys; "
+                f"one result parameter and only an explicitly declared subset of capture keys; "
                 f"allowed params {params!r}"
                 if project_captures
                 else f"capture keys plus bind; expected params {params!r}"
@@ -130,12 +129,19 @@ def lower_program(source: dict, *, project_captures=False) -> dict:
             (ok, "value", term["success"]),
             (error, "error", term["error"]),
         ):
-            arguments = {**forwarded, bind: var(bind)}
+            result_name = bind
             if project_captures:
+                # A target may use a local name for the raw outcome. The
+                # unique parameter outside the declared captures receives the
+                # result; this is interface alpha-renaming, not value inference.
+                target_params = set(blocks[target]["params"])
+                result_name = next(iter(target_params - set(capture)))
                 # Evaluate and carry EVERY capture exactly as before. Only the
                 # explicit final jump drops values the target did not declare.
                 # Dropping a capture expression before the effect would change
                 # fault/resource behavior and is not this source shorthand.
+            arguments = {**forwarded, result_name: var(bind)}
+            if project_captures:
                 arguments = {
                     key: value
                     for key, value in arguments.items()
