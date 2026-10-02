@@ -197,6 +197,14 @@ def _collaboration_bounds(name, properties):
             "guarantees": {"type": "array", "maxItems": 32, "items": {"type": "string", "maxLength": 2000}},
             "dependencies": {"type": "array", "maxItems": 32, "items": {"type": "string", "maxLength": 2000}},
             "evidence_requirements": {"type": "array", "maxItems": 32, "items": {"type": "string", "maxLength": 2000}},
+            "delegation": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "min_children": {"type": "integer", "minimum": 0, "maximum": 32},
+                    "max_children": {"type": "integer", "minimum": 0, "maximum": 32},
+                },
+            },
         },
     }
     if name == "spawn_agent":

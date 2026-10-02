@@ -296,6 +296,74 @@ class CollaborationTests(unittest.TestCase):
             "pass",
         )
 
+    def test_nested_delegation_contract_gates_child_cardinality(self):
+        from flora.general.coordinator import Coordinator
+
+        coord = Coordinator(
+            self.app,
+            {"enabled": True, "max_children": 2, "max_depth": 1},
+            provider=self.provider,
+            root=self.root / "contract-coordinator",
+            expected_children={"min_children": 1, "max_children": 1},
+        )
+        try:
+            self.assertFalse(coord.completion()["delegation"]["ready"])
+            ident = coord.spawn_agent("Complete the assigned nested branch")["agent_id"]
+            coord.futures[ident].result(timeout=5)
+            self.assertEqual(coord.completion()["delegation"]["actual"], 1)
+            with self.assertRaisesRegex(ValidationError, "child quota"):
+                coord.spawn_agent("An extra nested branch")
+        finally:
+            coord.close()
+
+    def test_invalid_nested_delegation_contract_is_rejected(self):
+        with self.assertRaisesRegex(ValidationError, "child bounds"):
+            self.app.delegation.spawn_agent(
+                "nested",
+                context={"contract": {"delegation": {"min_children": 2, "max_children": 1}}},
+            )
+
+    def test_nested_contract_prevents_accepting_worker_with_unfinished_child(self):
+        from flora.general.coordinator import Coordinator
+
+        coord = Coordinator(
+            self.app,
+            {"enabled": True, "max_children": 2, "max_depth": 1},
+            provider=self.provider,
+            root=self.root / "nested-gate",
+        )
+        try:
+            with patch.object(coord.pool, "submit"):
+                ident = coord.spawn_agent(
+                    "Delegate one nested branch",
+                    context={"contract": {"delegation": {"min_children": 1, "max_children": 1}}},
+                )["agent_id"]
+            from flora.general.storage import atomic_json
+
+            atomic_json(
+                coord.root / ident / "result.json",
+                {
+                    "status": "completed",
+                    "value": {"result": 1},
+                    "reason": "",
+                    "budget": {},
+                    "nested_completion": {"ready": False},
+                },
+            )
+            coord._update(ident, status="completed", detail="Finished")
+            fingerprint = self._collect_from(coord, ident)
+            with self.assertRaisesRegex(ValidationError, "Nested delegation contract"):
+                coord.review_agent(ident, fingerprint, "accepted", "Reviewed")
+        finally:
+            coord.close()
+
+    @staticmethod
+    def _collect_from(coord, ident):
+        row = coord.read_agent(ident, limit=24000)
+        while row.get("next_offset") is not None:
+            row = coord.read_agent(ident, offset=row["next_offset"], limit=24000)
+        return row["result_digest"]
+
     def test_invented_context_is_rejected_before_worker_dispatch(self):
         with self.assertRaisesRegex(ValidationError, "Unknown source"):
             self.app.delegation.spawn_agent("research", context={"source_ids": ["src-999999"]})

@@ -84,12 +84,39 @@ delegate. The parent must inspect your result; never claim it has been verified.
         "max_wall_seconds": 600,
     }
 
-    def __init__(self, owner, options, *, provider=None, root=None, depth=0, shared_budget=None):
+    def __init__(
+        self,
+        owner,
+        options,
+        *,
+        provider=None,
+        root=None,
+        depth=0,
+        shared_budget=None,
+        expected_children=None,
+    ):
         validate_options(options)
         self.owner, self.options, self.provider = owner, options, provider
         if type(depth) is not int or depth < 0 or depth > options.get("max_depth", 0):
             raise ValidationError("invalid subagent nesting depth")
         self.depth = depth
+        if expected_children is not None:
+            if (
+                not isinstance(expected_children, dict)
+                or set(expected_children) - {"min_children", "max_children"}
+                or type(expected_children.get("min_children", 0)) is not int
+                or type(expected_children.get("max_children", options.get("max_children", 8))) is not int
+            ):
+                raise ValidationError("invalid nested delegation contract")
+            expected_min = expected_children.get("min_children", 0)
+            expected_max = expected_children.get("max_children", options.get("max_children", 8))
+            if not 0 <= expected_min <= expected_max <= 32:
+                raise ValidationError("nested delegation child bounds are invalid")
+            if expected_min > options.get("max_children", 8):
+                raise ValidationError("nested delegation minimum exceeds child quota")
+            self.expected_children = {"min_children": expected_min, "max_children": expected_max}
+        else:
+            self.expected_children = None
         self.shared_budget = shared_budget or {"count": 0, "lock": Lock()}
         if "budget" in options:
             from .budgets import unlimited_defaults
@@ -147,7 +174,12 @@ delegate. The parent must inspect your result; never claim it has been verified.
         return {
             "enabled": True,
             "read_only": True,
-            "max_children_per_session": self.options.get("max_children", 8),
+            "max_children_per_session": min(
+                self.options.get("max_children", 8),
+                self.expected_children["max_children"]
+                if self.expected_children is not None
+                else self.options.get("max_children", 8),
+            ),
             "max_parallel": self.options.get("max_parallel", 3),
             "max_depth": self.options.get("max_depth", 0),
             "depth": self.depth,
@@ -170,7 +202,10 @@ delegate. The parent must inspect your result; never claim it has been verified.
         with self.lock:
             if self.closed or self.stop.is_set():
                 raise ValidationError("Subagents are paused or closed")
-            if len(self.records) >= self.options.get("max_children", 8):
+            child_limit = self.options.get("max_children", 8)
+            if self.expected_children is not None:
+                child_limit = min(child_limit, self.expected_children["max_children"])
+            if len(self.records) >= child_limit:
                 raise ValidationError("Session subagent quota reached; reuse existing child IDs")
             with self.shared_budget["lock"]:
                 limit = self.options.get("max_total_children", 64)
