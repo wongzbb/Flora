@@ -145,13 +145,48 @@ def _single_missing_delimiter_bundle(text):
                 stack.pop()
             else:
                 return None
-    if mismatch is None or quoted or expected is None:
+    required = {"programs", "incumbent", "diagnostics", "expected_epoch", "expected_digest"}
+    if mismatch is None:
+        if quoted or not stack:
+            return None
+        closers = "".join({"[": "]", "{": "}"}[char] for char, _ in reversed(stack))
+        candidates = [(text + closers, len(text))]
+        # A complete program can omit the candidate/program-array closers
+        # immediately before the next bundle member (usually incumbent). Only
+        # try the known envelope member boundary, and accept exactly one full
+        # parse; arbitrary insertion remains rejected.
+        for key in ("incumbent", "diagnostics", "expected_epoch", "expected_digest"):
+            marker = ',"' + key + '"'
+            start = 0
+            while True:
+                position = text.find(marker, start)
+                if position < 0:
+                    break
+                for length in range(1, 4):
+                    from itertools import product
+
+                    for sequence in product("]}", repeat=length):
+                        candidates.append(
+                            (text[:position] + "".join(sequence) + text[position:], position)
+                        )
+                start = position + 1
+        matches = []
+        for candidate, offset in candidates:
+            try:
+                value = _strict_json_loads(candidate)
+            except (json.JSONDecodeError, ValueError, RecursionError):
+                continue
+            if isinstance(value, dict) and required.issubset(value):
+                matches.append((value, offset))
+        if len(matches) == 1:
+            return matches[0]
+        return None
+    if quoted or expected is None:
         return None
     candidates = (
         text[:mismatch] + expected + text[mismatch + 1 :],
         text[:mismatch] + expected + text[mismatch:],
     )
-    required = {"programs", "incumbent", "diagnostics", "expected_epoch", "expected_digest"}
     for candidate in candidates:
         if _delimiter_error(candidate) is not None:
             continue

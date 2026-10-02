@@ -136,6 +136,13 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual(repaired[0], json.loads(source))
         self.assertIsNone(_single_missing_delimiter_bundle('{"programs":[}]}'))
 
+    def test_missing_candidate_and_program_closers_are_repaired_at_bundle_boundary(self):
+        source = json.dumps(bundle())
+        malformed = source.replace("}], \"incumbent\"", "], \"incumbent\"", 1)
+        repaired = _single_missing_delimiter_bundle(malformed)
+        self.assertIsNotNone(repaired)
+        self.assertEqual(repaired[0], bundle())
+
     def test_reasoning_fallback_requires_explicit_different_profile(self):
         p = self.provider(
             json_response("", "length", "thought"),
