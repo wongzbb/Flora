@@ -635,7 +635,10 @@ and evidence; do not discard required goals to bypass completion checks.
                     "\nThis worker may delegate bounded read-only subtasks through the "
                     "nested coordinator. Delegate only when the assigned subtask explicitly "
                     "requires nested separable work; never copy the parent's worker count. "
-                    "Collect and review every nested result before returning."
+                    "For a chain, compile one small phase that performs the next handoff "
+                    "or collects its result; do not encode all downstream layers in one "
+                    "large program. Replan from the observed child result before the next "
+                    "phase. Collect and review every nested result before returning."
                 )
             else:
                 instructions += "\nRead-only worker: no task delegation, file writes or command execution."

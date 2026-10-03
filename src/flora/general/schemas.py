@@ -27,6 +27,10 @@ def bounded_specs(
         "agent_capabilities": " Successful VALUE is an object with search_provider, services, browser, mcp_servers, document_inputs, document_exports, max_attachment_bytes, ocr, shell_commands and require_report; the configured capability names are under services/mcp_servers, not a generic capabilities array.",
         "list_skills": " Successful VALUE is an object with skills:[{name,sha256,description}]; installed guides do not grant tools or prove task completion.",
         "child_capabilities": " Successful VALUE is an object with read_only:true, search, workspace, services and claims_verified:false; it is not a generic capabilities array.",
+        "agent_status": " Successful VALUE is an object with agents:[durable status records] plus capability fields; status records are not child answers. Use read_agent or wait_agents to collect actual result text.",
+        "wait_agents": " Successful VALUE is an object with agents:[per-child read views]. A pending or unavailable child has result_available:false, result:null and result_digest:''; do not dereference text/result fields until result_available is true. A complete view may still require read_agent pagination and review_agent.",
+        "read_agents": " Successful VALUE is an object with agents:[independent bounded read views]. Check each result_available and next_offset separately; a read view is not review acceptance or factual verification.",
+        "read_agent": " Successful VALUE is one bounded child read view. When result_available is false, only status and availability are present; when true, follow next_offset until null before parsing text and use the returned result_digest for review.",
     }
     bounds = {
         "append_lines": {"lines": {"minItems": 1, "maxItems": 10000}},
