@@ -333,12 +333,12 @@ and evidence; do not discard required goals to bypass completion checks.
             if label.startswith(kind + " ") or label.startswith(kind + "["):
                 return kind
         aliases = {
-            "null": ("null", "none"),
-            "boolean": ("boolean", "bool"),
-            "number": ("number", "numeric", "integer", "float", "decimal"),
-            "string": ("string", "text"),
-            "object": ("object", "mapping", "dict"),
-            "array": ("array", "list"),
+            "null": ("null", "none", "空值", "无"),
+            "boolean": ("boolean", "bool", "布尔"),
+            "number": ("number", "numeric", "integer", "float", "decimal", "数字", "数值", "整数", "浮点"),
+            "string": ("string", "text", "字符串", "文本"),
+            "object": ("object", "mapping", "dict", "对象", "字典", "映射"),
+            "array": ("array", "list", "数组", "列表"),
         }
         for kind, words in aliases.items():
             if any(word in label for word in words):

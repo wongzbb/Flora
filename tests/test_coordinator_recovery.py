@@ -60,6 +60,8 @@ class CoordinatorRecoveryTests(unittest.TestCase):
     def test_contract_type_uses_top_level_array_before_nested_words(self):
         self.assertEqual(Coordinator._contract_type("array of objects with path and type"), "array")
         self.assertEqual(Coordinator._contract_type("object with fields"), "object")
+        self.assertEqual(Coordinator._contract_type("最终答案字符串"), "string")
+        self.assertEqual(Coordinator._contract_type("输出为数值"), "number")
 
     def test_structured_contract_checks_nested_items_and_required_fields(self):
         contract = {
