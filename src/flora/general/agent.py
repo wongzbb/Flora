@@ -464,9 +464,13 @@ pending/running, or blocked with a concrete limitation. Existing successful effe
 remain committed across these phases. The host checks state and reference integrity;
 it does not infer the task's decomposition or verify the truth of completion claims.
 When the required task obligation is the only unresolved step, use complete_task
-with a concise note and observed evidence; it preserves the host-created goal and
-checks required child reviews before committing completion. Do not replace the
-goal text through update_work.
+with a concise note and checked evidence references. The evidence list may be []
+when the completion is supported by the host's child-review/readiness checks; if
+provided, every item must be exactly {source_id} or {path,sha256} from an actual
+observation. Do not put child review records, agent IDs, digests, or invented
+objects in evidence: those are host observations checked automatically. The tool
+preserves the host-created goal and checks required child reviews before committing
+completion. Do not replace the goal text through update_work.
 """
                 if compiler.get("prompt_style") == "compact-v3":
                     instructions = instructions.replace(

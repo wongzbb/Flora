@@ -89,6 +89,11 @@ class TaskCompletionTests(unittest.TestCase):
         self.assertEqual(completed["steps"][0]["status"], "completed")
         self.assertTrue(self.app.work.completion()["ready"])
 
+    def test_complete_task_guidance_separates_child_reviews_from_evidence(self):
+        descriptions = {item["name"]: item["description"] for item in self.app.agent.tools.descriptions()}
+        self.assertIn("Child review records", descriptions["complete_task"])
+        self.assertIn("{source_id} or {path,sha256}", descriptions["complete_task"])
+
     def test_complete_task_rejects_unresolved_required_substep(self):
         root = self.app.work.read_work()["steps"][0]
         extra = {**root, "id": "verify", "goal": "Verify selected source"}

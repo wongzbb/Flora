@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import os
 import queue
+import shutil
 import sys
 import time
 import unicodedata
@@ -19,6 +20,7 @@ from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.styles import Style
 from rich.console import Console, Group
+from rich.layout import Layout
 from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -202,10 +204,28 @@ class TerminalUI:
                 ),
                 bottom_toolbar=self.composer_toolbar,
             )
+        self.anchor_composer()
         return self.input_session.prompt(
             [("class:composer-border", "╭─ "), ("class:prompt", "flora › ")],
             prompt_continuation=[("class:composer-border", "│ ")],
         )
+
+    def anchor_composer(self):
+        """Place the editable prompt directly above its bottom toolbar.
+
+        Prompt-toolkit's toolbar is bottom-anchored, but its regular prompt is
+        otherwise printed at the cursor left by the previous Rich render. Move
+        only the terminal cursor to the last two rows before opening the prompt;
+        the result history remains in scrollback and the composer occupies a
+        stable bottom strip like the full-screen Codex composer.
+        """
+        if not self.interactive or self.plain:
+            return
+        rows = max(3, shutil.get_terminal_size((120, 24)).lines)
+        # Clear the old composer strip, then let prompt-toolkit redraw the input
+        # and toolbar. ANSI is emitted only for an interactive terminal.
+        sys.stdout.write(f"\033[{rows - 1};1H\033[J")
+        sys.stdout.flush()
 
     def composer_toolbar(self):
         """Return the compact state line rendered below the fixed composer."""
@@ -235,6 +255,34 @@ class TerminalUI:
             ]
         )
         return parts
+
+    def composer_panel(self):
+        """Render the execution-time composer pinned below the live view.
+
+        Prompt-toolkit owns the editable composer while the agent is idle.  A
+        running task cannot safely accept another turn, but it should still
+        reserve the same bottom area so execution output never changes where
+        the conversation input appears.  Keeping this renderable in one place
+        also makes the idle and running states use the same labels and colors.
+        """
+        active = sum(
+            1 for row in self.actors.values() if row.get("status") in {"queued", "running"}
+        )
+        total = len(self.actors)
+        state = safe(self.phase or "Working")
+        status = safe(self.last_result_status)
+        details = "shown" if self.show_execution_details else "collapsed"
+        line = Text()
+        line.append("╭─ ", style="composer-border")
+        line.append("flora › ", style="prompt")
+        line.append("working…", style="toolbar-muted")
+        line.append("  ", style="toolbar-muted")
+        line.append(f"{state} · {status}", style="toolbar-label")
+        if total:
+            line.append(f" · agents {active}/{total}", style="toolbar-muted")
+        line.append(f" · details {details}", style="toolbar-muted")
+        line.append("\n╰─ Enter send · Alt+Enter newline · /details · Ctrl+C pause", style="toolbar-muted")
+        return Panel(line, border_style="violet", padding=(0, 1), title="[violet]COMPOSER[/violet]")
 
     def note(self, value):
         self.console.print(Text(safe(value), style="muted"))
@@ -439,9 +487,18 @@ class TerminalUI:
                 style="muted",
             )
         )
-        return Panel(
+        execution = Panel(
             Group(*elements), title="[violet]FLORA / EXECUTION[/violet]", border_style="line"
         )
+        # Rich Layout gives the execution view a reserved bottom row.  The
+        # layout is redrawn by Live, so the composer remains visually fixed as
+        # panels and status messages above it change.
+        layout = Layout(name="flora")
+        layout.split_column(
+            Layout(execution, name="execution"),
+            Layout(self.composer_panel(), name="composer", size=4),
+        )
+        return layout
 
     def live(self):
         return (

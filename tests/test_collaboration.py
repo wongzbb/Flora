@@ -107,6 +107,43 @@ class CollaborationTests(unittest.TestCase):
         )
         self.assertEqual(_child_provider(provider).progress_timeout, 90)
 
+    def test_batch_retry_reuses_existing_ids_without_quota_failure(self):
+        specs = [
+            {"task": "Independent A", "name": "a"},
+            {"task": "Independent B", "name": "b"},
+        ]
+        first = self.app.delegation.spawn_agents(specs)
+        for ident in first["agent_ids"]:
+            self.app.delegation.futures[ident].result(timeout=5)
+        second = self.app.delegation.spawn_agents(specs)
+        self.assertEqual(second["agent_ids"], first["agent_ids"])
+        self.assertEqual(len(self.app.delegation.records), 2)
+
+    def test_batch_duplicate_dependencies_are_normalized_before_admission(self):
+        dependency = self.spawn("Dependency")
+        before = set(self.app.delegation.records)
+        with self.assertRaises(ValidationError):
+            self.app.delegation.spawn_agents(
+                [
+                    {"task": "Same dependent task", "depends_on": [dependency]},
+                    {
+                        "task": "Same dependent task",
+                        "depends_on": [{"agent_id": dependency}, dependency],
+                    },
+                ]
+            )
+        self.assertEqual(set(self.app.delegation.records), before)
+
+    def test_batch_validation_completes_before_any_child_is_started(self):
+        with self.assertRaises(ValidationError):
+            self.app.delegation.spawn_agents(
+                [
+                    {"task": "Valid first item"},
+                    {"task": "Invalid later item", "context": {"source_ids": "bad"}},
+                ]
+            )
+        self.assertEqual(self.app.delegation.records, {})
+
     def test_collaboration_schema_rejects_known_bad_shapes_before_dispatch(self):
         from flora.language.toolcheck import validate_effect_arguments
 
@@ -157,6 +194,13 @@ class CollaborationTests(unittest.TestCase):
         self.assertEqual(self.app.delegation.completion()["unreviewed_workers"], ids)
         descriptions = {item["name"] for item in self.app.agent.tools.descriptions()}
         self.assertIn("spawn_agents", descriptions)
+
+    def test_batch_spawn_rejects_duplicate_handoffs_before_side_effects(self):
+        with self.assertRaisesRegex(ValidationError, "duplicate task/context/dependency"):
+            self.app.delegation.spawn_agents(
+                [{"task": "Produce an independent calculation"}] * 2
+            )
+        self.assertEqual(self.app.delegation.records, {})
 
     def test_spawn_result_envelope_can_be_passed_to_single_agent_tools(self):
         envelope = self.app.delegation.spawn_agent("Inspect one result")

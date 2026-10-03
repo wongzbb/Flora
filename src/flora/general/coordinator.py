@@ -12,7 +12,7 @@ import json
 import re
 import uuid
 from concurrent.futures import Future
-from copy import copy, deepcopy
+from copy import deepcopy
 from datetime import UTC, datetime
 
 from flora.agent.api import Agent
@@ -21,7 +21,7 @@ from flora.integrations.providers import OpenAICompatibleProvider
 from flora.support.errors import ValidationError
 from flora.support.values import canonical_json, digest
 
-from .delegation import ChildPause, Delegation
+from .delegation import ChildPause, Delegation, _child_provider
 from .reliability import failure_info
 from .schemas import bounded_specs
 from .storage import atomic_json
@@ -111,7 +111,9 @@ parent wrapper may preserve the parent guarantee; record both old and new shapes
 and keep the original receipt non-conforming.
 For several independent workers, spawn_agents(tasks) submits a bounded batch of
 the same model-authored specifications; it does not choose the decomposition for
-you. Its result includes stable agent_ids for later phases. Use read_agents for
+you. Every entry in one batch must describe a distinct handoff: identical task,
+context and dependency specifications are rejected before any child is started,
+instead of being silently deduplicated into one identity. Its result includes stable agent_ids for later phases. Use read_agents for
 one bounded window per child when the assignments are independent; follow each
 returned next_offset to collect complete results, then review every child
 individually before finalizing.
@@ -187,6 +189,11 @@ and evidence; do not discard required goals to bypass completion checks.
         required: bool = True,
     ) -> dict:
         """Start a read-only task with explicit context {guidance?,source_ids?,files?}, dependencies and required flag. If the task specifies a return shape/type, evidence or nested workers, include context.contract before spawning. Returns agent_id; collect and review its actual result before finishing."""
+        prepared = self._prepare_handoff(task, name, context, depends_on, required)
+        return self._admit_handoff(prepared)
+
+    def _prepare_handoff(self, task, name, context, depends_on, required):
+        """Validate and canonicalize a handoff before any child is admitted."""
         if not isinstance(task, str) or not 1 <= len(task.strip()) <= 16000 or len(task) > 16000:
             raise ValidationError("Child task must contain 1–16000 characters")
         if (
@@ -232,6 +239,23 @@ and evidence; do not discard required goals to bypass completion checks.
         deps = [] if not depends_on else self._ids(depends_on)
         if len(deps) > 8:
             raise ValidationError("At most eight dependency IDs are supported")
+        return {
+            "task": task,
+            "name": name,
+            "context": context,
+            "dependencies": deps,
+            "required": required,
+            "signature": digest({"task": task, "context": context, "dependencies": deps}),
+        }
+
+    def _admit_handoff(self, prepared):
+        """Reuse or register one already-validated handoff."""
+        task = prepared["task"]
+        name = prepared["name"]
+        context = prepared["context"]
+        deps = prepared["dependencies"]
+        required = prepared["required"]
+        signature = prepared["signature"]
         with self.lock:
             if self.closed or self.stop.is_set():
                 raise ValidationError("Subagents are paused or closed")
@@ -459,6 +483,7 @@ and evidence; do not discard required goals to bypass completion checks.
         """
         if not isinstance(tasks, list) or not 1 <= len(tasks) <= 32:
             raise ValidationError("tasks must contain 1–32 worker specifications")
+        prepared = []
         for item in tasks:
             if not isinstance(item, dict) or set(item) - {
                 "task", "name", "context", "depends_on", "required"
@@ -483,17 +508,11 @@ and evidence; do not discard required goals to bypass completion checks.
                 raise ValidationError("depends_on must be an array of current-task IDs")
             if "context" in item and not isinstance(item["context"], dict):
                 raise ValidationError("context must be an object")
-        with self.lock:
-            current = len(self._current())
-            limit = self.options.get("max_children", 8)
-            if self.expected_children is not None:
-                limit = min(limit, self.expected_children["max_children"])
-            if current + len(tasks) > limit:
-                raise ValidationError("Current task child quota reached; reduce the batch size")
-        results = []
-        for item in tasks:
-            results.append(
-                self.spawn_agent(
+            # Run the exact same normalization as the single-item API.  This
+            # resolves identity envelopes and duplicate dependency IDs before
+            # computing the batch semantic signature.
+            prepared.append(
+                self._prepare_handoff(
                     item["task"],
                     item.get("name", "Researcher"),
                     item.get("context"),
@@ -501,6 +520,31 @@ and evidence; do not discard required goals to bypass completion checks.
                     item.get("required", True),
                 )
             )
+        # A batch is an explicit request for independent workers. The single
+        # handoff API still reuses an identical current-task identity for safe
+        # recovery, but applying that rule inside one batch silently changes a
+        # requested cardinality (seven entries can become one worker). Detect
+        # duplicate semantic handoffs before any side effect and let the model
+        # revise the decomposition with distinct assignments.
+        batch_signatures = set()
+        for item in prepared:
+            signature = item["signature"]
+            if signature in batch_signatures:
+                raise ValidationError(
+                    "spawn_agents batch contains duplicate task/context/dependency handoffs; "
+                    "use distinct assignments for independent workers; no child was started"
+                )
+            batch_signatures.add(signature)
+        with self.lock:
+            current = len(self._current())
+            existing = {row.get("handoff_digest") for row in self._current()}
+            new_count = sum(item["signature"] not in existing for item in prepared)
+            limit = self.options.get("max_children", 8)
+            if self.expected_children is not None:
+                limit = min(limit, self.expected_children["max_children"])
+            if current + new_count > limit:
+                raise ValidationError("Current task child quota reached; reduce the batch size")
+        results = [self._admit_handoff(item) for item in prepared]
         return {
             "agents": results,
             "agent_ids": [row["agent_id"] for row in results],
@@ -710,8 +754,11 @@ and evidence; do not discard required goals to bypass completion checks.
             )
             provider = self.provider
             if isinstance(provider, OpenAICompatibleProvider):
-                provider = copy(provider)
-                provider._disabled_features = set(provider._disabled_features)
+                # Use the same bounded idle-window adjustment as the legacy
+                # delegation path.  Recursive workers otherwise receive a
+                # shallow copy with the parent's short progress timeout and
+                # can be killed while still compiling their first program.
+                provider = _child_provider(provider)
             from .agent import INSTRUCTIONS_V4
 
             instructions = INSTRUCTIONS_V4 + self.child_instructions

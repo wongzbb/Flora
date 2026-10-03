@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from flora.terminal.cli import apply_default_subagent_options
 from tests.live_terminal_probe import assess_turn
 
 
@@ -94,3 +95,12 @@ class TerminalProbeTests(unittest.TestCase):
         self.assertTrue(self.assess("path", str(self.workspace), ["workspace_context"]))
         self.assertFalse(self.assess("path", str(self.workspace)))
         self.assertFalse(self.assess("path", "/wrong/path", ["workspace_context"]))
+
+    def test_interactive_defaults_expose_bounded_recursive_delegation(self):
+        profile = {}
+        options = apply_default_subagent_options(profile)
+        self.assertEqual(options["max_depth"], 5)
+        self.assertEqual(options["max_total_children"], 64)
+        self.assertTrue(options["enabled"])
+        explicit = {"subagents": {"enabled": True, "max_depth": 0}}
+        self.assertEqual(apply_default_subagent_options(explicit)["max_depth"], 0)

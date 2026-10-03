@@ -39,6 +39,31 @@ def add_launcher_options(parser):
     )
 
 
+def apply_default_subagent_options(general):
+    """Fill only omitted interactive defaults, preserving explicit zero bounds.
+
+    The guided launcher is the normal entry point.  It must expose bounded
+    recursive delegation by default so a user does not need an internal JSON
+    profile just to run a nested task.  ``setdefault`` keeps an explicit
+    ``max_depth: 0`` (or any other caller supplied bound) authoritative.
+    """
+    if not isinstance(general, dict):
+        raise ValidationError("general profile must be an object")
+    subagents = general.setdefault("subagents", {})
+    if not isinstance(subagents, dict):
+        raise ValidationError("general.subagents must be an object")
+    defaults = {
+        "enabled": True,
+        "max_parallel": 3,
+        "max_children": 8,
+        "max_depth": 5,
+        "max_total_children": 64,
+    }
+    for key, value in defaults.items():
+        subagents.setdefault(key, value)
+    return subagents
+
+
 def choose_session(ui, sessions, selected):
     if selected:
         return sessions.select(selected)
@@ -332,7 +357,7 @@ def launch(args, *, ui=None):
         else:
             profile = read_profile(args.config) if args.config else {}
             general = profile.setdefault("general", {})
-            general.setdefault("subagents", {"enabled": True, "max_parallel": 3, "max_children": 8})
+            apply_default_subagent_options(general)
             if getattr(args, "no_subagents", False):
                 general["subagents"] = {"enabled": False}
             if getattr(args, "allow_commands", False):
