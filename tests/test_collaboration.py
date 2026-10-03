@@ -70,6 +70,7 @@ class CollaborationTests(unittest.TestCase):
             item["name"]: item["description"] for item in self.app.agent.tools.descriptions()
         }
         self.assertIn("authoritative collection/contract observation", host_descriptions["review_agent"])
+        self.assertIn("include context.contract before spawning", host_descriptions["spawn_agent"])
 
     def test_delegation_guidance_does_not_contradict_exposed_nested_coordinator(self):
         self.assertIn("Recursive delegation is", self.app.delegation.instructions)

@@ -244,7 +244,7 @@ def _collaboration_bounds(name, properties):
                 },
                 "contract": contract_schema,
             },
-            description="Context accepts guidance, source_ids, files and a bounded assume-guarantee contract; completed dependency outputs are handed over automatically.",
+            description="Context accepts guidance, source_ids, files and a bounded assume–guarantee contract; when the assigned task specifies a return shape/type, evidence or nested workers, include contract before spawning. Completed dependency outputs are handed over automatically.",
         )
     elif name == "spawn_agents":
         properties["tasks"].update(

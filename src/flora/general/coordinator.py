@@ -88,6 +88,10 @@ requirements, include context.contract with assumptions, inputs, outputs, guaran
 dependencies, evidence_requirements and optional delegation bounds. The child must preserve that interface and
 surface a violated assumption instead of silently changing a value type. Existing IDs in depends_on must be from this task. Their
 actual completed outputs are handed to the child as explicitly unverified input.
+If the assigned task names a return shape or type, requires evidence or review, or
+requires nested workers, context.contract is mandatory before spawning. If you
+cannot state that interface, revise the decomposition first instead of creating an
+uncontracted required child.
 The contract's outputs object describes fields of the child's final returned
 value, not tool receipts, capability listings, status metadata or review records.
 Tool results are observations/evidence; they become part of the child value only
@@ -172,7 +176,7 @@ and evidence; do not discard required goals to bypass completion checks.
         depends_on: list[str] | None = None,
         required: bool = True,
     ) -> dict:
-        """Start a read-only task with explicit context {guidance?,source_ids?,files?}, dependencies and required flag. Returns agent_id; collect and review its actual result before finishing."""
+        """Start a read-only task with explicit context {guidance?,source_ids?,files?}, dependencies and required flag. If the task specifies a return shape/type, evidence or nested workers, include context.contract before spawning. Returns agent_id; collect and review its actual result before finishing."""
         if not isinstance(task, str) or not 1 <= len(task.strip()) <= 16000 or len(task) > 16000:
             raise ValidationError("Child task must contain 1–16000 characters")
         if (
