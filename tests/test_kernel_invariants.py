@@ -291,6 +291,22 @@ def contracts_three_valued_local_relations():
 
 
 @check
+def identity_envelope_missing_key_explains_opaque_boundary():
+    program = pure(
+        var("bad"),
+        params=["envelope"],
+        ops=[op("get", "bad", var("envelope"), "name")],
+    )
+    boundary = run_until_boundary(
+        new_machine(program, {"envelope": {"agent_id": "a-123456789abc", "status": "queued"}})
+    )
+    assert boundary.kind == "fault"
+    assert boundary.details["code"] == "MISSING_KEY"
+    assert "opaque agent_id" in boundary.details["message"]
+    return {"fault": boundary.details["code"], "guidance": "opaque agent_id"}
+
+
+@check
 def empirical_guard_excludes_unknown():
     samples = [
         {"value": {"n": 1}, "verdict": "PASS"},

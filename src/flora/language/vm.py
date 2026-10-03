@@ -322,7 +322,13 @@ def _apply(op: str, args: list[Any], receipts: Sequence[dict], memory: dict, max
         if not exists:
             if op == "get_default":
                 return args[2]
-            raise _Fault("MISSING_KEY", "requested key or index is absent")
+            detail = "requested key or index is absent"
+            if isinstance(args[0], dict) and "agent_id" in args[0]:
+                detail += (
+                    "; this value is a child identity envelope: use only its opaque "
+                    "agent_id with wait/read/review, never metadata as a child result"
+                )
+            raise _Fault("MISSING_KEY", detail)
         return value
     if op in ("set", "delete"):
         original, key = args[:2]
