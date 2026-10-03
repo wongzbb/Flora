@@ -9,6 +9,7 @@ coverage, not semantic truth. Legacy delegation stays unchanged.
 from __future__ import annotations
 
 import json
+import re
 import uuid
 from concurrent.futures import Future
 from copy import copy, deepcopy
@@ -323,6 +324,8 @@ and evidence; do not discard required goals to bypass completion checks.
         if not isinstance(descriptor, str):
             return None
         label = descriptor.strip().lower()
+        if label in {"int", "float", "decimal"}:
+            return "number"
         if label in {"null", "boolean", "number", "string", "object", "array"}:
             return label
         # Descriptions may refine the top-level interface (for example,
@@ -344,6 +347,24 @@ and evidence; do not discard required goals to bypass completion checks.
             if any(word in label for word in words):
                 return kind
         return None
+
+    @staticmethod
+    def _contract_type_options(descriptor):
+        """Return explicitly declared primitive alternatives for a field."""
+        if isinstance(descriptor, dict):
+            raw = descriptor.get("type")
+            if isinstance(raw, list):
+                options = [Coordinator._contract_type(item) for item in raw]
+                return [item for item in options if item is not None]
+            return [Coordinator._contract_type(descriptor)]
+        if not isinstance(descriptor, str):
+            return []
+        parts = re.split(r"\s*(?:\||\bor\b)\s*", descriptor.strip().lower())
+        if len(parts) == 1:
+            value = Coordinator._contract_type(descriptor)
+            return [] if value is None else [value]
+        options = [Coordinator._contract_type(part) for part in parts]
+        return [item for item in options if item is not None]
 
     @staticmethod
     def _contract_observation(contract, value):
@@ -375,16 +396,17 @@ and evidence; do not discard required goals to bypass completion checks.
             return None
 
         def check(path, item, expected):
-            expected_type = Coordinator._contract_type(expected)
-            if expected_type is None:
+            expected_types = Coordinator._contract_type_options(expected)
+            if not expected_types:
                 unknown.append(path)
                 return
             actual = actual_type(item)
-            if actual != expected_type:
+            if actual not in expected_types:
                 violations.append(f"output {path} is {actual}, expected {expected}")
                 return
             if not isinstance(expected, dict):
                 return
+            expected_type = expected_types[0]
             if expected_type == "array" and "items" in expected:
                 for index, child in enumerate(item):
                     check(f"{path}[{index}]", child, expected["items"])

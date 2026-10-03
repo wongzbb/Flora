@@ -73,7 +73,7 @@ class CollaborationTests(unittest.TestCase):
         for tool, args in (
             ("spawn_agent", {"task": "Inspect", "context": {"selected_file": {"var": "path"}}}),
             ("read_agent", {"agent_id": {"var": "child"}, "limit": 100000}),
-            ("wait_agents", {"agent_ids": [{"var": "child"}], "timeout": 61}),
+            ("wait_agents", {"agent_ids": [{"var": "child"}], "timeout": 301}),
             (
                 "review_agent",
                 {"agent_id": "x", "result_digest": "", "disposition": "done", "note": "x"},

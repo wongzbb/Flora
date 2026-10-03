@@ -404,8 +404,8 @@ delegate. The parent must inspect your result; never claim it has been verified.
 
     def wait_agents(self, agent_ids: list[str], timeout: int = 30) -> dict:
         """Wait for selected children and return flat per-child read views; review remains required."""
-        if type(timeout) is not int or not 0 <= timeout <= 60:
-            raise ValidationError("Wait timeout must be between 0 and 60 seconds")
+        if type(timeout) is not int or not 0 <= timeout <= 300:
+            raise ValidationError("Wait timeout must be between 0 and 300 seconds")
         ids = self._ids(agent_ids)
         with self.lock:
             futures = [self.futures[x] for x in ids if x in self.futures]
@@ -516,7 +516,7 @@ delegate. The parent must inspect your result; never claim it has been verified.
                                 "task": {"minLength": 1, "maxLength": 16000},
                                 "name": {"minLength": 1, "maxLength": 64},
                                 "agent_ids": {"minItems": 1, "maxItems": 32},
-                                "timeout": {"minimum": 0, "maximum": 60},
+                                "timeout": {"minimum": 0, "maximum": 300},
                                 "offset": {"minimum": 0},
                                 "limit": {"minimum": 1, "maximum": 24000},
                             }.get(k, {}),

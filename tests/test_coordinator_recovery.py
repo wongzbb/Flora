@@ -63,6 +63,14 @@ class CoordinatorRecoveryTests(unittest.TestCase):
         self.assertEqual(Coordinator._contract_type("最终答案字符串"), "string")
         self.assertEqual(Coordinator._contract_type("输出为数值"), "number")
 
+    def test_contract_observation_accepts_explicit_union_types(self):
+        contract = {"outputs": {"child": "object|null", "count": "int or null"}}
+        observed = Coordinator._contract_observation(
+            contract, {"child": {"layer": 2}, "count": 3}
+        )
+        self.assertEqual(observed["status"], "pass")
+        self.assertEqual(observed["violations"], [])
+
     def test_structured_contract_checks_nested_items_and_required_fields(self):
         contract = {
             "outputs": {

@@ -337,7 +337,7 @@ def _collaboration_bounds(name, properties):
             },
             description="Child IDs or untrusted spawn result envelopes containing agent_id; only the ID is used.",
         )
-        properties["timeout"].update(minimum=0, maximum=60)
+        properties["timeout"].update(minimum=0, maximum=300)
     elif name == "review_agent":
         properties["agent_id"] = {
             "type": ["string", "object"],
