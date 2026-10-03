@@ -196,6 +196,10 @@ and evidence; do not discard required goals to bypass completion checks.
             raise ValidationError("Context source_ids and files must be arrays")
         contract = context.get("contract")
         if contract is not None:
+            if not required:
+                raise ValidationError(
+                    "Contracted child handoffs must be required; optional children cannot bypass contract review"
+                )
             self._validate_contract(contract)
             delegation = contract.get("delegation", {})
             if delegation.get("min_children", 0) and self.depth >= self.options.get("max_depth", 0):
@@ -976,10 +980,16 @@ and evidence; do not discard required goals to bypass completion checks.
                 row.get("context", {}).get("contract", {}),
                 view.get("value") if view is not None else None,
             )
-            if disposition == "accepted" and contract_check["status"] == "violation":
+            if disposition == "accepted" and contract_check["status"] not in {
+                "pass",
+                "not_applicable",
+            }:
                 raise ValidationError(
-                    "Contract output guarantee not met; revise the handoff or reject the result: "
-                    + "; ".join(contract_check["violations"])
+                    "Contract output guarantee is not established; revise the handoff or block/reject the result: "
+                    + "; ".join(
+                        contract_check.get("violations", [])
+                        or ["unknown output fields: " + ", ".join(contract_check.get("unknown", []))]
+                    )
                 )
             review = {
                 "disposition": disposition,

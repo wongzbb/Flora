@@ -85,6 +85,21 @@ class CoordinatorRecoveryTests(unittest.TestCase):
         self.assertEqual(bad["status"], "violation")
         self.assertTrue(any("missing output entries[0].type" in item for item in bad["violations"]))
 
+    def test_contracted_child_cannot_be_marked_optional(self):
+        with self.assertRaisesRegex(ValidationError, "must be required"):
+            self.coordinator.spawn_agent(
+                "inspect the assigned source",
+                required=False,
+                context={"contract": {"outputs": {"value": "number"}}},
+            )
+
+    def test_unknown_contract_output_cannot_be_accepted(self):
+        observed = self.coordinator._contract_observation(
+            {"outputs": {"value": "future custom type"}}, {"value": 3}
+        )
+        self.assertEqual(observed["status"], "unknown")
+        self.assertEqual(observed["unknown"], ["value"])
+
     def _set_task(self):
         self.app.task = {"key": "current", "task": "Recover coordinated research"}
         self.app.work.begin("current", self.app.task["task"])
