@@ -130,6 +130,9 @@ child result; it does not accept or review it. Use its returned result_digest an
 then review_agent with disposition accepted/blocked/rejected. Its top-level
 disposition and contract_status are stable host observations; the nested review
 record remains available for audit. The authoritative
+collect_completed_agent combines a bounded wait with complete collection when a
+parent does not need to branch on an intermediate pending state; a timeout still
+returns an unavailable observation and must not be accepted or reviewed.
 For collect_agent, keep both outcome targets minimal: declare one raw result
 parameter (for example params ["collected"] and ["collect_error"]), then inspect
 the returned object with pure get operations. Do not spread result_available,
@@ -1159,6 +1162,7 @@ and evidence; do not discard required goals to bypass completion checks.
             self.read_agent,
             self.read_agents,
             self.collect_agent,
+            self.collect_completed_agent,
             self.resume_agent,
             self.review_agent,
         ]
