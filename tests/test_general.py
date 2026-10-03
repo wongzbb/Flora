@@ -83,6 +83,37 @@ class GeneralTests(unittest.TestCase):
                 app._event(event(2))
                 self.assertEqual(app._same_observation_count, 2)
 
+    def test_replan_observation_counts_even_when_program_changes(self):
+        with tempfile.TemporaryDirectory() as root:
+            workspace = Path(root, "workspace")
+            workspace.mkdir()
+            with GeneralAgent(
+                session_dir=Path(root, "session"),
+                workspace=workspace,
+                provider=WorkspaceProvider(),
+            ) as app:
+                def event(program, value="child_running"):
+                    return {
+                        "kind": "consumer_check",
+                        "candidate": "main",
+                        "result": {
+                            "verdict": "PASS",
+                            "relation": "DEFINED_PREFIX",
+                            "witness": {
+                                "program_digest": program,
+                                "candidate": {
+                                    "kind": "replan",
+                                    "value": {"observed": {"status": value}},
+                                },
+                            },
+                        },
+                    }
+                app._event(event("program-1"))
+                app._event(event("program-2"))
+                with self.assertRaises(PauseRequested):
+                    app._event(event("program-3"))
+                self.assertIn("same program", app._pause_reason)
+
     def test_repeated_wait_requests_safe_child_pause(self):
         with tempfile.TemporaryDirectory() as root:
             workspace = Path(root, "workspace")

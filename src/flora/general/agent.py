@@ -577,11 +577,18 @@ discarding their history. Updating work does not roll back successful effects.
                 ).hexdigest()
             except (TypeError, ValueError):
                 observed_digest = None
-            signature = (
-                event.get("candidate"),
-                witness.get("program_digest"),
-                result.get("observation_digest") or observed_digest,
-            )
+            # A replan is the model's interpretation of the observed frontier.
+            # Recompiling it with a different program digest does not create new
+            # information; count the semantic observation itself so wait/read
+            # cycles cannot evade the no-progress guard by changing syntax.
+            if candidate and candidate.get("kind") == "replan" and observed_digest is not None:
+                signature = (event.get("candidate"), "replan", observed_digest)
+            else:
+                signature = (
+                    event.get("candidate"),
+                    witness.get("program_digest"),
+                    result.get("observation_digest") or observed_digest,
+                )
             if observed_digest is not None and signature == self._last_observation_signature:
                 self._same_observation_count += 1
             else:
