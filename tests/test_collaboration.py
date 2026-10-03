@@ -65,6 +65,10 @@ class CollaborationTests(unittest.TestCase):
         self.assertIn("skills:", descriptions["list_skills"])
         self.assertIn("not a generic capabilities array", descriptions["child_capabilities"])
         self.assertIn("workspace_root", descriptions["workspace_context"])
+        host_descriptions = {
+            item["name"]: item["description"] for item in self.app.agent.tools.descriptions()
+        }
+        self.assertIn("authoritative collection/contract observation", host_descriptions["review_agent"])
 
     def test_delegation_guidance_does_not_contradict_exposed_nested_coordinator(self):
         self.assertIn("Recursive delegation is", self.app.delegation.instructions)

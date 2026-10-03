@@ -123,7 +123,10 @@ wait_agents waits without new model calls and returns the same flat per-child re
 view as read_agent (not a record nested inside another result). read_agent
 pages only the actual answer, limitations, source references and usage, not a huge
 internal trace. Follow next_offset until complete, then review_agent with the
-returned result_digest and disposition accepted/blocked/rejected. Inspect actual
+returned result_digest and disposition accepted/blocked/rejected. The authoritative
+contract observation is review_agent's returned review.contract_check.status;
+never substitute a child value field named contract_check for that host result.
+Inspect actual
 sources before relying on factual claims. Review verifies collection/reference
 integrity, NOT truth. Required children must be reviewed before final return.
 If result_available is false or result is null, the answer is not observed yet;
