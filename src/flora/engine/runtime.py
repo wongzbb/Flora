@@ -33,6 +33,38 @@ from flora.support.resources import (
 )
 from flora.support.values import canonical_json, clone, digest
 
+_VOLATILE_OBSERVATION_KEYS = frozenset(
+    {
+        "budget",
+        "created",
+        "updated",
+        "event_id",
+        "trace_digest",
+        "read_digest",
+        "read_state_digest",
+        "elapsed_seconds",
+        "input_tokens",
+        "output_tokens",
+        "model_calls",
+        "tool_calls",
+        "reserved_output",
+        "unknown_usage_calls",
+    }
+)
+
+
+def _semantic_observation(value):
+    """Remove accounting and internal cursor metadata before no-progress hashing."""
+    if isinstance(value, dict):
+        return {
+            key: _semantic_observation(item)
+            for key, item in value.items()
+            if key not in _VOLATILE_OBSERVATION_KEYS
+        }
+    if isinstance(value, list):
+        return [_semantic_observation(item) for item in value]
+    return value
+
 
 def _migration_failure(boundary, receipt_count):
     """Disclose structural failure only; VM messages may contain arbitrary data."""
@@ -520,11 +552,25 @@ class Runtime:
         )
         self.retention["contexts_dropped"] += stats["dropped_records"]
         self.retention["contract_records_dropped"] = self.contracts.dropped_records
+        report_result = result.to_dict()
+        # The contract verdict describes the candidate prefix; this separate
+        # digest records the actual observation frontier that preceded the next
+        # action. Consumers may use it to distinguish a repeated effect request
+        # with a changed receipt from a true no-information replay.
+        report_result["observation_digest"] = digest(
+            _semantic_observation(
+                {
+                    "tool": self.trace.records[-1]["tool"] if self.trace.records else None,
+                    "args": self.trace.records[-1]["args"] if self.trace.records else None,
+                    "last_receipt": self.trace.records[-1] if self.trace.records else None,
+                }
+            )
+        )
         self._report(
             "consumer_check",
             candidate=candidate.id,
             retained=item in self.contexts,
-            result=result.to_dict(),
+            result=report_result,
         )
 
     def apply_revision(

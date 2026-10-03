@@ -20,7 +20,7 @@ from flora.checks.contracts import (
 from flora.checks.reuse import ReuseLibrary
 from flora.engine.budget import Budget, BudgetLimits
 from flora.engine.replay import replay
-from flora.engine.runtime import Runtime, RuntimeConfig
+from flora.engine.runtime import Runtime, RuntimeConfig, _semantic_observation
 from flora.examples import (
     CalendarWorld,
     block,
@@ -304,6 +304,26 @@ def identity_envelope_missing_key_explains_opaque_boundary():
     assert boundary.details["code"] == "MISSING_KEY"
     assert "opaque agent_id" in boundary.details["message"]
     return {"fault": boundary.details["code"], "guidance": "opaque agent_id"}
+
+
+@check
+def observation_digest_ignores_accounting_metadata():
+    first = {
+        "tool": "wait_agents",
+        "value": {"agents": [{"status": "running", "budget": {"elapsed_seconds": 1}}]},
+        "event_id": 3,
+        "updated": "t1",
+    }
+    second = {
+        "tool": "wait_agents",
+        "value": {"agents": [{"status": "running", "budget": {"elapsed_seconds": 9}}]},
+        "event_id": 4,
+        "updated": "t2",
+    }
+    assert _semantic_observation(first) == _semantic_observation(second)
+    changed = {**second, "value": {"agents": [{"status": "completed"}]}}
+    assert _semantic_observation(first) != _semantic_observation(changed)
+    return {"volatile_ignored": True, "status_change_retained": True}
 
 
 @check

@@ -580,7 +580,7 @@ discarding their history. Updating work does not roll back successful effects.
             signature = (
                 event.get("candidate"),
                 witness.get("program_digest"),
-                observed_digest,
+                result.get("observation_digest") or observed_digest,
             )
             if observed_digest is not None and signature == self._last_observation_signature:
                 self._same_observation_count += 1
