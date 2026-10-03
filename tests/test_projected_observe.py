@@ -322,6 +322,7 @@ class ProjectedObserveTests(unittest.TestCase):
             self.assertIn("SOURCE block-list-v3", v3)
             self.assertIn("ALL capture expressions still evaluate before the effect", v3)
             self.assertIn("subset of capture keys", v3)
+            self.assertIn("Always write both target blocks explicitly", v3)
             self.assertNotIn("their params are exactly capture keys plus bind", v3)
             self.assertNotIn("with params exactly\ncapture+bind", v3)
             self.assertIn("Resume params", v3)

@@ -303,6 +303,12 @@ def _projected_observe_prompt(prompt):
         "by each outcome target, plus one result parameter. The result parameter may be renamed\n"
         "locally: for capture={context:EXPR}, success params may be [context,v] and error\n"
         "params [e], where e receives the raw error even if the observe bind is v.\n"
+        "Always write both target blocks explicitly, including their params arrays; for\n"
+        "example, bind=v,capture={context:EXPR} uses success={label:ok,params:[context,v]}\n"
+        "and error={label:err,params:[e]} (or another single result parameter name).\n"
+        "Every jump, branch, call, effect, and observe args object must contain exactly\n"
+        "the target block's declared params: do not pass pagination or envelope fields\n"
+        "such as next_offset unless that name is explicitly a target parameter.\n"
         "ALL capture expressions still evaluate before the effect, including captures\n"
         "neither target receives. Only the final jump projects values; no liveness inference,\n"
         "default values, retries or implicit error handling. Ordinary effect/call/alternative\n"
@@ -409,6 +415,8 @@ TERM variants (never put in ops):
 {"op":"observe","tool":"granted_name","args":EXPR,"bind":"v","capture":{},"success":"ok","error":"err"}
 Jump/call/alternative args exactly match target params. BOTH branch targets have
 the SAME params matching args. Resume params are exactly capture keys plus bind.
+Every control-flow args object must contain exactly the target params; do not pass
+pagination or envelope fields such as next_offset unless the target declares them.
 Capture values are evaluated before the boundary. All ordinary effect replies are
 {status:"returned",value:VALUE} OR {status:"raised",error:{type,message}}; check
 status BEFORE accessing value/error. Observe mechanically passes raw VALUE to
