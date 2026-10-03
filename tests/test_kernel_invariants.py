@@ -307,6 +307,20 @@ def identity_envelope_missing_key_explains_opaque_boundary():
 
 
 @check
+def null_child_observation_explains_availability_branch():
+    program = pure(
+        var("bad"),
+        params=["pending"],
+        ops=[op("get", "bad", var("pending"), "value")],
+    )
+    boundary = run_until_boundary(new_machine(program, {"pending": None}))
+    assert boundary.kind == "fault"
+    assert boundary.details["code"] == "TYPE_ERROR"
+    assert "result_available/status" in boundary.details["message"]
+    return {"fault": boundary.details["code"], "guidance": "availability branch"}
+
+
+@check
 def observation_digest_ignores_accounting_metadata():
     first = {
         "tool": "wait_agents",

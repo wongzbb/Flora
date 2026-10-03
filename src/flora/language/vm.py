@@ -247,6 +247,12 @@ def _lookup(container: Any, key: Any) -> tuple[bool, Any]:
     if type(container) is dict:
         _expect(type(key) is str, "object key must be a string")
         return key in container, container.get(key)
+    if container is None:
+        raise _Fault(
+            "TYPE_ERROR",
+            "get requires an object, array, or string; the observed value is null: "
+            "branch on result_available/status before reading a pending child result",
+        )
     _expect(type(container) in (list, str), "get requires an object, array, or string")
     _expect(type(key) is int, "sequence index must be an integer")
     if -len(container) <= key < len(container):
@@ -327,6 +333,11 @@ def _apply(op: str, args: list[Any], receipts: Sequence[dict], memory: dict, max
                 detail += (
                     "; this value is a child identity envelope: use only its opaque "
                     "agent_id with wait/read/review, never metadata as a child result"
+                )
+            elif args[0] is None:
+                detail += (
+                    "; the observed value is null: branch on result_available/status "
+                    "before reading a pending child result"
                 )
             raise _Fault("MISSING_KEY", detail)
         return value
