@@ -49,6 +49,7 @@ COMMANDS = [
     "/sources",
     "/artifacts",
     "/work",
+    "/details",
     "/attach",
     "/new",
     "/exit",
@@ -97,6 +98,23 @@ class TerminalUI:
         self.dialogue = {}
         self.dialogue_truncated = set()
         self.dropped_events = 0
+        # Keep the existing Rich visual language while making the composer a
+        # stable, stateful prompt-toolkit surface. Verbose execution panels are
+        # collapsed by default; /details expands them without affecting /log.
+        self.show_execution_details = False
+        self.session_name = ""
+        self.workspace = ""
+        self.model = ""
+        self.last_result_status = "Ready"
+
+    def set_context(self, *, session=None, workspace=None, model=None):
+        """Set session/workspace/model labels shown in the composer toolbar."""
+        if session is not None:
+            self.session_name = safe(session)
+        if workspace is not None:
+            self.workspace = safe(workspace)
+        if model is not None:
+            self.model = safe(model)
 
     def banner(self, workspace):
         if self.plain or self.console.width < 64:
@@ -175,13 +193,48 @@ class TerminalUI:
                 style=Style.from_dict(
                     {
                         "prompt": COLORS["mint"],
+                        "composer-border": COLORS["violet"],
+                        "toolbar-label": COLORS["mint"],
+                        "toolbar-muted": COLORS["muted"],
                         "bottom-toolbar": "bg:#101827 #a1aec3",
                         "completion-menu.completion.current": "bg:#c2b1ff #0b101b",
                     }
                 ),
-                bottom_toolbar=" Enter send · Alt+Enter newline · Tab commands · Ctrl+C pause · Ctrl+D exit ",
+                bottom_toolbar=self.composer_toolbar,
             )
-        return self.input_session.prompt([("class:prompt", "flora › ")])
+        return self.input_session.prompt(
+            [("class:composer-border", "╭─ "), ("class:prompt", "flora › ")],
+            prompt_continuation=[("class:composer-border", "│ ")],
+        )
+
+    def composer_toolbar(self):
+        """Return the compact state line rendered below the fixed composer."""
+        active = sum(
+            1 for row in self.actors.values() if row.get("status") in {"queued", "running"}
+        )
+        total = len(self.actors)
+        detail = "shown" if self.show_execution_details else "collapsed"
+        parts = [
+            ("class:composer-border", "╰─ "),
+            ("class:toolbar-label", " FLORA "),
+            ("class:toolbar-muted", f"{self.phase} · {self.last_result_status}"),
+        ]
+        if total:
+            parts.append(("class:toolbar-muted", f" · agents {active}/{total}"))
+        if self.model:
+            parts.append(("class:toolbar-muted", f" · model {self.model}"))
+        if self.workspace:
+            parts.append(("class:toolbar-muted", f" · {self.workspace}"))
+        parts.extend(
+            [
+                ("class:toolbar-muted", f" · details {detail}"),
+                (
+                    "class:toolbar-muted",
+                    " · Enter send · Alt+Enter newline · /details · Ctrl+C pause",
+                ),
+            ]
+        )
+        return parts
 
     def note(self, value):
         self.console.print(Text(safe(value), style="muted"))
@@ -310,26 +363,32 @@ class TerminalUI:
                         )
                         if key in self.dialogue_truncated:
                             title += " · last 12,000 characters; /log for more"
-                        self.console.print(
-                            Panel(
-                                Text(self.dialogue[key]),
-                                title=safe(label + " / " + title),
-                                border_style="violet" if key[2] == "program" else "line",
+                        if self.show_execution_details:
+                            self.console.print(
+                                Panel(
+                                    Text(self.dialogue[key]),
+                                    title=safe(label + " / " + title),
+                                    border_style="violet" if key[2] == "program" else "line",
+                                )
                             )
-                        )
+                        else:
+                            self.note(label + " · " + title + " · collapsed; use /details or /log")
                     del self.dialogue[key]
                     self.dialogue_truncated.discard(key)
         if channel == "request":
             self.note(label + " · model request " + text + " · outbound prompts: /log 0")
         elif channel.startswith("tool/"):
             tool = safe(event.get("tool", ""))
-            self.console.print(
-                Panel(
-                    Text(text[:6000] + ("\n… /log for more" if len(text) > 6000 else "")),
-                    title=safe(f"{label} / {channel} / {tool}"),
-                    border_style="mint",
+            if self.show_execution_details:
+                self.console.print(
+                    Panel(
+                        Text(text[:6000] + ("\n… /log for more" if len(text) > 6000 else "")),
+                        title=safe(f"{label} / {channel} / {tool}"),
+                        border_style="mint",
+                    )
                 )
-            )
+            else:
+                self.note(label + " · " + tool + " · result collapsed; use /details or /log")
         else:
             self.note(label + " · " + channel + " · " + text)
 
@@ -413,18 +472,36 @@ class TerminalUI:
             self.note("No subagents have been created in this conversation.")
 
     def result(self, result):
-        self.console.print(Text("\nFlora", style="bold violet"))
+        self.last_result_status = safe(result.get("status", "unknown"))
         value = result.get("value")
+        body = []
         if value is not None:
             if isinstance(value, str):
-                self.console.print(Markdown(safe(value)) if not self.plain else Text(safe(value)))
+                body.append(Markdown(safe(value)) if not self.plain else Text(safe(value)))
             else:
-                self.console.print(Text(safe(json.dumps(value, ensure_ascii=False, indent=2))))
-        self.note("Status: " + result["status"])
+                body.append(Text(safe(json.dumps(value, ensure_ascii=False, indent=2))))
+        body.append(Text("Status: " + self.last_result_status, style="mint"))
         if result.get("reason"):
-            self.note(result["reason"])
+            body.append(Text(safe(result["reason"]), style="muted"))
         if result.get("failure"):
-            self.note(result["failure"]["code"] + " · " + result["failure"]["next_action"])
+            body.append(
+                Text(
+                    safe(result["failure"]["code"] + " · " + result["failure"]["next_action"]),
+                    style="pink",
+                )
+            )
+        if self.plain:
+            self.console.print(Text("\nFlora", style="bold violet"))
+            for item in body:
+                self.console.print(item)
+        else:
+            self.console.print(
+                Panel(
+                    Group(*body),
+                    title="[violet]FLORA / RESULT[/violet]",
+                    border_style="violet" if self.last_result_status == "completed" else "pink",
+                )
+            )
         checks = result.get("completion_checks", {})
         for section in ("work", "children"):
             for item in checks.get(section, {}).get("limitations", []):

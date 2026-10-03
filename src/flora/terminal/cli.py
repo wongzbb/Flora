@@ -110,6 +110,7 @@ def help_text(ui):
         "/sources              Saved sources (paged)\n"
         "/artifacts            Generated files and current hashes\n"
         "/work                 Durable task goals, evidence and unresolved steps\n"
+        "/details              Expand or collapse live execution panels\n"
         "/attach PATH          Attach a workspace file to your next task\n"
         "/new                  Start a fresh conversation in this directory\n"
         "/exit                 Save and exit; Ctrl+D also exits"
@@ -133,6 +134,11 @@ def show_budget_mode(ui, agent, status):
 
 
 def conversation(agent, ui, sessions, path, *, initial_task=None):
+    ui.set_context(
+        session=path.name,
+        workspace=sessions.workspace,
+        model=getattr(agent.agent.provider, "model", ""),
+    )
     ui.note("Session: " + path.name)
     ui.note("Resume here with: flora --resume " + path.name)
     ui.note("/help for commands. Ctrl+C pauses execution; Ctrl+D exits at the prompt.")
@@ -249,6 +255,10 @@ def conversation(agent, ui, sessions, path, *, initial_task=None):
                 show_json(ui, agent.artifact_status())
             elif task == "/work":
                 show_json(ui, agent.work.read_work() if agent.work else {"available": False, "note": "This saved conversation uses its original protocol"})
+            elif task == "/details":
+                ui.show_execution_details = not ui.show_execution_details
+                state = "shown" if ui.show_execution_details else "collapsed"
+                ui.note("Execution details are now " + state + ". Full records remain available through /log.")
             elif command == "/sources":
                 show_json(ui, agent.store.list_sources(offset=int(argument) if argument else 0))
             elif command == "/attach":
