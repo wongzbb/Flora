@@ -329,7 +329,15 @@ def _apply(op: str, args: list[Any], receipts: Sequence[dict], memory: dict, max
             if op == "get_default":
                 return args[2]
             detail = "requested key or index is absent"
-            if isinstance(args[0], dict) and "agent_id" in args[0]:
+            if (
+                isinstance(args[0], dict)
+                and args[0].get("result_available") is False
+            ):
+                detail += (
+                    "; this child result is unavailable: branch on result_available/status "
+                    "and wait or collect another page before reading result fields"
+                )
+            elif isinstance(args[0], dict) and "agent_id" in args[0]:
                 detail += (
                     "; this value is a child identity envelope: use only its opaque "
                     "agent_id with wait/read/review, never metadata as a child result"

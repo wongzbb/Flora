@@ -321,6 +321,22 @@ def null_child_observation_explains_availability_branch():
 
 
 @check
+def unavailable_child_view_explains_wait_branch():
+    program = pure(
+        var("bad"),
+        params=["view"],
+        ops=[op("get", "bad", var("view"), "value")],
+    )
+    boundary = run_until_boundary(
+        new_machine(program, {"view": {"result_available": False, "status": "running"}})
+    )
+    assert boundary.kind == "fault"
+    assert boundary.details["code"] == "MISSING_KEY"
+    assert "result is unavailable" in boundary.details["message"]
+    return {"fault": boundary.details["code"], "guidance": "wait or collect"}
+
+
+@check
 def observation_digest_ignores_accounting_metadata():
     first = {
         "tool": "wait_agents",
