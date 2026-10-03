@@ -87,6 +87,12 @@ requirements, include context.contract with assumptions, inputs, outputs, guaran
 dependencies, evidence_requirements and optional delegation bounds. The child must preserve that interface and
 surface a violated assumption instead of silently changing a value type. Existing IDs in depends_on must be from this task. Their
 actual completed outputs are handed to the child as explicitly unverified input.
+The contract's outputs object describes fields of the child's final returned
+value, not tool receipts, capability listings, status metadata or review records.
+Tool results are observations/evidence; they become part of the child value only
+if the child explicitly returns them through its declared interface. Declare only
+guarantees the child is expected to return, and keep unavailable observations as
+uncertainty or a blocked disposition rather than inventing missing output fields.
 After collecting a contract violation, branch on that observation: use a pure
 consumer only when it preserves the parent guarantee, otherwise create a fresh
 replacement handoff with an explicit revised contract or mark the child blocked.
@@ -313,6 +319,13 @@ and evidence; do not discard required goals to bypass completion checks.
         label = descriptor.strip().lower()
         if label in {"null", "boolean", "number", "string", "object", "array"}:
             return label
+        # Descriptions may refine the top-level interface (for example,
+        # "array of objects with path and type").  Select that top-level word
+        # before looking at nested words; substring matching would otherwise
+        # classify the example as an object and reject a real array.
+        for kind in ("array", "object", "number", "boolean", "string", "null"):
+            if label.startswith(kind + " ") or label.startswith(kind + "["):
+                return kind
         aliases = {
             "null": ("null", "none"),
             "boolean": ("boolean", "bool"),

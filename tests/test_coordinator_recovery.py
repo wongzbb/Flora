@@ -12,6 +12,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from flora.general.agent import GeneralAgent
+from flora.general.coordinator import Coordinator
 from flora.general.storage import atomic_json
 from flora.integrations.providers import ModelResponse
 from flora.support.errors import ValidationError
@@ -55,6 +56,10 @@ class CoordinatorRecoveryTests(unittest.TestCase):
         )
         self._set_task()
         self.gates = []
+
+    def test_contract_type_uses_top_level_array_before_nested_words(self):
+        self.assertEqual(Coordinator._contract_type("array of objects with path and type"), "array")
+        self.assertEqual(Coordinator._contract_type("object with fields"), "object")
 
     def _set_task(self):
         self.app.task = {"key": "current", "task": "Recover coordinated research"}
