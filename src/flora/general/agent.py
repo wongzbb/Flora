@@ -383,6 +383,8 @@ class GeneralAgent:
                 functions.append(self.workspace_context)
             if self.work:
                 functions.extend([self.work.read_work, self.work.update_work])
+                if self.work.require_task_completion:
+                    functions.append(self.work.complete_task)
                 if self.work.refinement_enabled:
                     functions.extend([self.work.refine_work, self.work.read_work_history])
             if general.get("services"):
@@ -461,6 +463,10 @@ substeps are fulfilled and checked against real evidence. Keep unresolved steps
 pending/running, or blocked with a concrete limitation. Existing successful effects
 remain committed across these phases. The host checks state and reference integrity;
 it does not infer the task's decomposition or verify the truth of completion claims.
+When the required task obligation is the only unresolved step, use complete_task
+with a concise note and observed evidence; it preserves the host-created goal and
+checks required child reviews before committing completion. Do not replace the
+goal text through update_work.
 """
                 if compiler.get("prompt_style") == "compact-v3":
                     instructions = instructions.replace(

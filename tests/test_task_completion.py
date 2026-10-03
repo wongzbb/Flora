@@ -82,6 +82,20 @@ class TaskCompletionTests(unittest.TestCase):
         self.assertTrue(self.app.work.completion()["ready"])
         self.assertFalse(self.app.work.completion()["claims_verified"])
 
+    def test_complete_task_preserves_host_goal_and_checks_children(self):
+        original = self.app.work.read_work()["steps"][0]
+        completed = self.app.work.complete_task("Observed required work complete", [], 0)
+        self.assertEqual(completed["steps"][0]["goal"], original["goal"])
+        self.assertEqual(completed["steps"][0]["status"], "completed")
+        self.assertTrue(self.app.work.completion()["ready"])
+
+    def test_complete_task_rejects_unresolved_required_substep(self):
+        root = self.app.work.read_work()["steps"][0]
+        extra = {**root, "id": "verify", "goal": "Verify selected source"}
+        self.app.work.update_work([root, extra], 0)
+        with self.assertRaisesRegex(ValidationError, "Required work remains unresolved"):
+            self.app.work.complete_task("premature", [], 1)
+
     def test_explicit_blocked_outcome_retains_limitation_not_success_evidence(self):
         root = self.app.work.read_work()["steps"][0]
         root["status"] = "blocked"

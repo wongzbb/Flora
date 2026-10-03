@@ -24,6 +24,7 @@ def bounded_specs(
         "list_sources": " Successful VALUE is an object with sources:[{source_id,origin,title,sha256,created}] and next_offset (null at the end); it is a listing of saved observations, not their contents or a truth verdict.",
         "workspace_context": " Successful VALUE is an object with workspace_root, relative_path_base and process_cwd string paths.",
         "artifact_status": " Successful VALUE is an object with artifacts:[{path,sha256,sources,task_key,kind,current,current_task}] and claims_verified:false; current is a hash check, not proof of semantic correctness.",
+        "complete_task": " Successful VALUE records completion of the host-created required task obligation while preserving its goal. It checks unresolved required steps and child review readiness first; it is bookkeeping, not a truth verdict.",
         "agent_capabilities": " Successful VALUE is an object with search_provider, services, browser, mcp_servers, document_inputs, document_exports, max_attachment_bytes, ocr, shell_commands and require_report; the configured capability names are under services/mcp_servers, not a generic capabilities array.",
         "list_skills": " Successful VALUE is an object with skills:[{name,sha256,description}]; installed guides do not grant tools or prove task completion.",
         "child_capabilities": " Successful VALUE is an object with read_only:true, search, workspace, services and claims_verified:false; it is not a generic capabilities array.",

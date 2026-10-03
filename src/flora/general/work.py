@@ -176,6 +176,44 @@ class WorkLedger:
             proposed = {**self.state, "revision": expected_revision + 1, "steps": clean}
             return self._commit(proposed)
 
+    def complete_task(self, note: str, evidence: list[dict], expected_revision: int) -> dict:
+        """Complete the host-created task obligation without rewriting its goal."""
+        with self.lock:
+            self._check_revision(expected_revision)
+            if not self.require_task_completion:
+                raise ValidationError("Task completion contract is disabled")
+            task_step = next(
+                (step for step in self.state["steps"] if step["id"] == TASK_OBLIGATION_ID),
+                None,
+            )
+            if task_step is None or not task_step["required"]:
+                raise ValidationError("Required task obligation is missing")
+            other_pending = [
+                step["id"]
+                for step in self.state["steps"]
+                if step["id"] != TASK_OBLIGATION_ID
+                and step["required"]
+                and step["status"] in {"pending", "running", "blocked"}
+            ]
+            if other_pending:
+                raise ValidationError(
+                    "Required work remains unresolved: " + ", ".join(other_pending)
+                )
+            if getattr(self.owner, "delegation", None):
+                children = self.owner.delegation.completion()
+                if not children.get("ready"):
+                    raise ValidationError("Required child work remains unreviewed or incomplete")
+            if not isinstance(note, str) or not 1 <= len(note.strip()) <= 4000:
+                raise ValidationError("Completion note must be nonempty and at most 4000 characters")
+            checked = self.evidence(evidence)
+            steps = [
+                {**step, "status": "completed", "note": note, "evidence": checked}
+                if step["id"] == TASK_OBLIGATION_ID
+                else deepcopy(step)
+                for step in self.state["steps"]
+            ]
+            return self._commit({**self.state, "revision": expected_revision + 1, "steps": steps})
+
     def refine_work(
         self,
         superseded_ids: list[str],
