@@ -523,8 +523,29 @@ delegate. The parent must inspect your result; never claim it has been verified.
         except (TypeError, ValueError) as exc:
             raise ValidationError("Collected child result is not valid JSON") from exc
         collected = dict(first)
-        collected.update(text=text, next_offset=None, total_chars=len(text), result=parsed)
+        collected.update(
+            text=text,
+            next_offset=None,
+            total_chars=len(text),
+            result=parsed,
+            child_status=parsed.get("status") if isinstance(parsed, dict) else None,
+            child_value=parsed.get("value") if isinstance(parsed, dict) else None,
+        )
         return collected
+
+    def collect_completed_agent(
+        self, agent_id: str, timeout: int = 300, limit: int = 24000
+    ) -> dict:
+        """Wait for one child to reach a terminal state, then collect it.
+
+        Waiting and collection remain one observable host action: a timeout is
+        returned as an unavailable view, while a terminal child is fully read.
+        This does not accept, review, retry, or change the child's contract.
+        """
+        if type(timeout) is not int or not 0 <= timeout <= 300:
+            raise ValidationError("Collect timeout must be between 0 and 300")
+        self.wait_agents([agent_id], timeout=timeout)
+        return self.collect_agent(agent_id, limit=limit)
 
     def resume_agent(self, agent_id: str) -> dict:
         """Explicitly resume an interrupted child using its original budget and effect journal."""
@@ -591,6 +612,7 @@ delegate. The parent must inspect your result; never claim it has been verified.
                     self.read_agent,
                     self.read_agents,
                     self.collect_agent,
+                    self.collect_completed_agent,
                     self.resume_agent,
                 ]
             )._tools.values()

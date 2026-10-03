@@ -73,6 +73,7 @@ class CollaborationTests(unittest.TestCase):
         self.assertIn("include context.contract before spawning", host_descriptions["spawn_agent"])
         self.assertIn("complete observed child read view", host_descriptions["collect_agent"])
         self.assertIn("outcome targets minimal", host_descriptions["collect_agent"])
+        self.assertIn("complete observed child read view", host_descriptions["collect_completed_agent"])
 
     def test_delegation_guidance_does_not_contradict_exposed_nested_coordinator(self):
         self.assertIn("Recursive delegation is", self.app.delegation.instructions)
@@ -184,6 +185,8 @@ class CollaborationTests(unittest.TestCase):
         self.assertTrue(collected["result_available"])
         self.assertIsNone(collected["next_offset"])
         self.assertEqual(collected["result"]["status"], "completed")
+        self.assertEqual(collected["child_status"], "completed")
+        self.assertEqual(collected["child_value"]["finding"], "Observed handoff")
         reviewed = self.app.delegation.review_agent(
             ident,
             collected["result_digest"],
@@ -194,6 +197,15 @@ class CollaborationTests(unittest.TestCase):
         self.assertEqual(reviewed["disposition"], "accepted")
         self.assertEqual(reviewed["contract_status"], "not_applicable")
         self.assertEqual(reviewed["result_digest"], collected["result_digest"])
+
+    def test_collect_completed_agent_waits_then_collects_without_acceptance(self):
+        ident = self.app.delegation.spawn_agent("wait and collect") ["agent_id"]
+        collected = self.app.delegation.collect_completed_agent(ident, timeout=5, limit=1)
+        self.assertTrue(collected["result_available"])
+        self.assertIsNone(collected["next_offset"])
+        self.assertIsNone(self.app.delegation.records[ident].get("review"))
+        self.assertEqual(collected["child_status"], "completed")
+        self.assertIsInstance(collected["child_value"], dict)
 
     def test_nested_identity_envelopes_are_unwrapped_only_at_collaboration_boundary(self):
         row = self.app.delegation.spawn_agent("nested identity")
