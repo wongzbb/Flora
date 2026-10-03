@@ -162,6 +162,17 @@ class CompilerAdvisoryTests(unittest.TestCase):
         self.assertIn("next necessary effect", repair["guidance"])
         self.assertIn("Never replay an already successful effect", repair["guidance"])
 
+    def test_bundle_envelope_repair_preserves_required_protocol_fields(self):
+        bad = {"revisions": []}
+        good = quoted_bundle()
+        compiler, provider, _, events, ctx = self.compile_sequence(bad, good)
+        self.assertEqual(compiler.compile(ctx), good)
+        self.assertTrue(any(e["kind"] == "compiler_rejected" for e in events))
+        repair = json.loads(provider.requests[1][-1]["content"])
+        self.assertIn("programs", repair["guidance"])
+        self.assertIn("expected_digest", repair["guidance"])
+        self.assertIn("revisions is optional", repair["guidance"])
+
     def test_unknown_dynamic_tool_argument_is_not_rejected_or_guessed(self):
         source = authored({"account": {"var": "account"}, "quantity": 2})
         source["programs"][0]["program"]["blocks"]["main"]["ops"] = [

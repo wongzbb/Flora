@@ -1211,6 +1211,13 @@ class LLMCompiler:
                                             if self.prompt_style == "compact-v3"
                                             else "Use replan only when new semantic reasoning is necessary. "
                                         )
+                                        + (
+                                            "For a top-level bundle-envelope error, return all required envelope keys: "
+                                            "programs, incumbent, diagnostics, expected_epoch, and expected_digest; "
+                                            "revisions is optional. Do not return a revisions-only patch. "
+                                            if "bundle requires programs" in str(exc)
+                                            else ""
+                                        )
                                         + "Keep meaningful alternatives "
                                         "and diagnostics. Preserve the task, exact anchor and tool capabilities."
                                     ),
