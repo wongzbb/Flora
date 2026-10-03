@@ -589,12 +589,17 @@ discarding their history. Updating work does not roll back successful effects.
                 self._same_observation_count = 1 if observed_digest is not None else 0
             if (
                 self._same_observation_count >= 3
-                and not (self.delegation and self.delegation.is_busy())
             ):
                 self._pause_reason = (
                     "Repeated the same program and observed value without information gain; "
                     "revise the plan or record the unresolved limitation"
                 )
+                # A repeated wait is itself a no-information action even when
+                # a child is still running. Stop children at their next safe
+                # boundary so the parent does not spend its whole wall budget
+                # replaying the same wait; explicit resume remains required.
+                if self.delegation and self.delegation.is_busy():
+                    self.delegation.request_pause()
                 raise PauseRequested
         if self.work and event.get("kind") == "bundle_installed":
             epoch = event["epoch"]

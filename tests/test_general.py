@@ -5,7 +5,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from flora.general.agent import GeneralAgent, PauseRequested, _new_session_defaults, _normalize
 from flora.integrations.providers import ModelResponse
@@ -82,6 +82,40 @@ class GeneralTests(unittest.TestCase):
                 app._event(event(2))
                 app._event(event(2))
                 self.assertEqual(app._same_observation_count, 2)
+
+    def test_repeated_wait_requests_safe_child_pause(self):
+        with tempfile.TemporaryDirectory() as root:
+            workspace = Path(root, "workspace")
+            workspace.mkdir()
+            with GeneralAgent(
+                session_dir=Path(root, "session"),
+                workspace=workspace,
+                provider=WorkspaceProvider(),
+            ) as app:
+                delegation = Mock()
+                delegation.is_busy.return_value = True
+                app.delegation = delegation
+                event = {
+                    "kind": "consumer_check",
+                    "candidate": "main",
+                    "result": {
+                        "verdict": "PASS",
+                        "relation": "DEFINED_PREFIX",
+                        "witness": {
+                            "program_digest": "wait-program",
+                            "candidate": {
+                                "kind": "effect",
+                                "request": {"tool": "wait_agents", "args": {"timeout": 30}},
+                            },
+                        },
+                    },
+                }
+                app._event(event)
+                app._event(event)
+                with self.assertRaises(PauseRequested):
+                    app._event(event)
+                delegation.request_pause.assert_called_once()
+                app.delegation = None
 
     def test_new_workspace_task_uses_one_compile_one_observation(self):
         with tempfile.TemporaryDirectory() as root:
