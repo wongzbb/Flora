@@ -9,7 +9,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 from flora.general.agent import GeneralAgent
-from flora.integrations.providers import ModelResponse
+from flora.general.delegation import _child_provider
+from flora.integrations.providers import ModelResponse, OpenAICompatibleProvider
 from flora.support.errors import ValidationError
 from flora.support.values import digest
 from tests.helpers import bundle, pure
@@ -74,6 +75,33 @@ class CollaborationTests(unittest.TestCase):
         self.assertIn("Recursive delegation is", self.app.delegation.instructions)
         self.assertIn("nested coordinator", self.app.delegation.instructions)
         self.assertNotIn("Children cannot", self.app.delegation.instructions)
+
+    def test_nested_provider_idle_guard_respects_first_program_window(self):
+        provider = OpenAICompatibleProvider(
+            base_url="https://example.test/v1",
+            model="test",
+            api_key_env=None,
+            timeout=20,
+            total_timeout=300,
+            progress_timeout=60,
+            first_program_timeout=240,
+        )
+        child = _child_provider(provider)
+        self.assertIsNot(child, provider)
+        self.assertEqual(child.progress_timeout, 120)
+        self.assertEqual(provider.progress_timeout, 60)
+
+    def test_nested_provider_does_not_exceed_total_timeout(self):
+        provider = OpenAICompatibleProvider(
+            base_url="https://example.test/v1",
+            model="test",
+            api_key_env=None,
+            timeout=20,
+            total_timeout=90,
+            progress_timeout=30,
+            first_program_timeout=240,
+        )
+        self.assertEqual(_child_provider(provider).progress_timeout, 90)
 
     def test_collaboration_schema_rejects_known_bad_shapes_before_dispatch(self):
         from flora.language.toolcheck import validate_effect_arguments

@@ -21,6 +21,28 @@ from .schemas import bounded_specs
 from .storage import atomic_json
 
 
+def _child_provider(provider):
+    """Copy a built-in provider and give nested first-program work fair idle time."""
+    from flora.integrations.providers import OpenAICompatibleProvider
+
+    if not isinstance(provider, OpenAICompatibleProvider):
+        return provider
+    from copy import copy
+
+    child = copy(provider)
+    child._disabled_features = set(child._disabled_features)
+    # A child can spend most of its first-program window reasoning before the
+    # next streamed chunk. Keep an inter-chunk guard, but do not let it fire
+    # before half of that explicitly configured window; total_timeout remains
+    # the hard upper bound.
+    if child.progress_timeout is not None and child.first_program_timeout is not None:
+        child.progress_timeout = min(
+            child.total_timeout,
+            max(child.progress_timeout, child.first_program_timeout / 2),
+        )
+    return child
+
+
 def validate_options(options):
     if not isinstance(options, dict) or set(options) - {
         "enabled",
@@ -300,15 +322,7 @@ delegate. The parent must inspect your result; never claim it has been verified.
                 actor=ident,
                 secrets=(self.owner._session_key,),
             )
-            child_provider = self.provider
-            # A built-in provider's streaming callbacks belong to one worker.
-            from flora.integrations.providers import OpenAICompatibleProvider
-
-            if isinstance(child_provider, OpenAICompatibleProvider):
-                from copy import copy
-
-                child_provider = copy(child_provider)
-                child_provider._disabled_features = set(child_provider._disabled_features)
+            child_provider = _child_provider(self.provider)
             agent = Agent(
                 model=model if self.provider is None else None,
                 provider=child_provider,
