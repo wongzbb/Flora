@@ -58,6 +58,14 @@ class CollaborationTests(unittest.TestCase):
         self.app.delegation.futures[ident].result(timeout=5)
         return ident
 
+    def test_child_result_descriptions_preserve_actual_object_shapes(self):
+        descriptions = {spec.name: spec.description for spec in self.app.delegation._tools()}
+        self.assertIn("entries:", descriptions["list_files"])
+        self.assertIn("sources:", descriptions["list_sources"])
+        self.assertIn("skills:", descriptions["list_skills"])
+        self.assertIn("not a generic capabilities array", descriptions["child_capabilities"])
+        self.assertIn("workspace_root", descriptions["workspace_context"])
+
     def test_collaboration_schema_rejects_known_bad_shapes_before_dispatch(self):
         from flora.language.toolcheck import validate_effect_arguments
 

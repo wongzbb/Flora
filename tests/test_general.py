@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from flora.general.agent import GeneralAgent, _new_session_defaults, _normalize
+from flora.general.agent import GeneralAgent, PauseRequested, _new_session_defaults, _normalize
 from flora.integrations.providers import ModelResponse
 from flora.support.errors import ValidationError
 from tests.helpers import bundle
@@ -28,6 +28,61 @@ class WorkspaceProvider:
 
 
 class GeneralTests(unittest.TestCase):
+    def test_repeated_program_and_observation_pauses_without_information_gain(self):
+        with tempfile.TemporaryDirectory() as root:
+            workspace = Path(root, "workspace")
+            workspace.mkdir()
+            with GeneralAgent(
+                session_dir=Path(root, "session"),
+                workspace=workspace,
+                provider=WorkspaceProvider(),
+            ) as app:
+                event = {
+                    "kind": "consumer_check",
+                    "candidate": "main",
+                    "result": {
+                        "verdict": "PASS",
+                        "relation": "DEFINED_PREFIX",
+                        "witness": {
+                            "program_digest": "program-1",
+                            "candidate": {"kind": "return", "value": {"x": 1}},
+                        },
+                    },
+                }
+                app._event(event)
+                app._event(event)
+                with self.assertRaises(PauseRequested):
+                    app._event(event)
+                self.assertIn("same program", app._pause_reason)
+
+    def test_changed_observation_resets_stagnation_counter(self):
+        with tempfile.TemporaryDirectory() as root:
+            workspace = Path(root, "workspace")
+            workspace.mkdir()
+            with GeneralAgent(
+                session_dir=Path(root, "session"),
+                workspace=workspace,
+                provider=WorkspaceProvider(),
+            ) as app:
+                def event(value):
+                    return {
+                        "kind": "consumer_check",
+                        "candidate": "main",
+                        "result": {
+                            "verdict": "PASS",
+                            "relation": "DEFINED_PREFIX",
+                            "witness": {
+                                "program_digest": "program-1",
+                                "candidate": {"kind": "return", "value": {"x": value}},
+                            },
+                        },
+                    }
+                app._event(event(1))
+                app._event(event(1))
+                app._event(event(2))
+                app._event(event(2))
+                self.assertEqual(app._same_observation_count, 2)
+
     def test_new_workspace_task_uses_one_compile_one_observation(self):
         with tempfile.TemporaryDirectory() as root:
             workspace = Path(root, "workspace")

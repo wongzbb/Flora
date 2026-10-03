@@ -274,6 +274,8 @@ class GeneralAgent:
         self.delegation = None
         self.work = None
         self._progress_epoch, self._progress_compiles = -1, 0
+        self._last_observation_signature = None
+        self._same_observation_count = 0
         self._pause_reason = None
         self._session_key = session_key
         self.lock, self.pause = threading.Lock(), threading.Event()
@@ -562,6 +564,38 @@ discarding their history. Updating work does not roll back successful effects.
     def _event(self, event):
         self.store.event(event)
         self._notify(event)
+        if self.work and event.get("kind") == "consumer_check":
+            result = event.get("result") or {}
+            witness = result.get("witness") or {}
+            candidate = witness.get("candidate")
+            # A repeated program with the same observed value cannot be an
+            # information-gaining branch. Count only an exact observation;
+            # changing tool output resets the counter and remains executable.
+            try:
+                observed_digest = hashlib.sha256(
+                    json.dumps(candidate, sort_keys=True, ensure_ascii=False).encode("utf-8")
+                ).hexdigest()
+            except (TypeError, ValueError):
+                observed_digest = None
+            signature = (
+                event.get("candidate"),
+                witness.get("program_digest"),
+                observed_digest,
+            )
+            if observed_digest is not None and signature == self._last_observation_signature:
+                self._same_observation_count += 1
+            else:
+                self._last_observation_signature = signature
+                self._same_observation_count = 1 if observed_digest is not None else 0
+            if (
+                self._same_observation_count >= 3
+                and not (self.delegation and self.delegation.is_busy())
+            ):
+                self._pause_reason = (
+                    "Repeated the same program and observed value without information gain; "
+                    "revise the plan or record the unresolved limitation"
+                )
+                raise PauseRequested
         if self.work and event.get("kind") == "bundle_installed":
             epoch = event["epoch"]
             self._progress_compiles = (
