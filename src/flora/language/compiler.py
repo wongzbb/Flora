@@ -1200,6 +1200,10 @@ class LLMCompiler:
                                         "Correct the stated error and check every delimiter and escaped string. "
                                         "Bind shared observed values and avoid copying large return literals into "
                                         "multiple branches; keep one final return block when semantics permit. "
+                                        "If the validation error concerns block parameters, continuation arguments, "
+                                        "or an undefined local, reduce this repair to the next necessary effect and "
+                                        "one minimal continuation block; defer later consumers and branches until "
+                                        "the resulting observation is available. Never replay an already successful effect. "
                                         "Use line breaks between blocks and keep each term inside its block, after ops. "
                                         "Compile the next closed phase, including known pure result consumers and branches. "
                                         + (

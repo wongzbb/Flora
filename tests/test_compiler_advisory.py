@@ -151,6 +151,17 @@ class CompilerAdvisoryTests(unittest.TestCase):
         self.assertTrue(any(e["kind"] == "compiler_rejected" for e in events))
         self.assertFalse(any(e["kind"] == "compiler_advisory" for e in events))
 
+    def test_validation_repair_requests_a_minimal_next_effect_phase(self):
+        bad = authored({"account": {"literal": {"var": "x"}}, "quantity": 2})
+        good = authored({"account": "a", "quantity": 2})
+        compiler, provider, _, _, ctx = self.compile_sequence(
+            bad, good, ctx=context(TOOLS), syntax="block-list-v1", prompt_style="compact-v1"
+        )
+        self.assertEqual(compiler.compile(ctx), good)
+        repair = json.loads(provider.requests[1][-1]["content"])
+        self.assertIn("next necessary effect", repair["guidance"])
+        self.assertIn("Never replay an already successful effect", repair["guidance"])
+
     def test_unknown_dynamic_tool_argument_is_not_rejected_or_guessed(self):
         source = authored({"account": {"var": "account"}, "quantity": 2})
         source["programs"][0]["program"]["blocks"]["main"]["ops"] = [
