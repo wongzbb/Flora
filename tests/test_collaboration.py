@@ -191,6 +191,9 @@ class CollaborationTests(unittest.TestCase):
             "Collected every page and inspected the complete observed result.",
         )
         self.assertEqual(reviewed["review"]["disposition"], "accepted")
+        self.assertEqual(reviewed["disposition"], "accepted")
+        self.assertEqual(reviewed["contract_status"], "not_applicable")
+        self.assertEqual(reviewed["result_digest"], collected["result_digest"])
 
     def test_nested_identity_envelopes_are_unwrapped_only_at_collaboration_boundary(self):
         row = self.app.delegation.spawn_agent("nested identity")

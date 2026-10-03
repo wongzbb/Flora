@@ -127,7 +127,9 @@ wait_agents waits without new model calls and returns the same flat per-child re
 view as read_agent (not a record nested inside another result). collect_agent
 performs the bounded pagination mechanically and returns one complete observed
 child result; it does not accept or review it. Use its returned result_digest and
-then review_agent with disposition accepted/blocked/rejected. The authoritative
+then review_agent with disposition accepted/blocked/rejected. Its top-level
+disposition and contract_status are stable host observations; the nested review
+record remains available for audit. The authoritative
 For collect_agent, keep both outcome targets minimal: declare one raw result
 parameter (for example params ["collected"] and ["collect_error"]), then inspect
 the returned object with pure get operations. Do not spread result_available,
@@ -1038,7 +1040,16 @@ and evidence; do not discard required goals to bypass completion checks.
             }
             row["review"] = review
             self._save()
-            return {"agent_id": agent_id, "review": deepcopy(review)}
+            # Keep the full review record for auditability, and expose the two
+            # decisions most parents need at a stable boundary. These are host
+            # observations, never claims copied from the child value.
+            return {
+                "agent_id": agent_id,
+                "review": deepcopy(review),
+                "disposition": disposition,
+                "contract_status": contract_check["status"],
+                "result_digest": result_digest,
+            }
 
     def is_busy(self):
         with self.lock:
