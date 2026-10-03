@@ -260,6 +260,16 @@ class FrontendTests(unittest.TestCase):
         lowered = lower_bundle(source, syntax="block-list-v3")
         self.assertEqual(lowered["programs"][0]["program"]["blocks"]["main"]["term"]["op"], "effect")
 
+    def test_dictionary_program_normalizes_effect_with_complete_observe_outcomes(self):
+        source = bundle(observe())
+        term = source["programs"][0]["program"]["blocks"]["main"]["term"]
+        term["op"] = "effect"
+        lowered = lower_bundle(source, syntax="block-list-v3")
+        self.assertEqual(
+            lowered["programs"][0]["program"]["blocks"]["main"]["term"]["op"],
+            "effect",
+        )
+
     def test_block_list_normalizes_generic_tool_term_shorthand(self):
         source = bundle(
             [

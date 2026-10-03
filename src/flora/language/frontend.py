@@ -271,6 +271,21 @@ def lower_block_list(source, *, inline_expressions=False, project_captures=False
                 raise ValidationError("block-list-v1 requires valid unique block labels")
             blocks[label] = {key: value for key, value in block.items() if key != "label"}
         program = {"version": 1, "entry": next(iter(blocks)), "blocks": blocks}
+    # Apply the same unambiguous observe envelope normalization to the
+    # dictionary form as to the labelled-list form.  Models may return either
+    # source shape; the semantic lowering and validation remain identical.
+    if isinstance(program.get("blocks"), dict):
+        for label, block in program["blocks"].items():
+            term = block.get("term") if isinstance(block, dict) else None
+            if (
+                isinstance(term, dict)
+                and set(term) == {"op", "tool", "args", "bind", "capture", "success", "error"}
+                and term.get("op") == "effect"
+            ):
+                program["blocks"][label] = {
+                    **block,
+                    "term": {**term, "op": "observe"},
+                }
     if inline_expressions:
         from flora.language.expressions import lower_expressions
 
