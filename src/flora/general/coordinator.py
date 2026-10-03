@@ -115,8 +115,10 @@ Spawn return values are identity envelopes, not child answers: extract only the
 opaque agent_id string and pass it to wait/read/review. Never read name/status
 inside an identity envelope as if it were a nested result.
 Do not split trivial tasks. Use parallel workers for separable work, and dependencies
-only when a worker genuinely needs another's result. No recursive delegation or
-child writes/shell/browser/service mutations. agent_status lists live state.
+only when a worker genuinely needs another's result. Child writes/shell/browser/service
+mutations remain forbidden. Recursive delegation is allowed only when this worker's
+host exposes a nested coordinator and its assigned contract requires a separable
+child; otherwise report the unavailable delegation assumption. agent_status lists live state.
 wait_agents waits without new model calls and returns the same flat per-child read
 view as read_agent (not a record nested inside another result). read_agent
 pages only the actual answer, limitations, source references and usage, not a huge

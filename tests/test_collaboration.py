@@ -66,6 +66,11 @@ class CollaborationTests(unittest.TestCase):
         self.assertIn("not a generic capabilities array", descriptions["child_capabilities"])
         self.assertIn("workspace_root", descriptions["workspace_context"])
 
+    def test_delegation_guidance_does_not_contradict_exposed_nested_coordinator(self):
+        self.assertIn("Recursive delegation is", self.app.delegation.instructions)
+        self.assertIn("nested coordinator", self.app.delegation.instructions)
+        self.assertNotIn("Children cannot", self.app.delegation.instructions)
+
     def test_collaboration_schema_rejects_known_bad_shapes_before_dispatch(self):
         from flora.language.toolcheck import validate_effect_arguments
 

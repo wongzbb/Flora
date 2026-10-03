@@ -62,7 +62,10 @@ class Delegation:
 Independent read-only subagents are available. For separable research, document or
 repository analysis, spawn_agent with a precise task and the context it needs;
 several children may run concurrently. Children cannot write files, run commands,
-delegate recursively, use browser mutations or access MCP/HTTP service mutations.
+use browser mutations or access MCP/HTTP service mutations. Recursive delegation is
+allowed only when the host exposes a nested coordinator and the assigned contract
+explicitly requires a separable child; otherwise a child must report that the
+delegation assumption is unavailable instead of attempting it.
 Call wait_agents and read_agent to collect actual results before using them.
 A child conclusion is not verified evidence; check its sources and limitations.
 Child source IDs refer to the shared observation ledger. Budget counters are
