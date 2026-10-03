@@ -62,6 +62,11 @@ class HandoffAuthorityTests(unittest.TestCase):
                 "agent_id"
             ]
 
+    def test_nested_worker_guidance_matches_exposed_capability(self):
+        c = self.open_app()
+        self.assertIn("If the host exposes a nested coordinator", c.child_instructions)
+        self.assertNotIn("You cannot modify files or delegate", c.child_instructions)
+
     def test_versioned_origin_is_task_visible_without_expanding_tools(self):
         c = self.open_app()
         ident = self.queue(c)
