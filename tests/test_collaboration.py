@@ -71,6 +71,8 @@ class CollaborationTests(unittest.TestCase):
         }
         self.assertIn("authoritative collection/contract observation", host_descriptions["review_agent"])
         self.assertIn("include context.contract before spawning", host_descriptions["spawn_agent"])
+        self.assertIn("complete observed child read view", host_descriptions["collect_agent"])
+        self.assertIn("outcome targets minimal", host_descriptions["collect_agent"])
 
     def test_delegation_guidance_does_not_contradict_exposed_nested_coordinator(self):
         self.assertIn("Recursive delegation is", self.app.delegation.instructions)
@@ -175,6 +177,20 @@ class CollaborationTests(unittest.TestCase):
         self.assertEqual([item["agent_id"] for item in batch["agents"]], ids)
         self.assertTrue(all(item["result_available"] for item in batch["agents"]))
         self.assertTrue(all(item["total_chars"] > 0 for item in batch["agents"]))
+
+    def test_collect_agent_assembles_pages_without_bypassing_review(self):
+        ident = self.spawn("collect a paginated result")
+        collected = self.app.delegation.collect_agent(ident, limit=1)
+        self.assertTrue(collected["result_available"])
+        self.assertIsNone(collected["next_offset"])
+        self.assertEqual(collected["result"]["status"], "completed")
+        reviewed = self.app.delegation.review_agent(
+            ident,
+            collected["result_digest"],
+            "accepted",
+            "Collected every page and inspected the complete observed result.",
+        )
+        self.assertEqual(reviewed["review"]["disposition"], "accepted")
 
     def test_nested_identity_envelopes_are_unwrapped_only_at_collaboration_boundary(self):
         row = self.app.delegation.spawn_agent("nested identity")

@@ -88,7 +88,9 @@ use browser mutations or access MCP/HTTP service mutations. Recursive delegation
 allowed only when the host exposes a nested coordinator and the assigned contract
 explicitly requires a separable child; otherwise a child must report that the
 delegation assumption is unavailable instead of attempting it.
-Call wait_agents and read_agent to collect actual results before using them.
+Call wait_agents and collect_agent to collect actual results before using them.
+A collection is still an observation, not acceptance: review the returned
+result_digest with review_agent when the host exposes review_agent.
 A child conclusion is not verified evidence; check its sources and limitations.
 Child source IDs refer to the shared observation ledger. Budget counters are
 separate bounded ledgers, not included in the parent's budget. Reuse a child ID;
@@ -485,6 +487,45 @@ delegate. The parent must inspect your result; never claim it has been verified.
         ids = self._ids(agent_ids)
         return {"agents": [self.read_agent(agent_id, limit=limit) for agent_id in ids]}
 
+    def collect_agent(self, agent_id: str, limit: int = 24000) -> dict:
+        """Collect every page of one completed child without changing review state.
+
+        This is a generic collection boundary, not an acceptance shortcut. Keep
+        both outcome targets minimal at the program boundary; it
+        performs only the reads requested by the caller, preserves the digest
+        and read-window bookkeeping used by ``review_agent``, and returns the
+        parsed child result once all pages have been observed.  A pending child
+        is returned as unavailable so the caller must choose whether to wait
+        again or record a limitation.
+        """
+        if type(limit) is not int or not 1 <= limit <= 24000:
+            raise ValidationError("Collect limit must be between 1 and 24000")
+        agent_id = self._id(agent_id)
+        offset = 0
+        pages = []
+        first = None
+        while True:
+            page = self.read_agent(agent_id, offset=offset, limit=limit)
+            if first is None:
+                first = page
+            if not page.get("result_available"):
+                return page
+            pages.append(page.get("text", ""))
+            next_offset = page.get("next_offset")
+            if next_offset is None:
+                break
+            if type(next_offset) is not int or next_offset <= offset:
+                raise ValidationError("Child result pagination did not advance")
+            offset = next_offset
+        text = "".join(pages)
+        try:
+            parsed = json.loads(text)
+        except (TypeError, ValueError) as exc:
+            raise ValidationError("Collected child result is not valid JSON") from exc
+        collected = dict(first)
+        collected.update(text=text, next_offset=None, total_chars=len(text), result=parsed)
+        return collected
+
     def resume_agent(self, agent_id: str) -> dict:
         """Explicitly resume an interrupted child using its original budget and effect journal."""
         agent_id = self._id(agent_id)
@@ -549,6 +590,7 @@ delegate. The parent must inspect your result; never claim it has been verified.
                     self.wait_agents,
                     self.read_agent,
                     self.read_agents,
+                    self.collect_agent,
                     self.resume_agent,
                 ]
             )._tools.values()

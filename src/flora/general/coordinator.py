@@ -124,10 +124,15 @@ mutations remain forbidden. Recursive delegation is allowed only when this worke
 host exposes a nested coordinator and its assigned contract requires a separable
 child; otherwise report the unavailable delegation assumption. agent_status lists live state.
 wait_agents waits without new model calls and returns the same flat per-child read
-view as read_agent (not a record nested inside another result). read_agent
-pages only the actual answer, limitations, source references and usage, not a huge
-internal trace. Follow next_offset until complete, then review_agent with the
-returned result_digest and disposition accepted/blocked/rejected. The authoritative
+view as read_agent (not a record nested inside another result). collect_agent
+performs the bounded pagination mechanically and returns one complete observed
+child result; it does not accept or review it. Use its returned result_digest and
+then review_agent with disposition accepted/blocked/rejected. The authoritative
+For collect_agent, keep both outcome targets minimal: declare one raw result
+parameter (for example params ["collected"] and ["collect_error"]), then inspect
+the returned object with pure get operations. Do not spread result_available,
+result_digest, value, or other envelope keys into continuation arguments unless
+those names are explicitly declared parameters.
 contract observation is review_agent's returned review.contract_check.status;
 never substitute a child value field named contract_check for that host result.
 Inspect actual
@@ -1142,6 +1147,7 @@ and evidence; do not discard required goals to bypass completion checks.
             self.wait_agents,
             self.read_agent,
             self.read_agents,
+            self.collect_agent,
             self.resume_agent,
             self.review_agent,
         ]
