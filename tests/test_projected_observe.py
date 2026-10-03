@@ -224,7 +224,7 @@ class ProjectedObserveTests(unittest.TestCase):
             "no": "err",
             "args": {"result": 1},
         }
-        with self.assertRaisesRegex(ValidationError, "argument keys"):
+        with self.assertRaisesRegex(ValidationError, r"argument keys.*expected.*got"):
             lowered(program)
 
     def test_actual_diagnostic_insertion_and_contract_capture_still_work(self):

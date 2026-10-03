@@ -126,7 +126,12 @@ def parse_program(data: dict, allowed_tools: Collection[str] | None = None) -> d
         if type(target) is not str or target not in blocks:
             _error(path, f"unknown target {target!r}")
         if type(mapping) is not dict or set(mapping) != params[target]:
-            _error(path, f"argument keys must match {target!r} parameters")
+            actual = sorted(mapping) if type(mapping) is dict else type(mapping).__name__
+            _error(
+                path,
+                f"argument keys must match {target!r} parameters; "
+                f"expected {sorted(params[target])!r}, got {actual!r}",
+            )
         for key, value in mapping.items():
             _expression(value, scope, f"{path}.{key}")
 
