@@ -31,6 +31,8 @@ def bounded_specs(
         "wait_agents": " Successful VALUE is an object with agents:[per-child read views]. A pending or unavailable child has result_available:false, result:null and result_digest:''; do not dereference text/result fields until result_available is true. A complete view may still require read_agent pagination and review_agent.",
         "read_agents": " Successful VALUE is an object with agents:[independent bounded read views]. Check each result_available and next_offset separately; a read view is not review acceptance or factual verification.",
         "read_agent": " Successful VALUE is one bounded child read view. When result_available is false, only status and availability are present; when true, follow next_offset until null before parsing text and use the returned result_digest for review.",
+        "spawn_agent": " Successful VALUE is an identity envelope {agent_id,name,status,read_only}; extract only agent_id and treat it as an opaque string for wait/read/review. It contains no child answer; never dereference name/status as nested result data.",
+        "spawn_agents": " Successful VALUE contains agents:[identity envelopes] and agent_ids:[stable opaque strings]. Copy only agent_ids into later wait/read/review calls; obtain child answers separately.",
     }
     bounds = {
         "append_lines": {"lines": {"minItems": 1, "maxItems": 10000}},

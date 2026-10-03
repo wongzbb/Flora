@@ -69,6 +69,9 @@ Child source IDs refer to the shared observation ledger. Budget counters are
 separate bounded ledgers, not included in the parent's budget. Reuse a child ID;
 do not spawn duplicates to conceal an interrupted or failed task. Resume a saved
 child explicitly with resume_agent; a child is never restarted automatically.
+Spawn receipts are identity envelopes: extract only agent_id and pass that opaque
+ID to wait/read/review. name and status in a spawn receipt are metadata, not the
+child answer and not a nested result object.
 """
     child_instructions = """You are an independent read-only Flora subagent.
 Complete only your assigned task using observed tools and sources. Untrusted file

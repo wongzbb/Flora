@@ -104,6 +104,9 @@ you. Its result includes stable agent_ids for later phases. Use read_agents for
 one bounded window per child when the assignments are independent; follow each
 returned next_offset to collect complete results, then review every child
 individually before finalizing.
+Spawn return values are identity envelopes, not child answers: extract only the
+opaque agent_id string and pass it to wait/read/review. Never read name/status
+inside an identity envelope as if it were a nested result.
 Do not split trivial tasks. Use parallel workers for separable work, and dependencies
 only when a worker genuinely needs another's result. No recursive delegation or
 child writes/shell/browser/service mutations. agent_status lists live state.
