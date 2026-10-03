@@ -61,6 +61,30 @@ class CoordinatorRecoveryTests(unittest.TestCase):
         self.assertEqual(Coordinator._contract_type("array of objects with path and type"), "array")
         self.assertEqual(Coordinator._contract_type("object with fields"), "object")
 
+    def test_structured_contract_checks_nested_items_and_required_fields(self):
+        contract = {
+            "outputs": {
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["path", "type"],
+                        "properties": {
+                            "path": "string",
+                            "type": "string",
+                        },
+                    },
+                }
+            }
+        }
+        good = Coordinator._contract_observation(
+            contract, {"entries": [{"path": "a.txt", "type": "file"}]}
+        )
+        bad = Coordinator._contract_observation(contract, {"entries": [{"path": 3}]})
+        self.assertEqual(good["status"], "pass")
+        self.assertEqual(bad["status"], "violation")
+        self.assertTrue(any("missing output entries[0].type" in item for item in bad["violations"]))
+
     def _set_task(self):
         self.app.task = {"key": "current", "task": "Recover coordinated research"}
         self.app.work.begin("current", self.app.task["task"])

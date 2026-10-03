@@ -314,6 +314,8 @@ and evidence; do not discard required goals to bypass completion checks.
     @staticmethod
     def _contract_type(descriptor):
         """Map bounded human-readable type labels to JSON primitive types."""
+        if isinstance(descriptor, dict):
+            descriptor = descriptor.get("type")
         if not isinstance(descriptor, str):
             return None
         label = descriptor.strip().lower()
@@ -341,7 +343,7 @@ and evidence; do not discard required goals to bypass completion checks.
 
     @staticmethod
     def _contract_observation(contract, value):
-        """Check only declared JSON primitive output types, preserving unknowns."""
+        """Check declared output types and bounded structured descriptors."""
         outputs = contract.get("outputs", {}) if isinstance(contract, dict) else {}
         if not outputs:
             return {"status": "not_applicable", "violations": [], "unknown": []}
@@ -352,32 +354,54 @@ and evidence; do not discard required goals to bypass completion checks.
                 "unknown": [],
             }
         violations, unknown = [], []
-        for field, expected in outputs.items():
+
+        def actual_type(item):
+            if item is None:
+                return "null"
+            if type(item) is bool:
+                return "boolean"
+            if isinstance(item, (int, float)):
+                return "number"
+            if isinstance(item, str):
+                return "string"
+            if isinstance(item, dict):
+                return "object"
+            if isinstance(item, list):
+                return "array"
+            return None
+
+        def check(path, item, expected):
             expected_type = Coordinator._contract_type(expected)
             if expected_type is None:
-                unknown.append(field)
-                continue
+                unknown.append(path)
+                return
+            actual = actual_type(item)
+            if actual != expected_type:
+                violations.append(f"output {path} is {actual}, expected {expected}")
+                return
+            if not isinstance(expected, dict):
+                return
+            if expected_type == "array" and "items" in expected:
+                for index, child in enumerate(item):
+                    check(f"{path}[{index}]", child, expected["items"])
+            if expected_type == "object":
+                properties = expected.get("properties", {})
+                required = expected.get("required", [])
+                if not isinstance(properties, dict) or not isinstance(required, list):
+                    unknown.append(path)
+                    return
+                for field in required:
+                    if field not in item:
+                        violations.append(f"missing output {path}.{field}")
+                for field, descriptor in properties.items():
+                    if field in item:
+                        check(f"{path}.{field}", item[field], descriptor)
+
+        for field, expected in outputs.items():
             if field not in value:
                 violations.append(f"missing output {field}")
                 continue
-            actual_value = value[field]
-            if actual_value is None:
-                actual = "null"
-            elif type(actual_value) is bool:
-                actual = "boolean"
-            elif isinstance(actual_value, (int, float)):
-                actual = "number"
-            elif isinstance(actual_value, str):
-                actual = "string"
-            elif isinstance(actual_value, dict):
-                actual = "object"
-            elif isinstance(actual_value, list):
-                actual = "array"
-            else:
-                unknown.append(field)
-                continue
-            if actual != expected_type:
-                violations.append(f"output {field} is {actual}, expected {expected}")
+            check(field, value[field], expected)
         status = "violation" if violations else ("unknown" if unknown else "pass")
         return {"status": status, "violations": violations, "unknown": unknown}
 
