@@ -1190,12 +1190,16 @@ class LLMCompiler:
                                     "output_budget_exhausted": truncated,
                                     "guidance": (
                                         "Generate a fresh compact complete bundle, not a continuation. "
-                                        "Avoid duplicated programs; keep meaningful alternatives and diagnostics. "
+                                        "Avoid duplicated programs and duplicated large return literals; bind shared "
+                                        "observed values and use one final return block while preserving meaningful "
+                                        "alternatives and diagnostics. "
                                         "Use pure operations for known data transformations. Do not return "
                                         "success before requested effects. Keep the same anchor and capabilities."
                                         if truncated
                                         else "Return a fresh COMPLETE JSON object, not a patch or continuation. "
                                         "Correct the stated error and check every delimiter and escaped string. "
+                                        "Bind shared observed values and avoid copying large return literals into "
+                                        "multiple branches; keep one final return block when semantics permit. "
                                         "Use line breaks between blocks and keep each term inside its block, after ops. "
                                         "Compile the next closed phase, including known pure result consumers and branches. "
                                         + (
