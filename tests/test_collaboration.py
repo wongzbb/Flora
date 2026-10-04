@@ -74,6 +74,8 @@ class CollaborationTests(unittest.TestCase):
         self.assertIn("complete observed child read view", host_descriptions["collect_agent"])
         self.assertIn("outcome targets minimal", host_descriptions["collect_agent"])
         self.assertIn("complete observed child read view", host_descriptions["collect_completed_agent"])
+        self.assertIn("one complete observed child read view per requested ID", host_descriptions["collect_completed_agents"])
+        self.assertIn("one host review observation per requested child", host_descriptions["review_agents"])
 
     def test_delegation_guidance_does_not_contradict_exposed_nested_coordinator(self):
         self.assertIn("Recursive delegation is", self.app.delegation.instructions)
@@ -274,6 +276,47 @@ class CollaborationTests(unittest.TestCase):
         self.assertIsNone(self.app.delegation.records[ident].get("review"))
         self.assertEqual(collected["child_status"], "completed")
         self.assertIsInstance(collected["child_value"], dict)
+
+    def test_collect_completed_agents_batches_wait_without_bypassing_review(self):
+        rows = self.app.delegation.spawn_agents(
+            [{"task": "batch wait one"}, {"task": "batch wait two"}]
+        )
+        collected = self.app.delegation.collect_completed_agents(
+            rows["agent_ids"], timeout=5, limit=1
+        )
+        self.assertEqual([row["agent_id"] for row in collected["agents"]], rows["agent_ids"])
+        self.assertTrue(all(row["result_available"] for row in collected["agents"]))
+        self.assertTrue(all(row["next_offset"] is None for row in collected["agents"]))
+        self.assertTrue(all(self.app.delegation.records[i].get("review") is None for i in rows["agent_ids"]))
+
+    def test_batch_reviews_keep_individual_digests_and_expose_partial_failure(self):
+        rows = self.app.delegation.spawn_agents(
+            [{"task": "review batch one"}, {"task": "review batch two"}]
+        )
+        for ident in rows["agent_ids"]:
+            self.app.delegation.futures[ident].result(timeout=5)
+        collected = self.app.delegation.collect_completed_agents(rows["agent_ids"], timeout=0)
+        reviews = [
+            {
+                "agent_id": collected["agents"][0]["agent_id"],
+                "result_digest": "wrong-digest",
+                "disposition": "accepted",
+                "note": "The host should reject this stale digest.",
+            },
+            {
+                "agent_id": collected["agents"][1]["agent_id"],
+                "result_digest": collected["agents"][1]["result_digest"],
+                "disposition": "accepted",
+                "note": "Collected and checked the complete observed result.",
+            },
+        ]
+        outcome = self.app.delegation.review_agents(reviews)
+        self.assertFalse(outcome["all_reviewed"])
+        self.assertFalse(outcome["all_accepted"])
+        self.assertEqual(outcome["reviews"][0]["status"], "error")
+        self.assertEqual(outcome["reviews"][1]["status"], "reviewed")
+        self.assertEqual(outcome["reviews"][1]["disposition"], "accepted")
+        self.assertIn(rows["agent_ids"][0], self.app.delegation.completion()["unreviewed_workers"])
 
     def test_nested_identity_envelopes_are_unwrapped_only_at_collaboration_boundary(self):
         row = self.app.delegation.spawn_agent("nested identity")

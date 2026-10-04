@@ -165,6 +165,11 @@ record remains available for audit. The authoritative
 collect_completed_agent combines a bounded wait with complete collection when a
 parent does not need to branch on an intermediate pending state; a timeout still
 returns an unavailable observation and must not be accepted or reviewed.
+For independent workers, prefer collect_completed_agents(agent_ids) to wait once
+and receive one complete observed envelope per child. It does not review or
+accept any child; inspect every envelope and then use review_agents with one
+review specification per child when all required results are ready. Both batch
+operations preserve individual digests, contract checks and failure branches.
 For collect_agent, keep both outcome targets minimal: declare one raw result
 parameter (for example params ["collected"] and ["collect_error"]), then inspect
 the returned object with pure get operations. Do not spread result_available,
@@ -1537,6 +1542,63 @@ and evidence; do not discard required goals to bypass completion checks.
                 "result_digest": result_digest,
             }
 
+    def review_agents(self, reviews: list[dict]) -> dict:
+        """Apply independent reviews while retaining one record per child.
+
+        Every item still goes through ``review_agent`` with its own digest,
+        evidence and contract checks. Validation failures are returned beside
+        successful reviews so the caller can branch on the exact child that
+        needs collection, revision or blocking; no failed item is accepted.
+        """
+        if not isinstance(reviews, list) or not 1 <= len(reviews) <= 32:
+            raise ValidationError("reviews must contain 1–32 review specifications")
+        prepared = []
+        seen = set()
+        for item in reviews:
+            if not isinstance(item, dict) or set(item) - {
+                "agent_id", "result_digest", "disposition", "note", "evidence"
+            }:
+                raise ValidationError(
+                    "each review accepts agent_id, result_digest, disposition, note and evidence"
+                )
+            if "agent_id" not in item or "result_digest" not in item:
+                raise ValidationError("each review requires agent_id and result_digest")
+            ident = self._id(item["agent_id"])
+            if ident in seen:
+                raise ValidationError("reviews must contain distinct child IDs")
+            seen.add(ident)
+            prepared.append((ident, item))
+        results = []
+        for ident, item in prepared:
+            try:
+                result = self.review_agent(
+                    ident,
+                    item["result_digest"],
+                    item.get("disposition"),
+                    item.get("note"),
+                    item.get("evidence"),
+                )
+            except ValidationError as exc:
+                results.append(
+                    {
+                        "agent_id": ident,
+                        "status": "error",
+                        "error": type(exc).__name__,
+                        "detail": str(exc),
+                    }
+                )
+            else:
+                results.append({"status": "reviewed", **result})
+        return {
+            "reviews": results,
+            "all_reviewed": all(row.get("status") == "reviewed" for row in results),
+            "all_accepted": all(
+                row.get("status") == "reviewed" and row.get("disposition") == "accepted"
+                for row in results
+            ),
+            "claims_verified": False,
+        }
+
     def is_busy(self):
         with self.lock:
             return any(r["status"] in {"queued", "running"} for r in self._current())
@@ -1675,7 +1737,9 @@ and evidence; do not discard required goals to bypass completion checks.
             self.read_agents,
             self.collect_agent,
             self.collect_completed_agent,
+            self.collect_completed_agents,
             self.resume_agent,
             self.review_agent,
+            self.review_agents,
         ]
         return list(make_registry(methods)._tools.values())

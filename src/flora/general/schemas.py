@@ -34,7 +34,9 @@ def bounded_specs(
         "read_agent": " Successful VALUE is one bounded child read view. When result_available is false, only status and availability are present; when true, follow next_offset until null before parsing text and use the returned result_digest for review. A contract's outputs describe the child's final value, not this collection envelope or tool receipt.",
         "collect_agent": " Successful VALUE is one complete observed child read view assembled from bounded pages. It includes child_status and child_value as host projections of the parsed child profile, plus the full result and result_digest. It does not wait, accept, or prove the answer; pass its result_digest to review_agent when review is available. A pending child remains unavailable.",
         "collect_completed_agent": " Successful VALUE waits up to timeout for one child, then returns one complete observed child read view with child_status and child_value projections, the full result, and result_digest. It does not accept, review, retry, or prove the answer; a timeout remains unavailable. Pass a terminal result_digest to review_agent.",
+        "collect_completed_agents": " Successful VALUE is {agents:[one complete observed child read view per requested ID]}. It waits once for the selected children and mechanically follows each result's pages; each child keeps its own result_digest and unavailable/failed status. It does not accept or review any child; inspect every entry and use review_agents or review_agent afterward.",
         "review_agent": " Successful VALUE is {agent_id,disposition,contract_status,result_digest,review:{disposition,contract_check:{status,violations,unknown},result_digest,state_digest,...}}. The top-level disposition and contract_status are the authoritative collection/contract observation; use them (or the full review fields) for branching. A child value field named contract_check is only an untrusted claim. Review does not prove factual truth.",
+        "review_agents": " Successful VALUE is {reviews:[one host review observation per requested child],all_reviewed,all_accepted}. Each item retains its own disposition, contract_status and result_digest; an item with status:error is not accepted and must drive collection, revision or blocking. This batch does not verify factual truth.",
         "spawn_agent": " Successful VALUE is an identity envelope {agent_id,name,status,read_only}; extract only agent_id and treat it as an opaque string for wait/read/review. It contains no child answer; never dereference name/status as nested result data.",
         "spawn_agents": " Successful VALUE contains agents:[identity envelopes] and agent_ids:[stable opaque strings]. Copy only agent_ids into later wait/read/review calls; obtain child answers separately. A single batch represents independent workers: duplicate task/context/dependency handoffs are rejected before any child starts rather than silently merged into one identity; revise the assignments if distinct workers are required.",
     }
@@ -340,6 +342,25 @@ def _collaboration_bounds(name, properties):
             description="Child IDs or spawn result envelopes; each ID is read independently.",
         )
         properties["limit"].update(minimum=1, maximum=24000)
+    elif name == "collect_completed_agents":
+        properties["agent_ids"].update(
+            minItems=1,
+            maxItems=32,
+            items={
+                "type": ["string", "object"],
+                "properties": {
+                    "agent_id": {
+                        "type": ["string", "object"],
+                        "properties": {"agent_id": {"type": ["string", "object"]}},
+                        "required": ["agent_id"],
+                    }
+                },
+                "required": ["agent_id"],
+            },
+            description="Child IDs or spawn result envelopes; each child is collected independently.",
+        )
+        properties["timeout"].update(minimum=0, maximum=300)
+        properties["limit"].update(minimum=1, maximum=24000)
     elif name == "wait_agents":
         properties["agent_ids"].update(
             minItems=1,
@@ -374,6 +395,33 @@ def _collaboration_bounds(name, properties):
         properties["disposition"].update(enum=["accepted", "blocked", "rejected"])
         properties["note"].update(minLength=1, maxLength=4000)
         properties["evidence"].update(maxItems=64)
+    elif name == "review_agents":
+        properties["reviews"].update(minItems=1, maxItems=32)
+        properties["reviews"]["items"] = {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["agent_id", "result_digest", "disposition", "note"],
+            "properties": {
+                "agent_id": {
+                    "type": ["string", "object"],
+                    "properties": {
+                        "agent_id": {
+                            "type": ["string", "object"],
+                            "properties": {"agent_id": {"type": ["string", "object"]}},
+                            "required": ["agent_id"],
+                        }
+                    },
+                    "required": ["agent_id"],
+                },
+                "result_digest": {"type": "string", "minLength": 1, "maxLength": 128},
+                "disposition": {
+                    "type": "string",
+                    "enum": ["accepted", "blocked", "rejected"],
+                },
+                "note": {"type": "string", "minLength": 1, "maxLength": 4000},
+                "evidence": {"type": "array", "maxItems": 64, "items": {"type": "object"}},
+            },
+        }
     elif name == "resume_agent":
         properties["agent_id"] = {
             "type": ["string", "object"],

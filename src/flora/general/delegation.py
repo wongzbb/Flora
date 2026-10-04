@@ -578,6 +578,25 @@ delegate. The parent must inspect your result; never claim it has been verified.
         self.wait_agents([agent_id], timeout=timeout)
         return self.collect_agent(agent_id, limit=limit)
 
+    def collect_completed_agents(
+        self, agent_ids: list[str], timeout: int = 300, limit: int = 24000
+    ) -> dict:
+        """Wait once, then fully collect each selected child independently.
+
+        This is a scheduling primitive only. It does not review or accept any
+        child, and an unavailable child remains unavailable in its own entry.
+        Each entry retains its own result digest so callers can branch on
+        partial failure without encoding pagination and wait loops in a model
+        program.
+        """
+        if type(timeout) is not int or not 0 <= timeout <= 300:
+            raise ValidationError("Collect timeout must be between 0 and 300")
+        if type(limit) is not int or not 1 <= limit <= 24000:
+            raise ValidationError("Collect limit must be between 1 and 24000")
+        ids = self._ids(agent_ids)
+        self.wait_agents(ids, timeout=timeout)
+        return {"agents": [self.collect_agent(ident, limit=limit) for ident in ids]}
+
     def resume_agent(self, agent_id: str) -> dict:
         """Explicitly resume an interrupted child using its original budget and effect journal."""
         agent_id = self._id(agent_id)
@@ -644,6 +663,7 @@ delegate. The parent must inspect your result; never claim it has been verified.
                     self.read_agents,
                     self.collect_agent,
                     self.collect_completed_agent,
+                    self.collect_completed_agents,
                     self.resume_agent,
                 ]
             )._tools.values()
