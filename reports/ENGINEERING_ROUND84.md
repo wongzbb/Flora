@@ -52,10 +52,16 @@ compilation before review and completion.
   `contract_status=pass` and `disposition=accepted`; the final task completion
   gate was ready. The run used 5 model calls and 5 tool calls and returned
   `sum_squares_1_100=338350` and `fibonacci_20=6765`.
-- Cross-model control: `glm-4.5-air` against the same endpoint made three
-  connection attempts and ended before program creation with
-  `model_transport`. No result was accepted. This does not establish a GLM
-  semantic failure.
+- Cross-model/output controls against the same endpoint were separated by the
+  catalog and request evidence. The initially tried `glm-4.5-air` name is not a
+  catalog ID. The catalog contains `zai-org/GLM-4.5-Air`, whose minimal chat
+  request returned HTTP 200, but the full Flora profile request returned HTTP
+  400. The user-requested `glm-5.3` ID accepted the full profile and returned
+  three model responses; its batch task stopped at `needs_program` after the
+  compiler rejected a model-generated continuation that referenced an undefined
+  `reviews` variable. No child was created and no result was accepted. This is
+  a model/program-scope compatibility failure, distinct from the earlier
+  transport failures; it does not justify a model-specific parser patch.
 - Earlier baseline evidence remains separate: the pre-change DeepSeek seven
   calculus-worker task and four-level nested task completed, but those runs do
   not validate the new batch API.
