@@ -92,6 +92,11 @@ Call wait_agents and collect_agent to collect actual results before using them.
 A collection is still an observation, not acceptance: review the returned
 result_digest with review_agent when the host exposes review_agent.
 A child conclusion is not verified evidence; check its sources and limitations.
+Contract evidence_requirements are for host-checkable file_read/source_read
+observations only. Put collection/review/type obligations in guarantees or
+dependencies and leave evidence_requirements empty for a pure computation.
+review_agent evidence accepts only actual source_id or {path,sha256} references;
+child values, result digests and statuses are observations, not evidence.
 Child source IDs refer to the shared observation ledger. Budget counters are
 separate bounded ledgers, not included in the parent's budget. Reuse a child ID;
 do not spawn duplicates to conceal an interrupted or failed task. Resume a saved

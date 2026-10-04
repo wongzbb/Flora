@@ -80,6 +80,14 @@ class CollaborationTests(unittest.TestCase):
         self.assertIn("nested coordinator", self.app.delegation.instructions)
         self.assertNotIn("Children cannot", self.app.delegation.instructions)
 
+    def test_contract_guidance_separates_process_obligations_from_source_evidence(self):
+        self.assertIn("host-checkable file_read/source_read", self.app.delegation.instructions)
+        self.assertIn("leave evidence_requirements empty", self.app.delegation.instructions)
+        from flora.general.coordinator import Coordinator
+
+        self.assertIn("free-form evidence string remains UNKNOWN", Coordinator.authority_instructions)
+        self.assertIn("never a child value", Coordinator.authority_instructions)
+
     def test_nested_provider_idle_guard_respects_first_program_window(self):
         provider = OpenAICompatibleProvider(
             base_url="https://example.test/v1",

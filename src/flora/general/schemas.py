@@ -215,6 +215,7 @@ def _collaboration_bounds(name, properties):
             "evidence_requirements": {
                 "type": "array",
                 "maxItems": 32,
+                "description": "Only host-checkable file_read/source_read observations belong here; collection, review, type and nested-completion obligations belong in guarantees/dependencies. Free-form strings remain UNKNOWN at review.",
                 "items": {
                     "type": ["string", "object"],
                     "maxLength": 2000,

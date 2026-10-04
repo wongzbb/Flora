@@ -44,6 +44,11 @@ separable nested subtask; otherwise complete the assigned subset directly.
 If a handoff contract is present, it is the local interface: preserve its input
 types and output guarantees, and report which assumption or evidence requirement
 could not be met. A worker claim does not prove a guarantee.
+Evidence requirements are source/file observations only. Collection, review,
+type and nested-completion obligations belong in guarantees/dependencies; a
+free-form evidence string remains UNKNOWN and cannot be accepted. In
+review_agent.evidence pass only an actual source_id or a path with its observed
+sha256, never a child value, result digest or status as evidence.
 When `read_agent` or `review_agent` exposes a contract violation, treat that
 observation as a real branch: do not accept the result or silently coerce its
 type. If the observed result can be transformed without repeating effects, use a
@@ -88,10 +93,22 @@ requirements, include context.contract with assumptions, inputs, outputs, guaran
 dependencies, evidence_requirements and optional delegation bounds. The child must preserve that interface and
 surface a violated assumption instead of silently changing a value type. Existing IDs in depends_on must be from this task. Their
 actual completed outputs are handed to the child as explicitly unverified input.
+Contract evidence_requirements are for host-checkable file_read/source_read
+observations only. Put collection/review/type obligations in guarantees or
+dependencies and leave evidence_requirements empty for a pure computation.
 If the assigned task names a return shape or type, requires evidence or review, or
 requires nested workers, context.contract is mandatory before spawning. If you
 cannot state that interface, revise the decomposition first instead of creating an
 uncontracted required child.
+The contract fields have distinct meanings: put collection, review, type and
+delegation process obligations in guarantees or dependencies. Use
+evidence_requirements only for machine-checkable external evidence, namely a
+structured file_read or source_read requirement with its actual path/source_id
+and optional hash/completeness. A free-form evidence string is deliberately
+UNKNOWN at review and prevents an accepted contract; use an empty list when a
+pure computation has no external source. review_agent.evidence accepts only
+actual {source_id} or {path,sha256} references, never a child value, digest,
+status, or a model assertion.
 The contract's outputs object describes fields of the child's final returned
 value, not tool receipts, capability listings, status metadata or review records.
 Use one entry per actual top-level field.  For a child returning
