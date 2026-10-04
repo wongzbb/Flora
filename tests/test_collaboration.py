@@ -107,6 +107,22 @@ class CollaborationTests(unittest.TestCase):
         )
         self.assertEqual(_child_provider(provider).progress_timeout, 90)
 
+    def test_nested_tools_require_a_local_delegation_contract(self):
+        from flora.general.coordinator import Coordinator
+
+        coord = Coordinator(
+            self.app,
+            {"enabled": True, "max_children": 2, "max_depth": 1},
+            provider=self.provider,
+            root=self.root / "uncontracted-nested",
+        )
+        try:
+            ident = coord.spawn_agent("Complete this leaf without delegation")["agent_id"]
+            coord.futures[ident].result(timeout=5)
+            self.assertNotIn("spawn_agent", self.provider.child_tools)
+        finally:
+            coord.close()
+
     def test_batch_retry_reuses_existing_ids_without_quota_failure(self):
         specs = [
             {"task": "Independent A", "name": "a"},
@@ -283,7 +299,10 @@ class CollaborationTests(unittest.TestCase):
         ) as app:
             app.task = {"key": "nested", "task": "Nested parent task"}
             app.work.begin("nested", "Nested parent task")
-            ident = app.delegation.spawn_agent("Inspect one branch")["agent_id"]
+            ident = app.delegation.spawn_agent(
+                "Inspect one branch",
+                context={"contract": {"delegation": {"min_children": 0, "max_children": 1}}},
+            )["agent_id"]
             app.delegation.futures[ident].result(timeout=5)
             self.assertIn("spawn_agent", self.provider.child_tools)
             self.assertTrue((root / "subagents" / ident / "subagents" / "children.json").exists())
@@ -374,7 +393,9 @@ class CollaborationTests(unittest.TestCase):
                 "value": {
                     "path": "facts.txt",
                     "sha256": "a" * 64,
+                    "offset": 0,
                     "has_more": False,
+                    "truncated": False,
                 },
             },
         )
@@ -383,6 +404,38 @@ class CollaborationTests(unittest.TestCase):
             self.app.delegation._child_evidence_witnesses(ident),
             [{"kind": "file_read", "path": "facts.txt", "sha256": "a" * 64, "complete": True}],
         )
+
+    def test_tail_only_file_receipt_is_not_complete_evidence(self):
+        ident = self.spawn("Trace partial witness")
+        from flora.state.trace import GENESIS, SQLiteTrace
+
+        path = self.app.delegation.root / ident / "kernel" / "turn-99999998.sqlite"
+        trace = SQLiteTrace(path)
+        event = trace.begin("read_file", {"path": "facts.txt", "offset": 9}, expected_epoch=0, expected_digest=GENESIS)
+        trace.settle(
+            event,
+            {
+                "status": "returned",
+                "value": {
+                    "path": "facts.txt",
+                    "sha256": "a" * 64,
+                    "offset": 9,
+                    "has_more": False,
+                    "truncated": True,
+                },
+            },
+        )
+        trace.close()
+        witness = self.app.delegation._child_evidence_witnesses(ident)
+        self.assertEqual(witness[-1]["complete"], False)
+
+    def test_textual_evidence_requirement_is_unknown_not_pass(self):
+        observed = self.app.delegation._evidence_observation(
+            {"evidence_requirements": ["read the complete source"]}, []
+        )
+        self.assertEqual(observed["status"], "unknown")
+        self.assertEqual(observed["required"], 1)
+        self.assertEqual(observed["unknown"], ["read the complete source"])
 
     def test_saved_v4_without_schema_version_keeps_its_identity(self):
         from flora.general.agent import _new_session_defaults
@@ -512,6 +565,16 @@ class CollaborationTests(unittest.TestCase):
         )
         self.assertEqual(rejected["review"]["contract_check"]["status"], "violation")
 
+    def test_rejected_required_child_does_not_satisfy_completion_gate(self):
+        ident = self.spawn(context={"contract": {"outputs": {"result": "number"}}})
+        fingerprint = self.collect(ident)
+        self.app.delegation.review_agent(
+            ident, fingerprint, "rejected", "The required numeric output was not produced"
+        )
+        completion = self.app.delegation.completion()
+        self.assertFalse(completion["ready"])
+        self.assertEqual(completion["unaccepted_workers"], [ident])
+
     def test_contract_type_labels_accept_bounded_human_readable_aliases(self):
         self.assertEqual(
             self.app.delegation._contract_observation(
@@ -519,6 +582,32 @@ class CollaborationTests(unittest.TestCase):
                 {"result": 42},
             )["status"],
             "pass",
+        )
+
+    def test_evidence_rechecks_only_witnesses_matched_to_contract_requirements(self):
+        observation = self.app.delegation._evidence_observation(
+            {
+                "evidence_requirements": [
+                    {"kind": "file_read", "path": "required.txt", "complete": True}
+                ]
+            },
+            [
+                {
+                    "kind": "file_read",
+                    "path": "required.txt",
+                    "sha256": "a" * 64,
+                    "complete": True,
+                },
+                {
+                    "kind": "file_read",
+                    "path": "incidental.txt",
+                    "sha256": "b" * 64,
+                    "complete": True,
+                },
+            ],
+        )
+        self.assertEqual(
+            [item["path"] for item in observation["matched_witnesses"]], ["required.txt"]
         )
 
     def test_nested_delegation_contract_gates_child_cardinality(self):
@@ -538,6 +627,56 @@ class CollaborationTests(unittest.TestCase):
             self.assertEqual(coord.completion()["delegation"]["actual"], 1)
             with self.assertRaisesRegex(ValidationError, "child quota"):
                 coord.spawn_agent("An extra nested branch")
+        finally:
+            coord.close()
+
+    def test_nested_delegation_cannot_count_optional_child(self):
+        from flora.general.coordinator import Coordinator
+
+        coord = Coordinator(
+            self.app,
+            {"enabled": True, "max_children": 2, "max_depth": 1},
+            provider=self.provider,
+            root=self.root / "optional-contract-coordinator",
+            expected_children={"min_children": 1, "max_children": 1},
+        )
+        try:
+            with patch.object(coord.pool, "submit"):
+                with self.assertRaisesRegex(ValidationError, "require every counted child"):
+                    coord.spawn_agent("Optional branch", required=False)
+        finally:
+            coord.close()
+
+    def test_batch_admission_rolls_back_when_registry_persist_fails(self):
+        before = self.app.delegation.shared_budget["count"]
+        with patch.object(self.app.delegation, "_save", side_effect=OSError("disk")):
+            with self.assertRaises(OSError):
+                self.app.delegation.spawn_agents(
+                    [{"task": "first"}, {"task": "second"}]
+                )
+        self.assertEqual(self.app.delegation.shared_budget["count"], before)
+        self.assertEqual(self.app.delegation.records, {})
+
+    def test_batch_quota_failure_does_not_promote_existing_optional_child(self):
+        from flora.general.coordinator import Coordinator
+
+        coord = Coordinator(
+            self.app,
+            {"enabled": True, "max_children": 1},
+            provider=self.provider,
+            root=self.root / "promotion-rollback",
+        )
+        try:
+            existing = coord.spawn_agent("Existing optional branch", required=False)["agent_id"]
+            prepared_existing = coord._prepare_handoff(
+                "Existing optional branch", "Researcher", None, None, True
+            )
+            prepared_new = coord._prepare_handoff(
+                "New branch", "Researcher", None, None, True
+            )
+            with self.assertRaisesRegex(ValidationError, "child quota"):
+                coord._admit_prepared([prepared_existing, prepared_new])
+            self.assertFalse(coord.records[existing]["required"])
         finally:
             coord.close()
 
@@ -579,6 +718,29 @@ class CollaborationTests(unittest.TestCase):
             fingerprint = self._collect_from(coord, ident)
             with self.assertRaisesRegex(ValidationError, "Nested delegation contract"):
                 coord.review_agent(ident, fingerprint, "accepted", "Reviewed")
+        finally:
+            coord.close()
+
+    def test_zero_minimum_nested_contract_is_vacuously_reviewable_at_depth_limit(self):
+        from flora.general.coordinator import Coordinator
+
+        coord = Coordinator(
+            self.app,
+            {"enabled": True, "max_children": 2, "max_depth": 1},
+            provider=self.provider,
+            root=self.root / "zero-min-depth-limit",
+            depth=1,
+            expected_children={"min_children": 0, "max_children": 1},
+        )
+        try:
+            ident = coord.spawn_agent(
+                "A leaf may delegate zero optional children",
+                context={"contract": {"delegation": {"min_children": 0, "max_children": 1}}},
+            )["agent_id"]
+            coord.futures[ident].result(timeout=5)
+            fingerprint = self._collect_from(coord, ident)
+            review = coord.review_agent(ident, fingerprint, "accepted", "Leaf result reviewed")
+            self.assertEqual(review["disposition"], "accepted")
         finally:
             coord.close()
 
@@ -701,6 +863,57 @@ class CollaborationTests(unittest.TestCase):
         self.assertEqual(deps[0]["agent_id"], first)
         self.assertEqual(deps[0]["result"]["value"]["finding"], "Observed handoff")
         self.assertFalse(deps[0]["claims_verified"])
+
+    def test_contracted_dependency_carries_producer_interface_and_review(self):
+        contract = {"outputs": {"finding": "string"}, "guarantees": ["return finding"]}
+        first = self.spawn("Independent contracted fact", context={"contract": contract})
+        first_fingerprint = self.collect(first)
+        self.app.delegation.review_agent(first, first_fingerprint, "accepted", "Checked output shape")
+        second = self.spawn("Consume the reviewed dependency", depends_on=[first])
+        dependency = self.app.delegation._result_view(second)["value"]["handoff"]["dependencies"][0]
+        self.assertEqual(dependency["producer_contract"], contract)
+        self.assertEqual(dependency["producer_review"]["disposition"], "accepted")
+
+    def test_contracted_dependency_without_review_is_blocked(self):
+        first = self.spawn(
+            "Independent fact requiring review",
+            context={"contract": {"outputs": {"finding": "string"}}},
+        )
+        second = self.spawn("Consume only reviewed dependency", depends_on=[first])
+        self.assertEqual(self.app.delegation.records[second]["status"], "blocked")
+        self.assertEqual(
+            self.app.delegation.records[second]["failure"]["code"], "dependency_unreviewed"
+        )
+
+    def test_empty_explicit_contract_still_requires_dependency_review(self):
+        first = self.spawn("Independent fact with explicit contract", context={"contract": {}})
+        second = self.spawn("Consume only reviewed dependency", depends_on=[first])
+        self.assertEqual(self.app.delegation.records[second]["status"], "blocked")
+        self.assertEqual(
+            self.app.delegation.records[second]["failure"]["code"], "dependency_unreviewed"
+        )
+
+    def test_dependency_rejects_producer_review_after_review_evidence_changes(self):
+        import hashlib
+
+        path = self.workspace / "dependency.txt"
+        path.write_bytes(b"old")
+        contract = {"outputs": {"finding": "string"}}
+        first = self.spawn("Independent fact with mutable evidence", context={"contract": contract})
+        fingerprint = self.collect(first)
+        self.app.delegation.review_agent(
+            first,
+            fingerprint,
+            "accepted",
+            "Checked the producer output and source",
+            evidence=[{"path": "dependency.txt", "sha256": hashlib.sha256(b"old").hexdigest()}],
+        )
+        path.write_bytes(b"new")
+        second = self.spawn("Consume only current reviewed dependency", depends_on=[first])
+        self.assertEqual(self.app.delegation.records[second]["status"], "blocked")
+        self.assertEqual(
+            self.app.delegation.records[second]["failure"]["code"], "dependency_unreviewed"
+        )
 
     def test_failed_dependency_is_blocked_without_model_or_hidden_retry(self):
         first = self.spawn("Independent fact")

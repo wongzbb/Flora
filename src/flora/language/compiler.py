@@ -61,7 +61,27 @@ _STRUCTURED_FALLBACK_MARKERS = (
 def _needs_structured_fallback(error: Exception) -> bool:
     """Recognise an interface failure, not a task or tool failure."""
     message = str(error).lower()
-    return any(marker in message for marker in _STRUCTURED_FALLBACK_MARKERS)
+    if any(marker in message for marker in _STRUCTURED_FALLBACK_MARKERS):
+        return True
+    # Pure-operation arity is another low-level representation invariant. Keep
+    # this structural predicate scoped to an IR ``.ops[...]`` diagnostic so a
+    # tool schema or external API error containing the word "expects" does not
+    # get a semantic fallback that could weaken capability validation.
+    return ".ops[" in message and " expects " in message and " arguments" in message
+
+
+def _completion_semantic_reason(context: CompilerContext) -> str | None:
+    """Return the latest completion-gate observation, if it requests actions."""
+    reports = getattr(context, "reports", [])
+    if not reports or not isinstance(reports[-1], dict):
+        return None
+    report = reports[-1]
+    if report.get("kind") != "completion_rejected":
+        return None
+    details = report.get("details")
+    if isinstance(details, dict):
+        return "Completion gate rejected the previous return; perform the required remaining work. " + canonical_json(details)
+    return "Completion gate rejected the previous return; perform the required remaining work before returning."
 
 
 def _large_low_level_failure(error: Exception, response_text: str) -> bool:
@@ -1199,6 +1219,28 @@ class LLMCompiler:
         # ordinary repair allowance has been spent.
         semantic_repair_left = 0
         attempt = 0
+        completion_reason = _completion_semantic_reason(snapshot)
+        if completion_reason and self.max_repairs > 0:
+            # A completion rejection is an observation that changes the next
+            # action phase. Start directly with semantic actions so the model
+            # does not rebuild fragile low-level continuation IR merely to
+            # call the host completion bookkeeping tool.
+            structured_mode = True
+            semantic_repair_left = 2
+            try:
+                bounded_view = json.loads(messages[1]["content"])
+            except (KeyError, TypeError, json.JSONDecodeError):
+                bounded_view = snapshot.to_dict()
+            messages = _structured_prompt(bounded_view, completion_reason)
+            self._emit(
+                {
+                    "kind": "structured_fallback_requested",
+                    "attempt": attempt,
+                    "reason": completion_reason[:1024],
+                    "semantic_retries": semantic_repair_left,
+                    "trigger": "completion_rejected",
+                }
+            )
         # Semantic recovery has its own finite budget.  Do not let the phase
         # marker itself keep issuing requests after that budget is exhausted;
         # the branch below raises the bounded-recovery error instead.

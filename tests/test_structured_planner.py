@@ -42,6 +42,21 @@ class StructuredPlannerTests(unittest.TestCase):
         program = lower_plan(plan)
         self.assertTrue(any(block["term"]["op"] == "replan" for block in program["blocks"].values()))
 
+    def test_branch_join_merges_names_defined_on_both_paths(self):
+        plan = {
+            "steps": [
+                {
+                    "if": {"literal": True},
+                    "then": [{"let": "final", "value": {"literal": 4}}],
+                    "else": [{"let": "final", "value": {"literal": 0}}],
+                }
+            ],
+            "return": {"var": "final"},
+        }
+        program = lower_plan(plan)
+        boundary = run_until_boundary(new_machine(program))
+        self.assertEqual(boundary.value, 4)
+
     def test_continuation_failure_uses_semantic_fallback(self):
         bad = bundle(pure(1))
         bad["programs"][0]["program"]["blocks"]["main"]["term"] = {
@@ -53,6 +68,41 @@ class StructuredPlannerTests(unittest.TestCase):
         result = compiler.compile(context(tools=[{"name": "read_value", "parameters": {"type": "object", "properties": {}, "additionalProperties": False}}]))
         self.assertIn(result["programs"][0]["program"]["entry"], result["programs"][0]["program"]["blocks"])
         self.assertIn("semantic action planner", provider.requests[1][0]["content"])
+
+    def test_pure_operation_arity_failure_uses_semantic_fallback(self):
+        bad_program = pure(1)
+        bad_program["blocks"]["main"]["ops"] = [{"dest": "bad", "op": "get", "args": [1]}]
+        provider = PlannerProvider(
+            bundle(bad_program), {"steps": [], "return": {"literal": "arity-recovered"}}
+        )
+        compiler = LLMCompiler(provider, syntax="block-list-v2", prompt_style="compact-v2")
+        result = compiler.compile(context())
+        entry = result["programs"][0]["program"]["entry"]
+        self.assertEqual(
+            result["programs"][0]["program"]["blocks"][entry]["term"]["value"],
+            {"literal": "arity-recovered"},
+        )
+        self.assertIn("semantic action planner", provider.requests[1][0]["content"])
+
+    def test_completion_rejection_starts_semantic_phase(self):
+        plan = {"steps": [], "return": {"literal": "bookkeeping"}}
+
+        class Provider:
+            def __init__(self):
+                self.requests = []
+
+            def complete(self, messages, *, max_tokens):
+                self.requests.append(messages)
+                return ModelResponse(json.dumps(plan), 1, 1)
+
+        provider = Provider()
+        compiler_context = context()
+        compiler_context.reports = [
+            {"kind": "completion_rejected", "details": {"pending_steps": ["task"]}}
+        ]
+        compiler = LLMCompiler(provider, syntax="block-list-v2", prompt_style="compact-v2")
+        compiler.compile(compiler_context)
+        self.assertIn("semantic action planner", provider.requests[0][0]["content"])
 
     def test_large_malformed_bundle_uses_semantic_fallback(self):
         provider = PlannerProvider("{" + (" " * 1200), {"steps": [], "return": {"literal": "ok"}})

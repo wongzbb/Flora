@@ -218,6 +218,14 @@ and evidence; do not discard required goals to bypass completion checks.
             raise ValidationError("Child name must be 1–64 printable characters")
         if type(required) is not bool:
             raise ValidationError("required must be boolean")
+        if (
+            not required
+            and self.expected_children is not None
+            and self.expected_children["min_children"] > 0
+        ):
+            raise ValidationError(
+                "Nested delegation bounds require every counted child to be required"
+            )
         context = {} if context is None else deepcopy(context)
         if not isinstance(context, dict) or set(context) - {
             "guidance",
@@ -262,81 +270,151 @@ and evidence; do not discard required goals to bypass completion checks.
         }
 
     def _admit_handoff(self, prepared):
-        """Reuse or register one already-validated handoff."""
-        task = prepared["task"]
-        name = prepared["name"]
-        context = prepared["context"]
-        deps = prepared["dependencies"]
-        required = prepared["required"]
-        signature = prepared["signature"]
+        """Reuse or atomically register one already-validated handoff."""
+        return self._admit_prepared([prepared])[0]
+
+    def _admit_prepared(self, prepared):
+        """Atomically reserve and persist a batch before dispatching workers.
+
+        Validation and duplicate detection happen before this method. The
+        durable registry and shared child-count ledger are committed together,
+        so a quota or persistence failure cannot leave only the first few
+        entries of a requested batch admitted.
+        """
+        if not prepared:
+            raise ValidationError("At least one handoff is required")
+        created = []
+        result_by_signature = {}
         with self.lock:
             if self.closed or self.stop.is_set():
                 raise ValidationError("Subagents are paused or closed")
-            if any(self.records[x].get("task_key") != self.owner.task["key"] for x in deps):
-                raise ValidationError("Dependencies must belong to the current parent task")
-            # Identical handoffs return their durable identity; no duplicate worker or spend.
-            signature = digest({"task": task, "context": context, "dependencies": deps})
-            existing = next(
-                (r for r in self._current() if r.get("handoff_digest") == signature), None
-            )
-            if existing:
-                if required and not existing["required"]:
-                    existing["required"] = True
-                    self._save()
-                return {
-                    "agent_id": existing["id"],
-                    "status": existing["status"],
-                    "reused": True,
-                    "requires_resume": existing["status"] not in {"queued", "running", "completed"},
-                }
+            existing_by_signature = {
+                row.get("handoff_digest"): row for row in self._current()
+            }
+            new = []
+            promotions = []
+            for item in prepared:
+                deps = item["dependencies"]
+                if any(self.records[x].get("task_key") != self.owner.task["key"] for x in deps):
+                    raise ValidationError("Dependencies must belong to the current parent task")
+                existing = existing_by_signature.get(item["signature"])
+                if existing is not None:
+                    if item["required"] and not existing.get("required", True):
+                        promotions.append(existing)
+                    result_by_signature[item["signature"]] = {
+                        "agent_id": existing["id"],
+                        "status": existing["status"],
+                        "reused": True,
+                        "requires_resume": existing["status"]
+                        not in {"queued", "running", "completed"},
+                    }
+                else:
+                    new.append(item)
             child_limit = self.options.get("max_children", 8)
             if self.expected_children is not None:
                 child_limit = min(child_limit, self.expected_children["max_children"])
-            if len(self._current()) >= child_limit:
+            if len(self._current()) + len(new) > child_limit:
                 raise ValidationError(
                     "Current task child quota reached; inspect or resume existing IDs"
                 )
+            old_required = {row["id"]: row.get("required", True) for row in promotions}
             with self.shared_budget["lock"]:
                 limit = self.options.get("max_total_children", 64)
-                if self.shared_budget["count"] >= limit:
+                if self.shared_budget["count"] + len(new) > limit:
                     raise ValidationError("Nested subagent budget reached; collect existing results")
-                self.shared_budget["count"] += 1
-                atomic_json(
-                    self._admission_path,
-                    {"version": 1, "count": self.shared_budget["count"]},
+                old_count = self.shared_budget["count"]
+                try:
+                    if new:
+                        self.shared_budget["count"] += len(new)
+                        atomic_json(
+                            self._admission_path,
+                            {"version": 1, "count": self.shared_budget["count"]},
+                        )
+                    for row in promotions:
+                        row["required"] = True
+                    for item in new:
+                        ident = "a-" + uuid.uuid4().hex[:12]
+                        (self.root / ident).mkdir(mode=0o700)
+                        created.append(ident)
+                        row = {
+                            "id": ident,
+                            "name": item["name"],
+                            "task": item["task"],
+                            "context": item["context"],
+                            "depends_on": item["dependencies"],
+                            "required": item["required"],
+                            "task_key": self.owner.task["key"],
+                            "parent_task": self.owner.task["task"],
+                            "handoff_digest": item["signature"],
+                            "status": "queued",
+                            "created": datetime.now(UTC).isoformat(),
+                            "budget": {},
+                            "review": None,
+                            "read_windows": [],
+                        }
+                        if self.owner.profile["general"].get("tool_schema_version", 1) >= 4:
+                            row["handoff_version"] = 1
+                        self.records[ident] = row
+                        result_by_signature[item["signature"]] = {
+                            "agent_id": ident,
+                            "name": item["name"],
+                            "status": "queued",
+                            "read_only": True,
+                        }
+                    if new or promotions:
+                        self._save()
+                except Exception:
+                    for ident, required in old_required.items():
+                        self.records[ident]["required"] = required
+                    for ident in created:
+                        self.records.pop(ident, None)
+                        try:
+                            (self.root / ident).rmdir()
+                        except OSError:
+                            pass
+                    self.shared_budget["count"] = old_count
+                    if new:
+                        try:
+                            atomic_json(self._admission_path, {"version": 1, "count": old_count})
+                        except OSError:
+                            pass
+                    raise
+            # Dispatch only after the entire durable batch is visible.
+            try:
+                for ident in created:
+                    self._submit(ident)
+            except Exception:
+                # Admission is durable before dispatch. If the executor fails
+                # after one child was submitted, retain the audit trail and
+                # make every still-queued sibling explicit instead of allowing
+                # a caller retry to mistake a partial batch for no admission.
+                for ident in created:
+                    row = self.records[ident]
+                    if row["status"] == "queued":
+                        row.update(
+                            status="interrupted",
+                            detail="Dispatch failed after durable admission",
+                            failure={
+                                "code": "dispatch_failed",
+                                "effects_replayed": False,
+                            },
+                        )
+                self._save()
+                raise
+        results = [result_by_signature[item["signature"]] for item in prepared]
+        for result in results:
+            if not result.get("reused"):
+                row = self.records[result["agent_id"]]
+                self.owner._child_event(
+                    {
+                        "kind": "subagent_spawned",
+                        "agent_id": result["agent_id"],
+                        "name": row["name"],
+                        "status": "queued",
+                        "depends_on": row["depends_on"],
+                    }
                 )
-            ident = "a-" + uuid.uuid4().hex[:12]
-            (self.root / ident).mkdir(mode=0o700)
-            self.records[ident] = {
-                "id": ident,
-                "name": name,
-                "task": task,
-                "context": context,
-                "depends_on": deps,
-                "required": required,
-                "task_key": self.owner.task["key"],
-                "parent_task": self.owner.task["task"],
-                "handoff_digest": signature,
-                "status": "queued",
-                "created": datetime.now(UTC).isoformat(),
-                "budget": {},
-                "review": None,
-                "read_windows": [],
-            }
-            if self.owner.profile["general"].get("tool_schema_version", 1) >= 4:
-                self.records[ident]["handoff_version"] = 1
-            self._save()
-            self._submit(ident)
-        self.owner._child_event(
-            {
-                "kind": "subagent_spawned",
-                "agent_id": ident,
-                "name": name,
-                "status": "queued",
-                "depends_on": deps,
-            }
-        )
-        return {"agent_id": ident, "name": name, "status": "queued", "read_only": True}
+        return results
 
     @staticmethod
     def _validate_contract(contract):
@@ -395,6 +473,41 @@ and evidence; do not discard required goals to bypass completion checks.
             value = contract.get(key, {})
             if not isinstance(value, dict) or len(value) > 64:
                 raise ValidationError(f"contract.{key} must be a bounded object")
+            nodes = 0
+
+            def check_descriptor(item, path, depth=0):
+                nonlocal nodes
+                nodes += 1
+                if depth > 16 or nodes > 256:
+                    raise ValidationError(f"contract.{key} descriptor is too deeply nested")
+                if isinstance(item, list):
+                    if len(item) > 32:
+                        raise ValidationError(f"{path} union is too large")
+                    for index, child in enumerate(item):
+                        check_descriptor(child, f"{path}[{index}]", depth + 1)
+                    return
+                if not isinstance(item, dict):
+                    return
+                properties = item.get("properties")
+                if properties is not None:
+                    if not isinstance(properties, dict) or len(properties) > 64:
+                        raise ValidationError(f"{path}.properties must contain at most 64 fields")
+                    for field, child in properties.items():
+                        if not isinstance(field, str) or len(field) > 2000:
+                            raise ValidationError(f"{path}.properties has an invalid field")
+                        check_descriptor(child, f"{path}.properties.{field}", depth + 1)
+                if "items" in item:
+                    check_descriptor(item["items"], f"{path}.items", depth + 1)
+                required = item.get("required")
+                if required is not None and (
+                    not isinstance(required, list)
+                    or len(required) > 64
+                    or any(not isinstance(field, str) for field in required)
+                ):
+                    raise ValidationError(f"{path}.required must be a bounded string list")
+
+            for field, descriptor in value.items():
+                check_descriptor(descriptor, f"contract.{key}.{field}")
         delegation = contract.get("delegation", {})
         if not isinstance(delegation, dict) or set(delegation) - {"min_children", "max_children"}:
             raise ValidationError("contract.delegation accepts min_children and max_children")
@@ -426,12 +539,20 @@ and evidence; do not discard required goals to bypass completion checks.
                         if isinstance(file_path, str) and isinstance(sha, str) and re.fullmatch(
                             r"[0-9a-f]{64}", sha
                         ):
+                            # A full revision hash can be computed for a
+                            # slice, but that does not mean the worker read
+                            # the whole file. Only an untruncated offset-zero
+                            # receipt is complete evidence.
                             witnesses.append(
                                 {
                                     "kind": "file_read",
                                     "path": file_path,
                                     "sha256": sha,
-                                    "complete": value.get("has_more") is False,
+                                    "complete": (
+                                        value.get("offset") == 0
+                                        and value.get("has_more") is False
+                                        and value.get("truncated") is False
+                                    ),
                                 }
                             )
                     elif tool == "read_source" and isinstance(args, dict):
@@ -451,6 +572,7 @@ and evidence; do not discard required goals to bypass completion checks.
                                         {
                                             "complete": (
                                                 isinstance(value, dict)
+                                                and value.get("offset") == 0
                                                 and type(value.get("offset")) is int
                                                 and type(value.get("total_characters")) is int
                                                 and isinstance(value.get("text"), str)
@@ -475,7 +597,9 @@ and evidence; do not discard required goals to bypass completion checks.
     def _evidence_observation(contract, witnesses):
         requirements = (contract or {}).get("evidence_requirements", [])
         structured = [item for item in requirements if isinstance(item, dict)]
+        textual = [item for item in requirements if isinstance(item, str)]
         missing = []
+        matched = {}
         for requirement in structured:
             matches = [
                 witness
@@ -490,11 +614,23 @@ and evidence; do not discard required goals to bypass completion checks.
                 matches = [m for m in matches if m.get("complete") is True]
             if not matches:
                 missing.append(requirement)
+            else:
+                for witness in matches:
+                    matched[canonical_json(witness)] = witness
         return {
-            "status": "pass" if not missing else "unknown",
-            "required": len(structured),
+            # Free-form evidence requirements remain useful guidance, but the
+            # host cannot prove them from a receipt. Treat them as UNKNOWN
+            # instead of silently reporting PASS with required=0.
+            "status": "pass" if not missing and not textual else "unknown",
+            "required": len(requirements),
             "missing": missing,
+            "unknown": textual,
             "witnesses": witnesses,
+            # Only witnesses that satisfy a declared structured requirement
+            # are evidence for that contract. Incidental reads remain useful
+            # audit observations but must not make an unrelated later change
+            # invalidate the producer handoff.
+            "matched_witnesses": list(matched.values()),
         }
 
     @staticmethod
@@ -682,7 +818,7 @@ and evidence; do not discard required goals to bypass completion checks.
                 limit = min(limit, self.expected_children["max_children"])
             if current + new_count > limit:
                 raise ValidationError("Current task child quota reached; reduce the batch size")
-        results = [self._admit_handoff(item) for item in prepared]
+        results = self._admit_prepared(prepared)
         return {
             "agents": results,
             "agent_ids": [row["agent_id"] for row in results],
@@ -832,6 +968,54 @@ and evidence; do not discard required goals to bypass completion checks.
             raise ValidationError("Children can only use GET or HEAD")
         return self.owner.web.http_request(service, path, method)
 
+    def _accepted_review_is_current(self, row, view):
+        """Revalidate a producer review before exposing it as a dependency.
+
+        A review is a host observation tied to a result/state digest and to
+        mutable source receipts. Checking only ``disposition=accepted`` would
+        let a later resume, status change, or source mutation cross a
+        dependency boundary with an obsolete contract conclusion.
+        """
+        review = row.get("review")
+        if (
+            not isinstance(review, dict)
+            or review.get("disposition") != "accepted"
+            or row.get("status") != "completed"
+            or not isinstance(view, dict)
+            or view.get("status") != "completed"
+            or review.get("result_digest") != digest(view)
+            or review.get("state_digest") != self._result_state(row, view)
+        ):
+            return False
+        try:
+            self.owner.work.recheck_evidence(review.get("evidence", []))
+        except (OSError, ValidationError):
+            return False
+        contract = (row.get("context") or {}).get("contract", {})
+        contract_check = self._contract_observation(contract, view.get("value"))
+        if contract_check["status"] not in {"pass", "not_applicable"}:
+            return False
+        evidence_check = self._evidence_observation(
+            contract, view.get("evidence_witnesses", [])
+        )
+        if evidence_check["status"] != "pass":
+            return False
+        for witness in evidence_check.get("matched_witnesses", []):
+            reference = (
+                {"path": witness["path"], "sha256": witness["sha256"]}
+                if isinstance(witness.get("path"), str)
+                and isinstance(witness.get("sha256"), str)
+                else {"source_id": witness["source_id"]}
+                if isinstance(witness.get("source_id"), str)
+                else None
+            )
+            if reference is not None:
+                try:
+                    self.owner.work.recheck_evidence([reference])
+                except (OSError, ValidationError):
+                    return False
+        return True
+
     def _run(self, ident):
         agent = dialogue = nested = None
         try:
@@ -841,6 +1025,16 @@ and evidence; do not discard required goals to bypass completion checks.
                 dependencies = []
                 for dep in row["depends_on"]:
                     view = self._result_view(dep)
+                    producer_context = self.records[dep].get("context") or {}
+                    producer_has_contract = (
+                        "contract" in producer_context and producer_context["contract"] is not None
+                    )
+                    producer_contract = (
+                        deepcopy(producer_context["contract"])
+                        if producer_has_contract
+                        else None
+                    )
+                    producer_review = self.records[dep].get("review")
                     if (
                         self.records[dep]["status"] != "completed"
                         or view is None
@@ -853,11 +1047,28 @@ and evidence; do not discard required goals to bypass completion checks.
                             failure={"code": "dependency_incomplete", "agent_id": dep},
                         )
                         return
+                    if producer_has_contract and not self._accepted_review_is_current(
+                        self.records[dep], view
+                    ):
+                        self._update(
+                            ident,
+                            status="blocked",
+                            detail="Contracted dependency has no accepted review",
+                            failure={"code": "dependency_unreviewed", "agent_id": dep},
+                        )
+                        return
                     dependencies.append(
                         {
                             "agent_id": dep,
                             "result_digest": digest(view),
                             "result": view,
+                            # Preserve the producer's declared interface and
+                            # host review as explicit, unverified input. The
+                            # dependent planner can branch on a shape or
+                            # review mismatch instead of receiving an
+                            # untyped value and silently changing semantics.
+                            "producer_contract": producer_contract,
+                            "producer_review": deepcopy(producer_review),
                             "claims_verified": False,
                         }
                     )
@@ -900,18 +1111,38 @@ and evidence; do not discard required goals to bypass completion checks.
             from .agent import INSTRUCTIONS_V4
 
             instructions = INSTRUCTIONS_V4 + self.child_instructions
-            if self.depth < self.options.get("max_depth", 0):
+            local_contract = row.get("context", {}).get("contract") or {}
+            nested_bounds = (
+                local_contract.get("delegation")
+                if isinstance(local_contract, dict)
+                else None
+            )
+            nested_allowed = self.depth < self.options.get("max_depth", 0) and isinstance(
+                nested_bounds, dict
+            )
+            if nested_allowed:
                 instructions += (
                     "\nThis worker may delegate bounded read-only subtasks through the "
-                    "nested coordinator. Delegate only when the assigned subtask explicitly "
-                    "requires nested separable work; never copy the parent's worker count. "
+                    "nested coordinator declared by its local contract. Delegate only when "
+                    "the assigned subtask explicitly requires nested separable work; never copy "
+                    "the parent's worker count. "
                     "For a chain, compile one small phase that performs the next handoff "
                     "or collects its result; do not encode all downstream layers in one "
                     "large program. Replan from the observed child result before the next "
                     "phase. Collect and review every nested result before returning."
                 )
             else:
-                instructions += "\nRead-only worker: no task delegation, file writes or command execution."
+                if "handoff_version" not in row:
+                    # Preserve the exact legacy prompt for unmarked saved
+                    # workers; their task identity is intentionally not
+                    # upgraded during recovery.
+                    instructions += "\nRead-only worker: no task delegation, file writes or command execution."
+                else:
+                    instructions += (
+                        "\nRead-only worker: no nested delegation is available because the local "
+                        "contract does not declare delegation bounds (or the depth limit is reached); "
+                        "do not invent a child contract to bypass this boundary."
+                    )
             if "handoff_version" in row:
                 instructions += self.authority_instructions
                 if compiler.get("prompt_style") == "compact-v3":
@@ -921,7 +1152,7 @@ and evidence; do not discard required goals to bypass completion checks.
                         "keep predictable consumers together, not a new compilation after every tool call.",
                     )
             tool_specs = self._tools()
-            if self.depth < self.options.get("max_depth", 0):
+            if nested_allowed:
                 nested = Coordinator(
                     self.owner,
                     self.options,
@@ -929,7 +1160,7 @@ and evidence; do not discard required goals to bypass completion checks.
                     root=self.root / ident / "subagents",
                     depth=self.depth + 1,
                     shared_budget=self.shared_budget,
-                    expected_children=(row["context"].get("contract") or {}).get("delegation"),
+                    expected_children=nested_bounds,
                 )
                 tool_specs += nested.specs()
             agent = Agent(
@@ -1199,7 +1430,7 @@ and evidence; do not discard required goals to bypass completion checks.
             ):
                 raise ValidationError("An unfinished child cannot be accepted as completed")
             delegation = ((row.get("context") or {}).get("contract") or {}).get("delegation", {})
-            if disposition == "accepted" and delegation and (
+            if disposition == "accepted" and delegation.get("min_children", 0) > 0 and (
                 not view.get("nested_completion")
                 or not view["nested_completion"].get("ready")
             ):
@@ -1212,6 +1443,28 @@ and evidence; do not discard required goals to bypass completion checks.
                 row.get("context", {}).get("contract", {}),
                 view.get("evidence_witnesses", []) if view is not None else [],
             )
+            # Evidence receipts are observations of a mutable world. Recheck
+            # the referenced file/source at acceptance time so an old child
+            # read cannot satisfy a current-source guarantee after mutation.
+            stale_witnesses = []
+            for witness in evidence_check.get("matched_witnesses", []):
+                reference = (
+                    {"path": witness["path"], "sha256": witness["sha256"]}
+                    if isinstance(witness.get("path"), str)
+                    and isinstance(witness.get("sha256"), str)
+                    else {"source_id": witness["source_id"]}
+                    if isinstance(witness.get("source_id"), str)
+                    else None
+                )
+                if reference is not None:
+                    try:
+                        self.owner.work.recheck_evidence([reference])
+                    except (OSError, ValidationError):
+                        stale_witnesses.append(reference)
+            if stale_witnesses:
+                evidence_check["status"] = "unknown"
+                evidence_check["stale"] = stale_witnesses
+                evidence_check.setdefault("missing", []).extend(stale_witnesses)
             contract_check["evidence"] = evidence_check
             if disposition == "accepted" and contract_check["status"] not in {
                 "pass",
@@ -1282,9 +1535,16 @@ and evidence; do not discard required goals to bypass completion checks.
 
     def completion(self):
         with self.lock:
-            required = [r for r in self._current() if r.get("required", True)]
+            current = self._current()
+            required = [r for r in current if r.get("required", True)]
+            optional = [r for r in current if not r.get("required", True)]
             waiting = [r["id"] for r in required if r["status"] in {"queued", "running"}]
             unreviewed = [r["id"] for r in required if not r.get("review")]
+            unaccepted = [
+                r["id"]
+                for r in required
+                if r.get("review") and r["review"].get("disposition") != "accepted"
+            ]
             stale_evidence = []
             # A changed result after an explicit resume invalidates any old acceptance.
             for row in required:
@@ -1318,18 +1578,40 @@ and evidence; do not discard required goals to bypass completion checks.
             delegation_ready = True
             delegation_state = None
             if delegation is not None:
-                count = len(self._current())
-                delegation_ready = delegation["min_children"] <= count <= delegation["max_children"]
+                # A nested cardinality contract counts required children for
+                # the lower bound. Optional workers cannot satisfy a required
+                # delegation bound, while the upper bound still applies to
+                # every admitted worker so an old optional record cannot
+                # overflow the contract.
+                count = len(required)
+                total_count = len(current)
+                optional_in_scope = [r["id"] for r in optional]
+                delegation_ready = (
+                    delegation["min_children"] <= count
+                    and total_count <= delegation["max_children"]
+                )
                 delegation_state = {
                     "expected": deepcopy(delegation),
                     "actual": count,
+                    "optional_workers": optional_in_scope,
                     "ready": delegation_ready,
                 }
             return {
-                "ready": delegation_ready and not waiting and not unreviewed and not stale_evidence,
+                # A required child that was explicitly blocked or rejected is
+                # observed, but it has not satisfied the local interface. A
+                # parent may report that limitation; it cannot pass its own
+                # required-child completion gate as if the contract held.
+                "ready": (
+                    delegation_ready
+                    and not waiting
+                    and not unreviewed
+                    and not unaccepted
+                    and not stale_evidence
+                ),
                 "waiting": bool(waiting),
                 "pending_workers": waiting,
                 "unreviewed_workers": unreviewed,
+                "unaccepted_workers": unaccepted,
                 "stale_review_evidence": stale_evidence,
                 "limitations": limits,
                 "delegation": delegation_state,

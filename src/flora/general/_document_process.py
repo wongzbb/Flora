@@ -72,6 +72,7 @@ def run_worker(payload, environment, *, timeout=30):
     with subprocess.Popen(command, stdin=subprocess.PIPE, **options) as process:
         deadline = time.monotonic() + timeout
         pending = payload
+        first_attempt = True
         try:
             while True:
                 remaining = deadline - time.monotonic()
@@ -89,10 +90,17 @@ def run_worker(payload, environment, *, timeout=30):
                                 "Document parser exceeded the 512 MiB resident-memory limit"
                             )
                 try:
-                    stdout, _ = process.communicate(input=pending, timeout=min(0.05, remaining))
+                    # Give the first communicate call enough time to drain
+                    # the bounded request into the worker pipe. A very short
+                    # Darwin timeout can interrupt that write; retrying with
+                    # ``input=None`` then leaves the child waiting for EOF
+                    # and the parser appears to hang until the wall deadline.
+                    window = min(0.5 if first_attempt else 0.05, remaining)
+                    stdout, _ = process.communicate(input=pending, timeout=window)
                     return subprocess.CompletedProcess(command, process.returncode, stdout)
                 except subprocess.TimeoutExpired:
                     pending = None  # communicate retains unsent input across timeout retries.
+                    first_attempt = False
         finally:
             if process.poll() is None:
                 process.kill()

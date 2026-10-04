@@ -271,6 +271,68 @@ class _Lowerer:
                 return self.block(scope, {"op": "replan", **value})
         raise ValidationError("structured end requires return or replan:{reason,state}")
 
+    @classmethod
+    def _definite_assignments(cls, steps, incoming=()):
+        """Return names defined on every path that reaches the sequence end.
+
+        Structured plans are lowered into SSA blocks. A name introduced in one
+        branch used to disappear at the join even when both branches assigned
+        it, forcing models to duplicate an entire final return. Compute only
+        the intersection of branch definitions; a name assigned in one branch
+        or in a possibly empty loop remains local and still fails closed if a
+        later step uses it.
+        """
+        scope = set(incoming)
+        for step in steps:
+            keys = set(step)
+            if keys in ({"let", "value"}, {"call", "save"}, {"call", "args", "save"},
+                        {"call", "save", "on_error"}, {"call", "args", "save", "on_error"}):
+                scope.add(step["let"] if "let" in step else step["save"])
+            elif keys == {"if", "then", "else"}:
+                then_scope = cls._definite_assignments(step["then"], scope)
+                else_scope = cls._definite_assignments(step["else"], scope)
+                scope = then_scope & else_scope
+            elif keys == {"for_each", "in", "steps"}:
+                # The body may execute zero times, so loop-local assignments
+                # cannot be definite after the loop.
+                continue
+            elif keys in ({"return"}, {"replan"}):
+                return scope
+        return scope
+
+    @classmethod
+    def _assignment_order(cls, steps):
+        """List assignment names in source order for deterministic joins."""
+        names = []
+        for step in steps:
+            keys = set(step)
+            if "let" in keys:
+                name = step["let"]
+                if name not in names:
+                    names.append(name)
+            elif "save" in keys:
+                name = step["save"]
+                if name not in names:
+                    names.append(name)
+                handler = step.get("on_error")
+                if isinstance(handler, dict) and "save" in handler:
+                    error = handler["save"]
+                    if error not in names:
+                        names.append(error)
+                if isinstance(handler, dict) and isinstance(handler.get("plan"), dict):
+                    for nested in cls._assignment_order(handler["plan"].get("steps", [])):
+                        if nested not in names:
+                            names.append(nested)
+            elif keys == {"if", "then", "else"}:
+                for nested_steps in (step["then"], step["else"]):
+                    for nested in cls._assignment_order(nested_steps):
+                        if nested not in names:
+                            names.append(nested)
+            elif keys == {"for_each", "in", "steps"}:
+                # Loop bindings and body locals do not escape the loop.
+                continue
+        return names
+
     def sequence(self, steps, scope, finish, depth=0):
         if depth > 32 or not isinstance(steps, list):
             raise ValidationError("structured steps require a list with nesting at most 32")
@@ -364,12 +426,25 @@ class _Lowerer:
             return self.block(scope, {"op": "effect", "tool": step["call"], "args": step["args"],
                                       "resume": check, "bind": reply, "capture": self.frame(scope)})
         if keys == {"if", "then", "else"}:
-            target = self.sequence(rest, scope, finish, depth)
+            then_definite = self._definite_assignments(step["then"], scope)
+            else_definite = self._definite_assignments(step["else"], scope)
+            common = then_definite & else_definite
+            branch_names = self._assignment_order(step["then"] + step["else"])
+            merged = tuple(
+                name for name in branch_names if name in common and name not in scope
+            )
+            target_scope = (*scope, *merged)
+            target = self.sequence(rest, target_scope, finish, depth)
 
             def join(branch_scope):
-                # New branch locals stay local; assignments to existing names
-                # cross the join. Both successors receive the same entry scope.
-                return self.jump(branch_scope, target, self.frame(scope))
+                # A name introduced on both branches is a definite SSA value
+                # at this join. One-sided branch locals stay local, while
+                # assignments to existing names retain their old behavior.
+                captures = {
+                    **self.frame(scope),
+                    **{name: ref(name) for name in merged},
+                }
+                return self.jump(branch_scope, target, captures)
 
             yes = self.sequence(step["then"], scope, join, depth + 1)
             no = self.sequence(step["else"], scope, join, depth + 1)
