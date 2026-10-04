@@ -1213,7 +1213,16 @@ and evidence; do not discard required goals to bypass completion checks.
                 result = agent.run(
                     task, data=data, slice_steps=32, repeated_error_limit=3
                 ).to_dict()
-            while result["status"] == "yielded":
+            # A scheduling slice is not a worker completion.  The same rule
+            # applies when the runtime's completion guard reports that nested
+            # workers are still running: keep the nested coordinator alive,
+            # wait for an actual child boundary, and resume the same kernel
+            # and budget.  Returning ``waiting`` here used to enter the
+            # ``finally`` block, close the nested coordinator, and persist a
+            # terminal-looking parent result while its required child was
+            # still active.  That lost the only live continuation and made
+            # deep delegation appear to fail nondeterministically.
+            while result["status"] in {"yielded", "waiting"}:
                 atomic_json(self.root / ident / "result.json", result)
                 self._update(
                     ident,
@@ -1223,6 +1232,13 @@ and evidence; do not discard required goals to bypass completion checks.
                 )
                 if self.stop.is_set():
                     raise ChildPause
+                if result["status"] == "waiting":
+                    if nested is None:
+                        # A waiting result without a nested coordinator has no
+                        # host-owned future to wait on. Preserve it as a
+                        # resumable observation instead of polling the model.
+                        break
+                    nested.wait_for_boundary(timeout=1)
                 result = agent.resume(slice_steps=32, repeated_error_limit=3).to_dict()
             if nested is not None:
                 result["nested_completion"] = nested.completion()
