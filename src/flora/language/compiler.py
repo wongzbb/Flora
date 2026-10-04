@@ -28,11 +28,33 @@ from flora.support.errors import CompilerError, StaleAnchor, ValidationError
 from flora.support.values import canonical_json, clone, digest
 
 
+# These are failures of the *model's chosen control representation*.  They are
+# deliberately kept separate from tool-schema and anchor errors: a semantic
+# phase can choose a different representation, but it must not invent a tool,
+# bypass the current trace anchor, or silently change a contract.  The old
+# implementation only recognised three continuation messages, which meant a
+# valid task could be rejected for an unrelated low-level spelling such as an
+# unknown target or duplicate SSA binding.  Keep this list phrased in terms of
+# parser/frontend invariants rather than provider-specific JSON wording.
 _STRUCTURED_FALLBACK_MARKERS = (
+    # Explicit continuation and scope invariants.
     "argument keys must match",
     "resume parameters",
+    "unknown target",
+    "unknown resume block",
     "undefined variable",
+    "duplicate ssa binding",
     "continuation",
+    # Program/block shape and terminator invariants.
+    "unknown entry block",
+    "unknown terminator",
+    "unknown pure operation",
+    "expected a terminator object",
+    "blocks must be",
+    "blocks.",
+    "params must be",
+    "ops must be",
+    "inline operation",
 )
 
 
@@ -55,38 +77,65 @@ def _large_low_level_failure(error: Exception, response_text: str) -> bool:
     )
 
 
+def _semantic_json_loads(text: str):
+    """Parse one complete semantic object at the response boundary.
+
+    Some OpenAI-compatible relays append an out-of-band notice after the model
+    JSON.  The notice is not part of the program and must never be evaluated.
+    Decode exactly the first JSON value with the project's strict loader, while
+    rejecting a second JSON candidate (which would be ambiguous).  The caller
+    records discarded bytes for the audit trail.
+    """
+    try:
+        return _strict_json_loads(text), 0
+    except (json.JSONDecodeError, ValueError, RecursionError) as original:
+        decoder = json.JSONDecoder()
+        start = len(text) - len(text.lstrip())
+        try:
+            _, end = decoder.raw_decode(text, start)
+        except (json.JSONDecodeError, ValueError, RecursionError):
+            raise original
+        fragment = text[start:end]
+        value = _strict_json_loads(fragment)
+        trailing = text[end:]
+        stripped = trailing.lstrip()
+        if stripped and stripped[0] in "[{":
+            raise original
+        return value, len(trailing.encode("utf-8"))
+
+
 def _structured_prompt(view: dict, error: str) -> list[dict]:
     """Ask for semantic actions; the host supplies continuation plumbing."""
     system = r"""You are Flora's semantic action planner. Return exactly one JSON object and no
-markdown. Do not emit Flora IR, blocks, params, resumes, branches, or bundle
-metadata. Describe only the next bounded executable phase using the tools in
-context. Every call is a real effect and its returned value is the only source
-of later data. Use {"var":"name"} to reference a saved result and {"literal":...}
-when an object is intentional data. Do not invent results, files, IDs, hashes or
-completion. Keep the user's requested types and contracts.
+markdown. Do not emit Flora IR, blocks, params, resumes, or low-level branch
+terminators. Semantic if/then/else is allowed. Describe only the next bounded
+executable phase using the tools in context. Every call is a real effect and its
+returned value is the only source of later data. Use {"var":"name"} to reference
+a saved result and {"literal":...} when an object is intentional data. Do not
+invent results, files, IDs, hashes or completion. Keep the user's requested
+types and contracts.
 
 A plan is {"steps":[...],"return":EXPR} or {"steps":[...],"replan":{"reason":STRING,"state":OBJECT}}.
-A call is {"call":"TOOL","args":OBJECT_OR_EXPR,"save":"NAME"}; optional on_error is
+The outer object must contain the complete steps array and exactly one terminal;
+do not close it after an intermediate step and do not emit a second JSON object.
+A call is {"call":"TOOL","args":OBJECT_OR_EXPR,"save":"NAME"}; args may be
+omitted for a tool with no parameters and then mean {}. Optional on_error is
 {"save":"ERROR_NAME","plan":PLAN} and receives the actual raised error. A call
 without on_error causes a replan with the actual outcome. A pure assignment is
 {"let":"NAME","value":EXPR}. Conditional execution is {"if":EXPR,"then":[...],"else":[...]}.
 For bounded arrays use {"for_each":"ITEM","in":EXPR,"steps":[...]}.
+EXPR is a JSON value containing vars/literals, or a pure operation
+{"op":"get|eq|length|add|...","args":[EXPR,...]}. A field projection may be
+written as {"get":{"from":EXPR,"path":["field",0]}}. To return a mapped array,
+use {"for_each":["ITEM","VALUE"],"in":EXPR,"yield":EXPR}; the host collects
+one yield value per observed item. Use these semantic forms instead of IR blocks.
 Use only these keys and at most 32 calls in this phase. Do not repeat an effect
 whose successful receipt is already in context. A replan is appropriate when
 new observations must change the next decomposition or contract. The host will
 compile variables, error dispatch, and continuation parameters mechanically.
 """
-    user = {
-        "task": view.get("task"),
-        "tools": view.get("tools"),
-        "receipts": view.get("receipts"),
-        "memory": view.get("memory"),
-        "reports": view.get("reports"),
-        "previous_programs": view.get("previous_programs"),
-        "epoch": view.get("epoch"),
-        "trace_digest": view.get("trace_digest"),
-        "compiler_validation_error": error[:4096],
-    }
+    user = clone(view)
+    user["compiler_validation_error"] = error[:4096]
     return [{"role": "system", "content": system},
             {"role": "user", "content": canonical_json(user)}]
 
@@ -1141,7 +1190,19 @@ class LLMCompiler:
             raise ValidationError("transport_retries must be between 0 and 3")
         self._recovery_left = self.transport_retries
         structured_mode = False
-        for attempt in range(self.max_repairs + 1):
+        # ``max_repairs`` governs the ordinary low-level bundle repair.  A
+        # semantic fallback is a different compilation phase: it changes the
+        # representation handed to the model, so it gets one independently
+        # bounded correction if that semantic plan itself is invalid.  Keep a
+        # monotonically increasing attempt number for accounting and events,
+        # while allowing the final semantic correction to occur after the
+        # ordinary repair allowance has been spent.
+        semantic_repair_left = 0
+        attempt = 0
+        # Semantic recovery has its own finite budget.  Do not let the phase
+        # marker itself keep issuing requests after that budget is exhausted;
+        # the branch below raises the bounded-recovery error instead.
+        while attempt <= self.max_repairs or semantic_repair_left > 0:
             response = self._request(messages, attempt)
             syntax_window = None
             try:
@@ -1163,11 +1224,19 @@ class LLMCompiler:
                     )
                 if structured_mode:
                     try:
-                        plan = _strict_json_loads(response.text)
+                        plan, trailing_bytes = _semantic_json_loads(response.text)
                     except (json.JSONDecodeError, ValueError, RecursionError) as exc:
                         raise ValidationError(
                             f"semantic plan must be strict JSON: {getattr(exc, 'msg', str(exc))}"
                         ) from None
+                    if trailing_bytes:
+                        self._emit(
+                            {
+                                "kind": "structured_plan_trailing_ignored",
+                                "attempt": attempt,
+                                "bytes": min(trailing_bytes, self.max_output_bytes),
+                            }
+                        )
                     validated = _compile_structured_plan(
                         plan, snapshot, max_bytes=self.max_output_bytes
                     )
@@ -1249,32 +1318,68 @@ class LLMCompiler:
                             ),
                         },
                     ]
+                    attempt += 1
                     continue
                 self._check_deadline()
                 self._emit({"kind": "compiler_validated", "attempt": attempt})
                 return validated
             except ValidationError as exc:
+                structural_failure = _needs_structured_fallback(exc) or _large_low_level_failure(
+                    exc, response.text
+                )
                 self._emit(
                     {
                         "kind": "compiler_rejected",
                         "attempt": attempt,
                         "message": str(exc)[:1024],
-                        "will_repair": attempt < self.max_repairs,
+                        "will_repair": (
+                            attempt < self.max_repairs
+                            or (not structured_mode and self.max_repairs > 0 and structural_failure)
+                            or (structured_mode and semantic_repair_left > 0)
+                        ),
                     }
                 )
-                if attempt == self.max_repairs:
+
+                # A semantic plan has no low-level continuation repair to fall
+                # back on.  Give it one fresh, bounded semantic correction with
+                # the concrete host validation error.  This path is independent
+                # of max_repairs so a semantically coherent plan can still be
+                # recovered after the ordinary allowance was consumed.
+                if structured_mode:
+                    if semantic_repair_left > 0:
+                        semantic_repair_left -= 1
+                        try:
+                            bounded_view = json.loads(messages[1]["content"])
+                        except (KeyError, TypeError, json.JSONDecodeError):
+                            bounded_view = snapshot.to_dict()
+                        messages = _structured_prompt(bounded_view, str(exc))
+                        self._emit(
+                            {
+                                "kind": "structured_plan_repair_requested",
+                                "attempt": attempt,
+                                "reason": str(exc)[:1024],
+                                "retries_remaining": semantic_repair_left,
+                            }
+                        )
+                        attempt += 1
+                        continue
                     raise CompilerError(
-                        f"compiler output failed validation after {attempt + 1} attempt(s): {str(exc)[:512]}"
+                        f"semantic plan failed validation after bounded repair: {str(exc)[:512]}"
                     ) from None
-                if _needs_structured_fallback(exc) or _large_low_level_failure(
-                    exc, response.text
-                ):
-                    # A malformed continuation is an interface failure. Ask
-                    # the model for semantic actions and let the host generate
-                    # every continuation signature. This preserves the same
-                    # anchor, tool schemas, receipts and execution semantics;
-                    # it is not a parser rewrite or a guessed result.
+
+                # A structurally invalid low-level bundle is a representation
+                # failure, even when it arrives on the last ordinary attempt.
+                # Switch to semantic actions before giving up; the host then
+                # owns block names, scopes, continuations and branch wiring.
+                # max_repairs=0 remains an explicit no-retry mode used by
+                # deterministic tests and callers that want strict rejection.
+                if structural_failure and self.max_repairs > 0:
                     structured_mode = True
+                    # Semantic planning is a separate bounded phase.  Give it
+                    # two corrections because a model can first repair an
+                    # expression and then repair the outer plan envelope; this
+                    # remains finite and never executes a guessed result.
+                    semantic_repair_left = 2
                     try:
                         bounded_view = json.loads(messages[1]["content"])
                     except (KeyError, TypeError, json.JSONDecodeError):
@@ -1285,9 +1390,16 @@ class LLMCompiler:
                             "kind": "structured_fallback_requested",
                             "attempt": attempt,
                             "reason": str(exc)[:1024],
+                            "semantic_retries": semantic_repair_left,
                         }
                     )
+                    attempt += 1
                     continue
+
+                if attempt >= self.max_repairs:
+                    raise CompilerError(
+                        f"compiler output failed validation after {attempt + 1} attempt(s): {str(exc)[:512]}"
+                    ) from None
                 # Repair receives a bounded fragment and an explicit truncation
                 # notice; a malformed multi-megabyte response cannot grow prompts.
                 fragment_bytes = response.text.encode("utf-8")[: min(self.max_output_bytes, 16384)]
@@ -1346,4 +1458,5 @@ class LLMCompiler:
                         },
                     ]
                 )
+                attempt += 1
         raise CompilerError("compiler exhausted its configured attempts")  # pragma: no cover

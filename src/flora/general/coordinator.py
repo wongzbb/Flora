@@ -94,6 +94,19 @@ cannot state that interface, revise the decomposition first instead of creating 
 uncontracted required child.
 The contract's outputs object describes fields of the child's final returned
 value, not tool receipts, capability listings, status metadata or review records.
+Use one entry per actual top-level field.  For a child returning
+``{"question": <string>, "answer": <string>}``, declare
+``{"question": {"type": "string"}, "answer": {"type": "string"}}``.
+Do not put a description such as ``"object with fields ..."`` under an
+``answer`` key: that declares a top-level ``answer`` object and is a different
+interface.  Keep the declared shape aligned with the value the child will
+actually return; a richer observed object is a contract observation that must
+drive an explicit revision or block, never an implicit coercion.
+When the assigned task does not require a fixed shape, leave ``outputs`` empty
+instead of guessing a primitive field from a tool description.  When a tool
+returns a structured observation, do not flatten it into a string or invent
+fields; either declare the documented object shape or state the uncertainty in
+the guarantees and let review branch on the observation.
 Tool results are observations/evidence; they become part of the child value only
 if the child explicitly returns them through its declared interface. Declare only
 guarantees the child is expected to return, and keep unavailable observations as
