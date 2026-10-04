@@ -311,6 +311,79 @@ class CollaborationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValidationError, "Nested subagent budget"):
                 app.delegation.spawn_agent("Second")
 
+    def test_total_child_admission_survives_session_restart(self):
+        path = self.root / "durable-budget"
+        profile = {
+            "general": {
+                "subagents": {
+                    "enabled": True,
+                    "max_children": 2,
+                    "max_total_children": 1,
+                }
+            }
+        }
+        first = GeneralAgent(
+            session_dir=path,
+            workspace=self.workspace,
+            provider=self.provider,
+            profile=profile,
+        )
+        first.task = {"key": "durable", "task": "Durable child budget"}
+        first.work.begin("durable", "Durable child budget")
+        ident = first.delegation.spawn_agent("First")['agent_id']
+        first.delegation.futures[ident].result(timeout=5)
+        saved_profile = copy.deepcopy(first.profile)
+        first.close()
+        with GeneralAgent(
+            session_dir=path,
+            provider=self.provider,
+            profile=saved_profile,
+        ) as reopened:
+            with self.assertRaisesRegex(ValidationError, "Nested subagent budget"):
+                reopened.delegation.spawn_agent("Second")
+
+    def test_structured_evidence_requirement_cannot_be_satisfied_by_child_claim(self):
+        contract = {
+            "outputs": {"finding": {"type": "string"}},
+            "evidence_requirements": [
+                {"kind": "file_read", "path": "facts.txt", "complete": True}
+            ],
+        }
+        ident = self.app.delegation.spawn_agent(
+            "Return a finding without reading a file", context={"contract": contract}
+        )["agent_id"]
+        self.app.delegation.futures[ident].result(timeout=5)
+        page = self.app.delegation.read_agent(ident, limit=24000)
+        with self.assertRaisesRegex(ValidationError, "evidence requirement"):
+            self.app.delegation.review_agent(
+                ident, page["result_digest"], "accepted", "The answer was collected"
+            )
+
+    def test_evidence_witnesses_come_from_child_trace_receipts(self):
+        ident = self.app.delegation.spawn_agent("Trace witness")['agent_id']
+        self.app.delegation.futures[ident].result(timeout=5)
+        from flora.state.trace import GENESIS, SQLiteTrace
+
+        path = self.app.delegation.root / ident / "kernel" / "turn-99999999.sqlite"
+        trace = SQLiteTrace(path)
+        event = trace.begin("read_file", {"path": "facts.txt"}, expected_epoch=0, expected_digest=GENESIS)
+        trace.settle(
+            event,
+            {
+                "status": "returned",
+                "value": {
+                    "path": "facts.txt",
+                    "sha256": "a" * 64,
+                    "has_more": False,
+                },
+            },
+        )
+        trace.close()
+        self.assertEqual(
+            self.app.delegation._child_evidence_witnesses(ident),
+            [{"kind": "file_read", "path": "facts.txt", "sha256": "a" * 64, "complete": True}],
+        )
+
     def test_saved_v4_without_schema_version_keeps_its_identity(self):
         from flora.general.agent import _new_session_defaults
 

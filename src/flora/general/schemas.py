@@ -212,7 +212,22 @@ def _collaboration_bounds(name, properties):
             "outputs": {"type": "object"},
             "guarantees": {"type": "array", "maxItems": 32, "items": {"type": "string", "maxLength": 2000}},
             "dependencies": {"type": "array", "maxItems": 32, "items": {"type": "string", "maxLength": 2000}},
-            "evidence_requirements": {"type": "array", "maxItems": 32, "items": {"type": "string", "maxLength": 2000}},
+            "evidence_requirements": {
+                "type": "array",
+                "maxItems": 32,
+                "items": {
+                    "type": ["string", "object"],
+                    "maxLength": 2000,
+                    "additionalProperties": False,
+                    "properties": {
+                        "kind": {"enum": ["file_read", "source_read"]},
+                        "path": {"type": "string", "maxLength": 2000},
+                        "source_id": {"type": "string", "maxLength": 2000},
+                        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                        "complete": {"type": "boolean"},
+                    },
+                },
+            },
             "delegation": {
                 "type": "object",
                 "additionalProperties": False,

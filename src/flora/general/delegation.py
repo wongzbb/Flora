@@ -149,7 +149,20 @@ delegate. The parent must inspect your result; never claim it has been verified.
             self.expected_children = {"min_children": expected_min, "max_children": expected_max}
         else:
             self.expected_children = None
-        self.shared_budget = shared_budget or {"count": 0, "lock": Lock()}
+        self.root = owner.directory / "subagents" if root is None else root
+        if self.root.is_symlink():
+            raise ValidationError("Subagent directory cannot be a symbolic link")
+        self.root.mkdir(mode=0o700, exist_ok=True)
+        if shared_budget is None:
+            shared_budget = {
+                "count": 0,
+                "lock": Lock(),
+                "admission_path": self.root / "admission.json",
+            }
+        else:
+            shared_budget.setdefault("admission_path", self.root / "admission.json")
+        self.shared_budget = shared_budget
+        self._admission_path = self.shared_budget["admission_path"]
         if "budget" in options:
             from .budgets import unlimited_defaults
 
@@ -162,10 +175,6 @@ delegate. The parent must inspect your result; never claim it has been verified.
                     "\nA null cumulative budget limit means unlimited, not zero or unknown. "
                     "Usage is still recorded. Per-response output limits and runtime checks still apply."
                 )
-        self.root = owner.directory / "subagents" if root is None else root
-        if self.root.is_symlink():
-            raise ValidationError("Subagent directory cannot be a symbolic link")
-        self.root.mkdir(mode=0o700, exist_ok=True)
         self.lock, self.stop = threading.RLock(), threading.Event()
         self.futures, self.closed = {}, False
         self.pool = ThreadPoolExecutor(
@@ -175,6 +184,19 @@ delegate. The parent must inspect your result; never claim it has been verified.
 
         path = self.root / "children.json"
         self.records = read_profile(path, max_bytes=8 * 1024 * 1024) if path.exists() else {}
+        if self._admission_path.exists():
+            admission = read_profile(self._admission_path, max_bytes=65536)
+            if (
+                not isinstance(admission, dict)
+                or admission.get("version") != 1
+                or type(admission.get("count")) is not int
+                or admission["count"] < 0
+            ):
+                raise ValidationError("Invalid durable subagent admission ledger")
+            with self.shared_budget["lock"]:
+                self.shared_budget["count"] = max(
+                    self.shared_budget.get("count", 0), admission["count"]
+                )
         for ident, row in self.records.items():
             if not re.fullmatch(r"a-[0-9a-f]{12}", ident) or not isinstance(row, dict):
                 raise ValidationError("Invalid subagent registry")
@@ -244,6 +266,10 @@ delegate. The parent must inspect your result; never claim it has been verified.
                 if self.shared_budget["count"] >= limit:
                     raise ValidationError("Nested subagent budget reached; collect existing results")
                 self.shared_budget["count"] += 1
+                atomic_json(
+                    self._admission_path,
+                    {"version": 1, "count": self.shared_budget["count"]},
+                )
             ident = "a-" + uuid.uuid4().hex[:12]
             (self.root / ident).mkdir(mode=0o700)
             self.records[ident] = {

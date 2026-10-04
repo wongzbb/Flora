@@ -288,6 +288,10 @@ and evidence; do not discard required goals to bypass completion checks.
                 if self.shared_budget["count"] >= limit:
                     raise ValidationError("Nested subagent budget reached; collect existing results")
                 self.shared_budget["count"] += 1
+                atomic_json(
+                    self._admission_path,
+                    {"version": 1, "count": self.shared_budget["count"]},
+                )
             ident = "a-" + uuid.uuid4().hex[:12]
             (self.root / ident).mkdir(mode=0o700)
             self.records[ident] = {
@@ -336,13 +340,44 @@ and evidence; do not discard required goals to bypass completion checks.
             raise ValidationError(
                 "contract accepts assumptions, inputs, outputs, guarantees, dependencies and evidence_requirements"
             )
-        for key in ("assumptions", "guarantees", "dependencies", "evidence_requirements"):
+        for key in ("assumptions", "guarantees", "dependencies"):
             values = contract.get(key, [])
             if not isinstance(values, list) or len(values) > 32 or any(
                 not isinstance(value, str) or not value.strip() or len(value) > 2000
                 for value in values
             ):
                 raise ValidationError(f"contract.{key} must be a bounded list of nonempty text")
+        requirements = contract.get("evidence_requirements", [])
+        if not isinstance(requirements, list) or len(requirements) > 32:
+            raise ValidationError("contract.evidence_requirements must contain at most 32 items")
+        for requirement in requirements:
+            if isinstance(requirement, str):
+                if not requirement.strip() or len(requirement) > 2000:
+                    raise ValidationError("contract evidence text is empty or too long")
+                continue
+            if not isinstance(requirement, dict) or set(requirement) - {
+                "kind", "path", "source_id", "sha256", "complete"
+            }:
+                raise ValidationError(
+                    "structured evidence requirements accept kind, path/source_id, sha256 and complete"
+                )
+            kind = requirement.get("kind")
+            if kind not in {"file_read", "source_read"}:
+                raise ValidationError("structured evidence kind must be file_read or source_read")
+            identity = "path" if kind == "file_read" else "source_id"
+            if (
+                not isinstance(requirement.get(identity), str)
+                or not requirement[identity].strip()
+                or len(requirement[identity]) > 2000
+            ):
+                raise ValidationError(f"structured {kind} requires a bounded {identity}")
+            if "sha256" in requirement and (
+                not isinstance(requirement["sha256"], str)
+                or not re.fullmatch(r"[0-9a-f]{64}", requirement["sha256"])
+            ):
+                raise ValidationError("structured evidence sha256 must be lowercase hex")
+            if "complete" in requirement and type(requirement["complete"]) is not bool:
+                raise ValidationError("structured evidence complete must be boolean")
         for key in ("inputs", "outputs"):
             value = contract.get(key, {})
             if not isinstance(value, dict) or len(value) > 64:
@@ -358,6 +393,96 @@ and evidence; do not discard required goals to bypass completion checks.
             or not 0 <= minimum <= maximum <= 32
         ):
             raise ValidationError("contract.delegation child bounds are invalid")
+
+    def _child_evidence_witnesses(self, ident):
+        """Extract only successful host tool receipts from the child's journal."""
+        from flora.state.trace import SQLiteTrace
+
+        witnesses = []
+        kernel = self.root / ident / "kernel"
+        for path in sorted(kernel.glob("turn-*.sqlite")):
+            trace = None
+            try:
+                trace = SQLiteTrace(path)
+                for record in trace.records:
+                    if record.get("status") != "returned":
+                        continue
+                    tool, value, args = record.get("tool"), record.get("value"), record.get("args", {})
+                    if tool == "read_file" and isinstance(value, dict):
+                        file_path, sha = value.get("path"), value.get("sha256")
+                        if isinstance(file_path, str) and isinstance(sha, str) and re.fullmatch(
+                            r"[0-9a-f]{64}", sha
+                        ):
+                            witnesses.append(
+                                {
+                                    "kind": "file_read",
+                                    "path": file_path,
+                                    "sha256": sha,
+                                    "complete": value.get("has_more") is False,
+                                }
+                            )
+                    elif tool == "read_source" and isinstance(args, dict):
+                        source_id = args.get("source_id")
+                        if isinstance(source_id, str) and source_id:
+                            witnesses.append(
+                                {
+                                    "kind": "source_read",
+                                    "source_id": source_id,
+                                    **(
+                                        {"sha256": value["sha256"]}
+                                        if isinstance(value, dict)
+                                        and isinstance(value.get("sha256"), str)
+                                        else {}
+                                    ),
+                                    **(
+                                        {
+                                            "complete": (
+                                                isinstance(value, dict)
+                                                and type(value.get("offset")) is int
+                                                and type(value.get("total_characters")) is int
+                                                and isinstance(value.get("text"), str)
+                                                and value["offset"] + len(value["text"])
+                                                >= value["total_characters"]
+                                            )
+                                        }
+                                        if isinstance(value, dict)
+                                        else {}
+                                    ),
+                                }
+                            )
+            except (OSError, ValidationError):
+                continue
+            finally:
+                if trace is not None:
+                    trace.close()
+        unique = {canonical_json(item): item for item in witnesses}
+        return list(unique.values())[:64]
+
+    @staticmethod
+    def _evidence_observation(contract, witnesses):
+        requirements = (contract or {}).get("evidence_requirements", [])
+        structured = [item for item in requirements if isinstance(item, dict)]
+        missing = []
+        for requirement in structured:
+            matches = [
+                witness
+                for witness in witnesses
+                if witness.get("kind") == requirement.get("kind")
+                and witness.get("path", witness.get("source_id"))
+                == requirement.get("path", requirement.get("source_id"))
+            ]
+            if requirement.get("sha256"):
+                matches = [m for m in matches if m.get("sha256") == requirement["sha256"]]
+            if requirement.get("complete"):
+                matches = [m for m in matches if m.get("complete") is True]
+            if not matches:
+                missing.append(requirement)
+        return {
+            "status": "pass" if not missing else "unknown",
+            "required": len(structured),
+            "missing": missing,
+            "witnesses": witnesses,
+        }
 
     @staticmethod
     def _contract_type(descriptor):
@@ -857,6 +982,7 @@ and evidence; do not discard required goals to bypass completion checks.
                 result = agent.resume(slice_steps=32, repeated_error_limit=3).to_dict()
             if nested is not None:
                 result["nested_completion"] = nested.completion()
+            result["evidence_witnesses"] = self._child_evidence_witnesses(ident)
             # Public answers never expose internal reports, prompts or huge traces.
             atomic_json(self.root / ident / "result.json", result)
             self._update(
@@ -923,6 +1049,7 @@ and evidence; do not discard required goals to bypass completion checks.
             "failure": failure_info(result["status"], result.get("reason")),
             "claims_verified": False,
             "nested_completion": result.get("nested_completion"),
+            "evidence_witnesses": result.get("evidence_witnesses", []),
         }
 
     @staticmethod
@@ -1068,6 +1195,11 @@ and evidence; do not discard required goals to bypass completion checks.
                 row.get("context", {}).get("contract", {}),
                 view.get("value") if view is not None else None,
             )
+            evidence_check = self._evidence_observation(
+                row.get("context", {}).get("contract", {}),
+                view.get("evidence_witnesses", []) if view is not None else [],
+            )
+            contract_check["evidence"] = evidence_check
             if disposition == "accepted" and contract_check["status"] not in {
                 "pass",
                 "not_applicable",
@@ -1078,6 +1210,11 @@ and evidence; do not discard required goals to bypass completion checks.
                         contract_check.get("violations", [])
                         or ["unknown output fields: " + ", ".join(contract_check.get("unknown", []))]
                     )
+                )
+            if disposition == "accepted" and evidence_check["status"] != "pass":
+                raise ValidationError(
+                    "Contract evidence requirement is not established; observed child receipts are missing: "
+                    + canonical_json(evidence_check["missing"])
                 )
             review = {
                 "disposition": disposition,

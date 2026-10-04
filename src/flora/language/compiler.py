@@ -28,6 +28,69 @@ from flora.support.errors import CompilerError, StaleAnchor, ValidationError
 from flora.support.values import canonical_json, clone, digest
 
 
+_STRUCTURED_FALLBACK_MARKERS = (
+    "argument keys must match",
+    "resume parameters",
+    "undefined variable",
+    "continuation",
+)
+
+
+def _needs_structured_fallback(error: Exception) -> bool:
+    """Recognise an interface failure, not a task or tool failure."""
+    message = str(error).lower()
+    return any(marker in message for marker in _STRUCTURED_FALLBACK_MARKERS)
+
+
+def _large_low_level_failure(error: Exception, response_text: str) -> bool:
+    """Use semantic planning for a large failed bundle, not tiny syntax probes."""
+    message = str(error).lower()
+    if len(response_text.encode("utf-8")) < 1024:
+        return False
+    return (
+        "strict json" in message
+        or "block-list" in message
+        or "bundle" in message
+        or "program" in message
+    )
+
+
+def _structured_prompt(view: dict, error: str) -> list[dict]:
+    """Ask for semantic actions; the host supplies continuation plumbing."""
+    system = r"""You are Flora's semantic action planner. Return exactly one JSON object and no
+markdown. Do not emit Flora IR, blocks, params, resumes, branches, or bundle
+metadata. Describe only the next bounded executable phase using the tools in
+context. Every call is a real effect and its returned value is the only source
+of later data. Use {"var":"name"} to reference a saved result and {"literal":...}
+when an object is intentional data. Do not invent results, files, IDs, hashes or
+completion. Keep the user's requested types and contracts.
+
+A plan is {"steps":[...],"return":EXPR} or {"steps":[...],"replan":{"reason":STRING,"state":OBJECT}}.
+A call is {"call":"TOOL","args":OBJECT_OR_EXPR,"save":"NAME"}; optional on_error is
+{"save":"ERROR_NAME","plan":PLAN} and receives the actual raised error. A call
+without on_error causes a replan with the actual outcome. A pure assignment is
+{"let":"NAME","value":EXPR}. Conditional execution is {"if":EXPR,"then":[...],"else":[...]}.
+For bounded arrays use {"for_each":"ITEM","in":EXPR,"steps":[...]}.
+Use only these keys and at most 32 calls in this phase. Do not repeat an effect
+whose successful receipt is already in context. A replan is appropriate when
+new observations must change the next decomposition or contract. The host will
+compile variables, error dispatch, and continuation parameters mechanically.
+"""
+    user = {
+        "task": view.get("task"),
+        "tools": view.get("tools"),
+        "receipts": view.get("receipts"),
+        "memory": view.get("memory"),
+        "reports": view.get("reports"),
+        "previous_programs": view.get("previous_programs"),
+        "epoch": view.get("epoch"),
+        "trace_digest": view.get("trace_digest"),
+        "compiler_validation_error": error[:4096],
+    }
+    return [{"role": "system", "content": system},
+            {"role": "user", "content": canonical_json(user)}]
+
+
 def _delimiter_error(text):
     """Describe a lexical mismatch; never rewrite or accept malformed model output."""
     stack = []
@@ -621,6 +684,27 @@ def validate_bundle(
     return result
 
 
+def _compile_structured_plan(plan: dict, context: CompilerContext, *, max_bytes: int) -> dict:
+    """Lower a semantic plan into ordinary Flora IR and validate it normally."""
+    from flora.language.structured import lower_plan
+
+    if not isinstance(plan, dict):
+        raise ValidationError("semantic plan must be an object")
+    program = lower_plan(plan)
+    bundle = {
+        "programs": [{"id": "main", "program": program, "inputs": {}}],
+        "incumbent": "main",
+        "diagnostics": [],
+        "expected_epoch": context.epoch,
+        "expected_digest": context.trace_digest,
+    }
+    validated = validate_bundle(bundle, context, max_bytes=max_bytes)
+    from flora.language.toolcheck import validate_effect_arguments
+
+    validate_effect_arguments(validated, context.tools)
+    return validated
+
+
 class ScriptedCompiler:
     """Deterministic offline compiler. Scripts are explicit, not model inference.
 
@@ -1056,6 +1140,7 @@ class LLMCompiler:
         if type(self.transport_retries) is not int or not 0 <= self.transport_retries <= 3:
             raise ValidationError("transport_retries must be between 0 and 3")
         self._recovery_left = self.transport_retries
+        structured_mode = False
         for attempt in range(self.max_repairs + 1):
             response = self._request(messages, attempt)
             syntax_window = None
@@ -1076,6 +1161,19 @@ class LLMCompiler:
                     raise ValidationError(
                         "provider response was truncated or did not finish as text"
                     )
+                if structured_mode:
+                    try:
+                        plan = _strict_json_loads(response.text)
+                    except (json.JSONDecodeError, ValueError, RecursionError) as exc:
+                        raise ValidationError(
+                            f"semantic plan must be strict JSON: {getattr(exc, 'msg', str(exc))}"
+                        ) from None
+                    validated = _compile_structured_plan(
+                        plan, snapshot, max_bytes=self.max_output_bytes
+                    )
+                    self._check_deadline()
+                    self._emit({"kind": "structured_plan_compiled", "attempt": attempt})
+                    return validated
                 try:
                     bundle = _strict_json_loads(response.text)
                 except json.JSONDecodeError as exc:
@@ -1168,6 +1266,28 @@ class LLMCompiler:
                     raise CompilerError(
                         f"compiler output failed validation after {attempt + 1} attempt(s): {str(exc)[:512]}"
                     ) from None
+                if _needs_structured_fallback(exc) or _large_low_level_failure(
+                    exc, response.text
+                ):
+                    # A malformed continuation is an interface failure. Ask
+                    # the model for semantic actions and let the host generate
+                    # every continuation signature. This preserves the same
+                    # anchor, tool schemas, receipts and execution semantics;
+                    # it is not a parser rewrite or a guessed result.
+                    structured_mode = True
+                    try:
+                        bounded_view = json.loads(messages[1]["content"])
+                    except (KeyError, TypeError, json.JSONDecodeError):
+                        bounded_view = snapshot.to_dict()
+                    messages = _structured_prompt(bounded_view, str(exc))
+                    self._emit(
+                        {
+                            "kind": "structured_fallback_requested",
+                            "attempt": attempt,
+                            "reason": str(exc)[:1024],
+                        }
+                    )
+                    continue
                 # Repair receives a bounded fragment and an explicit truncation
                 # notice; a malformed multi-megabyte response cannot grow prompts.
                 fragment_bytes = response.text.encode("utf-8")[: min(self.max_output_bytes, 16384)]
