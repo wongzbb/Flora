@@ -62,6 +62,9 @@ compilation before review and completion.
   `reviews` variable. No child was created and no result was accepted. This is
   a model/program-scope compatibility failure, distinct from the earlier
   transport failures; it does not justify a model-specific parser patch.
+  A minimal post-change `glm-5.3` Flora task (`2+2`, no tools) did complete with
+  value `4` in 11.27 seconds, confirming that the profile/model path itself is
+  usable for a simple program.
 - Earlier baseline evidence remains separate: the pre-change DeepSeek seven
   calculus-worker task and four-level nested task completed, but those runs do
   not validate the new batch API.
