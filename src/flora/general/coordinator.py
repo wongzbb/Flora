@@ -27,6 +27,35 @@ from .schemas import bounded_specs
 from .storage import atomic_json
 
 
+_REVIEW_VALUE_LIMIT = 32 * 1024
+
+
+def _review_value_projection(view, status):
+    """Expose a bounded observed child value without duplicating huge results."""
+    if view is None:
+        return {
+            "result_available": False,
+            "child_status": status,
+            "child_value": None,
+            "child_value_omitted": False,
+        }
+    value = view.get("value")
+    if len(canonical_json(value).encode("utf-8")) > _REVIEW_VALUE_LIMIT:
+        return {
+            "result_available": True,
+            "child_status": view.get("status"),
+            "child_value": None,
+            "child_value_omitted": True,
+            "child_value_digest": digest(value),
+        }
+    return {
+        "result_available": True,
+        "child_status": view.get("status"),
+        "child_value": deepcopy(value),
+        "child_value_omitted": False,
+    }
+
+
 class ChildStall(KeyboardInterrupt):
     pass
 
@@ -160,8 +189,11 @@ view as read_agent (not a record nested inside another result). collect_agent
 performs the bounded pagination mechanically and returns one complete observed
 child result; it does not accept or review it. Use its returned result_digest and
 then review_agent with disposition accepted/blocked/rejected. Its top-level
-disposition and contract_status are stable host observations; the nested review
-record remains available for audit. The authoritative
+disposition and contract_status are stable host observations; a successful
+review also exposes result_available, child_status and the observed child_value
+at this same boundary, so the next phase need not join two envelopes. These
+projections are not factual proof; branch on availability/status first. The
+nested review record remains available for audit. The authoritative
 collect_completed_agent combines a bounded wait with complete collection when a
 parent does not need to branch on an intermediate pending state; a timeout still
 returns an unavailable observation and must not be accepted or reviewed.
@@ -1536,12 +1568,19 @@ and evidence; do not discard required goals to bypass completion checks.
             # Keep the full review record for auditability, and expose the two
             # decisions most parents need at a stable boundary. These are host
             # observations, never claims copied from the child value.
+            projection = _review_value_projection(view, row["status"])
             return {
                 "agent_id": agent_id,
                 "review": deepcopy(review),
                 "disposition": disposition,
                 "contract_status": contract_check["status"],
                 "result_digest": result_digest,
+                # Keep the reviewed value available at the same boundary as
+                # the disposition. This is an observed child projection, not
+                # a truth claim; it avoids forcing the next semantic phase to
+                # reconstruct a cross-action join between review and collect.
+                **projection,
+                "claims_verified": False,
             }
 
     def review_agents(self, reviews: list[dict]) -> dict:

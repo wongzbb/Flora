@@ -107,8 +107,11 @@ def _semantic_json_loads(text: str):
     records discarded bytes for the audit trail.
     """
     try:
-        return _strict_json_loads(text), 0
+        return _strict_json_loads(text), 0, None
     except (json.JSONDecodeError, ValueError, RecursionError) as original:
+        repaired = _single_missing_comma_semantic(text, original)
+        if repaired is not None:
+            return repaired, 0, "insert_missing_comma"
         decoder = json.JSONDecoder()
         start = len(text) - len(text.lstrip())
         try:
@@ -121,7 +124,40 @@ def _semantic_json_loads(text: str):
         stripped = trailing.lstrip()
         if stripped and stripped[0] in "[{":
             raise original
-        return value, len(trailing.encode("utf-8"))
+        return value, len(trailing.encode("utf-8")), None
+
+
+def _single_missing_comma_semantic(text: str, error: Exception):
+    """Repair one lexical comma omission at the response boundary.
+
+    This is deliberately narrower than a JSON fixer: the decoder supplies the
+    insertion point, exactly one comma is inserted, the candidate must be one
+    strict object, and all semantic lowering/contract validation still runs.
+    No keys, values or control flow are inferred.
+    """
+    if not isinstance(error, json.JSONDecodeError):
+        return None
+    position = error.pos
+    if position <= 0 or position >= len(text):
+        return None
+    insertion = position
+    while insertion > 0 and text[insertion - 1].isspace():
+        insertion -= 1
+    next_position = position
+    while next_position < len(text) and text[next_position].isspace():
+        next_position += 1
+    if insertion <= 0 or next_position >= len(text):
+        return None
+    previous = text[insertion - 1]
+    next_char = text[next_position]
+    if previous not in '\"}]0123456789' or next_char not in '\"[{0123456789-':
+        return None
+    candidate = text[:insertion] + "," + text[insertion:]
+    try:
+        value = _strict_json_loads(candidate)
+    except (json.JSONDecodeError, ValueError, RecursionError):
+        return None
+    return value if isinstance(value, dict) else None
 
 
 def _structured_prompt(view: dict, error: str) -> list[dict]:
@@ -1331,7 +1367,7 @@ class LLMCompiler:
                     )
                 if structured_mode:
                     try:
-                        plan, trailing_bytes = _semantic_json_loads(response.text)
+                        plan, trailing_bytes, syntax_repair = _semantic_json_loads(response.text)
                     except (json.JSONDecodeError, ValueError, RecursionError) as exc:
                         raise ValidationError(
                             f"semantic plan must be strict JSON: {getattr(exc, 'msg', str(exc))}"
@@ -1342,6 +1378,14 @@ class LLMCompiler:
                                 "kind": "structured_plan_trailing_ignored",
                                 "attempt": attempt,
                                 "bytes": min(trailing_bytes, self.max_output_bytes),
+                            }
+                        )
+                    if syntax_repair:
+                        self._emit(
+                            {
+                                "kind": "structured_plan_syntax_repaired",
+                                "attempt": attempt,
+                                "repair": syntax_repair,
                             }
                         )
                     validated = _compile_structured_plan(

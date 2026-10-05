@@ -4,7 +4,7 @@ import unittest
 from flora.integrations.providers import ModelResponse
 from flora.integrations.binding import make_registry
 from flora.engine.runtime import Runtime
-from flora.language.compiler import LLMCompiler, _compile_structured_plan
+from flora.language.compiler import LLMCompiler, _compile_structured_plan, _semantic_json_loads
 from flora.state.trace import GENESIS
 from flora.language.structured import lower_plan
 from flora.language.vm import new_machine, resume, run_until_boundary
@@ -22,6 +22,14 @@ class PlannerProvider:
 
 
 class StructuredPlannerTests(unittest.TestCase):
+    def test_semantic_boundary_repairs_one_missing_comma_only(self):
+        plan, trailing, repair = _semantic_json_loads(
+            '{"steps":[] "return":{"literal":"ok"}}'
+        )
+        self.assertEqual(plan, {"steps": [], "return": {"literal": "ok"}})
+        self.assertEqual(trailing, 0)
+        self.assertEqual(repair, "insert_missing_comma")
+
     def test_semantic_bundle_preserves_candidates_and_anchors(self):
         semantic = {
             "programs": [

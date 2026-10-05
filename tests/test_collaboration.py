@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from flora.general.agent import GeneralAgent
+from flora.general.coordinator import _review_value_projection
 from flora.general.delegation import _child_provider
 from flora.integrations.providers import ModelResponse, OpenAICompatibleProvider
 from flora.support.errors import ValidationError
@@ -35,6 +36,16 @@ class WorkerProvider:
 
 
 class CollaborationTests(unittest.TestCase):
+    def test_review_projection_is_bounded_and_marks_omitted_values(self):
+        small = _review_value_projection({"status": "completed", "value": {"answer": 4}}, "failed")
+        self.assertEqual(small["child_value"], {"answer": 4})
+        self.assertFalse(small["child_value_omitted"])
+        large = _review_value_projection({"status": "completed", "value": "x" * 40000}, "failed")
+        self.assertTrue(large["result_available"])
+        self.assertIsNone(large["child_value"])
+        self.assertTrue(large["child_value_omitted"])
+        self.assertEqual(len(large["child_value_digest"]), 64)
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
@@ -268,6 +279,10 @@ class CollaborationTests(unittest.TestCase):
         self.assertEqual(reviewed["disposition"], "accepted")
         self.assertEqual(reviewed["contract_status"], "not_applicable")
         self.assertEqual(reviewed["result_digest"], collected["result_digest"])
+        self.assertTrue(reviewed["result_available"])
+        self.assertEqual(reviewed["child_status"], "completed")
+        self.assertEqual(reviewed["child_value"], collected["child_value"])
+        self.assertFalse(reviewed["claims_verified"])
 
     def test_collect_completed_agent_waits_then_collects_without_acceptance(self):
         ident = self.app.delegation.spawn_agent("wait and collect") ["agent_id"]
@@ -328,6 +343,9 @@ class CollaborationTests(unittest.TestCase):
         self.assertEqual(outcome["reviews"][0]["status"], "error")
         self.assertEqual(outcome["reviews"][1]["status"], "reviewed")
         self.assertEqual(outcome["reviews"][1]["disposition"], "accepted")
+        self.assertEqual(outcome["reviews"][1]["child_status"], "completed")
+        self.assertIn("child_value", outcome["reviews"][1])
+        self.assertFalse(outcome["claims_verified"])
         self.assertIn(rows["agent_ids"][0], self.app.delegation.completion()["unreviewed_workers"])
 
     def test_nested_identity_envelopes_are_unwrapped_only_at_collaboration_boundary(self):
