@@ -87,6 +87,9 @@ class CollaborationTests(unittest.TestCase):
         self.assertIn("complete observed child read view", host_descriptions["collect_completed_agent"])
         self.assertIn("one complete observed child read view per requested ID", host_descriptions["collect_completed_agents"])
         self.assertIn("one host review observation per requested child", host_descriptions["review_agents"])
+        self.assertIn("may omit result_digest", host_descriptions["review_agents"])
+        self.assertIn("replaces", host_descriptions["spawn_agent"])
+        self.assertIn("explicit replacement lineage", host_descriptions["spawn_agents"])
         self.assertIn("per-child errors", host_descriptions["resume_agents"])
 
     def test_delegation_guidance_does_not_contradict_exposed_nested_coordinator(self):
@@ -347,6 +350,24 @@ class CollaborationTests(unittest.TestCase):
         self.assertIn("child_value", outcome["reviews"][1])
         self.assertFalse(outcome["claims_verified"])
         self.assertIn(rows["agent_ids"][0], self.app.delegation.completion()["unreviewed_workers"])
+
+    def test_batch_review_can_bind_current_digest_without_copying_it(self):
+        ident = self.spawn("review without digest copy")
+        collected = self.app.delegation.collect_completed_agent(ident, timeout=5, limit=1)
+        outcome = self.app.delegation.review_agents([{
+            "agent_id": ident,
+            "disposition": "accepted",
+            "note": "The complete current result is available at the host boundary.",
+        }])
+        self.assertTrue(outcome["all_reviewed"])
+        self.assertTrue(outcome["all_accepted"])
+        reviewed = outcome["reviews"][0]
+        self.assertEqual(reviewed["result_digest"], collected["result_digest"])
+        self.assertEqual(reviewed["review"]["result_digest_source"], "host_current_result")
+        self.assertEqual(
+            self.app.delegation.records[ident]["review"]["result_digest_source"],
+            "host_current_result",
+        )
 
     def test_nested_identity_envelopes_are_unwrapped_only_at_collaboration_boundary(self):
         row = self.app.delegation.spawn_agent("nested identity")
@@ -655,6 +676,52 @@ class CollaborationTests(unittest.TestCase):
         completion = self.app.delegation.completion()
         self.assertFalse(completion["ready"])
         self.assertEqual(completion["unaccepted_workers"], [ident])
+
+    def test_explicit_replacement_supersedes_rejected_obligation_without_erasing_audit(self):
+        rejected = self.spawn(context={"contract": {"outputs": {"result": "number"}}})
+        fingerprint = self.collect(rejected)
+        self.app.delegation.review_agent(
+            rejected,
+            fingerprint,
+            "rejected",
+            "The child returned an object without the required numeric result.",
+        )
+        replacement = self.app.delegation.spawn_agent(
+            "Return the finding using the revised interface",
+            context={"contract": {"outputs": {"finding": "string"}}},
+            replaces=rejected,
+        )["agent_id"]
+        retry = self.app.delegation.spawn_agent(
+            "Return the finding using the revised interface",
+            context={"contract": {"outputs": {"finding": "string"}}},
+            replaces=rejected,
+        )["agent_id"]
+        self.assertEqual(retry, replacement)
+        self.assertEqual(self.app.delegation.records[rejected]["superseded_by"], replacement)
+        self.assertEqual(self.app.delegation.records[replacement]["replaces"], rejected)
+        active = {row["id"] for row in self.app.delegation._current()}
+        self.assertNotIn(rejected, active)
+        pending = self.app.delegation.completion()
+        self.assertEqual(pending["unaccepted_workers"], [])
+        self.assertEqual(pending["unreviewed_workers"], [replacement])
+        self.assertEqual(pending["superseded_workers"][0]["agent_id"], rejected)
+
+        self.app.delegation.futures[replacement].result(timeout=5)
+        replacement_fingerprint = self.collect(replacement)
+        self.app.delegation.review_agent(
+            replacement,
+            replacement_fingerprint,
+            "accepted",
+            "The revised output shape was collected and checked independently.",
+        )
+        self.assertTrue(self.app.delegation.completion()["ready"])
+        # The violating result remains directly readable for audit.
+        self.assertEqual(self.app.delegation.records[rejected]["review"]["disposition"], "rejected")
+
+    def test_replacement_requires_an_observed_rejected_or_blocked_review(self):
+        original = self.spawn()
+        with self.assertRaisesRegex(ValidationError, "blocked or rejected review"):
+            self.app.delegation.spawn_agent("Replace too early", replaces=original)
 
     def test_contract_type_labels_accept_bounded_human_readable_aliases(self):
         self.assertEqual(

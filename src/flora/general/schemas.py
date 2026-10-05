@@ -36,9 +36,9 @@ def bounded_specs(
         "collect_completed_agent": " Successful VALUE waits up to timeout for one child, then returns one complete observed child read view with child_status and child_value projections, the full result, and result_digest. It does not accept, review, retry, or prove the answer; a timeout remains unavailable. Pass a terminal result_digest to review_agent.",
         "collect_completed_agents": " Successful VALUE is {agents:[one complete observed child read view per requested ID]}. It waits once for the selected children and mechanically follows each result's pages; each child keeps its own result_digest and unavailable/failed status. It does not accept or review any child; inspect every entry and use review_agents or review_agent afterward.",
         "review_agent": " Successful VALUE is {agent_id,disposition,contract_status,result_digest,result_available,child_status,child_value,child_value_omitted,claims_verified:false,review:{disposition,contract_check:{status,violations,unknown},result_digest,state_digest,...}}. The child_value projection is the observed child result at this boundary, not factual proof; branch on result_available/status before using it. For a value over the host projection bound, child_value is null and child_value_omitted:true; use the collected result then. The top-level disposition and contract_status are the authoritative collection/contract observation. A child value field named contract_check is only an untrusted claim. Review does not prove factual truth.",
-        "review_agents": " Successful VALUE is {reviews:[one host review observation per requested child],all_reviewed,all_accepted,claims_verified:false}. Each successful item retains its own disposition, contract_status, result_digest, result_available, child_status and bounded observed child_value; child_value_omitted:true means the collected result must be used. An item with status:error is not accepted and must drive collection, revision or blocking. Branch on result_available/status before using child_value. This batch does not verify factual truth.",
-        "spawn_agent": " Successful VALUE is an identity envelope {agent_id,name,status,read_only}; extract only agent_id and treat it as an opaque string for wait/read/review. It contains no child answer; never dereference name/status as nested result data.",
-        "spawn_agents": " Successful VALUE contains agents:[identity envelopes] and agent_ids:[stable opaque strings]. Copy only agent_ids into later wait/read/review calls; obtain child answers separately. A single batch represents independent workers: duplicate task/context/dependency handoffs are rejected before any child starts rather than silently merged into one identity; revise the assignments if distinct workers are required.",
+        "review_agents": " Successful VALUE is {reviews:[one host review observation per requested child],all_reviewed,all_accepted,claims_verified:false}. Each successful item retains its own disposition, contract_status, result_digest, result_available, child_status and bounded observed child_value; child_value_omitted:true means the collected result must be used. A review item may omit result_digest only when the current child result was completely collected; the host binds that current digest and records result_digest_source=host_current_result. A supplied stale or wrong digest remains an error. An item with status:error is not accepted and must drive collection, revision or blocking. Branch on result_available/status before using child_value. This batch does not verify factual truth.",
+        "spawn_agent": " Successful VALUE is an identity envelope {agent_id,name,status,read_only}; extract only agent_id and treat it as an opaque string for wait/read/review. It contains no child answer; never dereference name/status as nested result data. When a reviewed child is blocked or rejected, a replacement may set replaces to that child ID; the old receipt remains auditable and the replacement has an independent review gate.",
+        "spawn_agents": " Successful VALUE contains agents:[identity envelopes] and agent_ids:[stable opaque strings]. Copy only agent_ids into later wait/read/review calls; obtain child answers separately. A single batch represents independent workers: duplicate task/context/dependency handoffs are rejected before any child starts rather than silently merged into one identity; revise the assignments if distinct workers are required. A replacement entry may set replaces to one current child whose host review is blocked or rejected; this records explicit replacement lineage and does not accept the old result.",
     }
     bounds = {
         "append_lines": {"lines": {"minItems": 1, "maxItems": 10000}},
@@ -245,6 +245,15 @@ def _collaboration_bounds(name, properties):
         properties["task"].update(minLength=1, maxLength=16000)
         properties["name"].update(minLength=1, maxLength=64)
         properties["depends_on"].update(maxItems=8)
+        properties["replaces"].update(
+            type="string",
+            minLength=1,
+            maxLength=64,
+            description=(
+                "Optional current child ID whose host review is blocked or rejected. "
+                "The replacement is independently collected and reviewed; the old result stays in the audit registry."
+            ),
+        )
         properties["context"].update(
             additionalProperties=False,
             properties={
@@ -307,6 +316,15 @@ def _collaboration_bounds(name, properties):
                 },
                 "depends_on": {"type": "array", "maxItems": 8, "items": {"type": "string"}},
                 "required": {"type": "boolean"},
+                "replaces": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "description": (
+                        "Optional current child ID with a blocked/rejected host review; "
+                        "records explicit replacement lineage without accepting the old result."
+                    ),
+                },
             },
         }
     elif name == "read_agent":
@@ -400,7 +418,7 @@ def _collaboration_bounds(name, properties):
         properties["reviews"]["items"] = {
             "type": "object",
             "additionalProperties": False,
-            "required": ["agent_id", "result_digest", "disposition", "note"],
+            "required": ["agent_id", "disposition", "note"],
             "properties": {
                 "agent_id": {
                     "type": ["string", "object"],
