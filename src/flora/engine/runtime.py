@@ -1058,6 +1058,33 @@ class Runtime:
                                 "completion_waiting", details=completion, correctness_feedback=False
                             )
                             return self._result("waiting", "Required workers are still running")
+                        # A completion retry is a new semantic phase. Preserve
+                        # the actual returned observation in host memory so
+                        # the next compiler call can recover it without
+                        # referring to registers from the discarded program.
+                        # Bound the copy; the authoritative receipt remains in
+                        # the trace when the value is too large to project.
+                        observed = {
+                            "candidate": self.incumbent,
+                            "epoch": self.trace.epoch,
+                            "trace_digest": self.trace.digest,
+                            "value": clone(boundaries[self.incumbent].value),
+                        }
+                        try:
+                            encoded_size(
+                                observed,
+                                limit=min(self.config.max_context_bytes, 65536),
+                                resource="completion observation",
+                            )
+                        except (ResourceLimitExceeded, ValidationError):
+                            observed = {
+                                "candidate": self.incumbent,
+                                "epoch": self.trace.epoch,
+                                "trace_digest": self.trace.digest,
+                                "value_omitted": True,
+                                "value_digest": digest(boundaries[self.incumbent].value),
+                            }
+                        self.memory["__openharness_completion_observation__"] = observed
                         self.candidates[self.incumbent].status = "COMPLETION_REJECTED"
                         self._report(
                             "completion_rejected",

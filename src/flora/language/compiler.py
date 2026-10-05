@@ -177,10 +177,17 @@ do not close it after an intermediate step and do not emit a second JSON object.
 Each compiled phase starts with an empty local scope. Variables saved by an
 earlier phase do not survive a replan or completion-gate retry. Recover a value
 from the actual context.receipts using read_receipt with its visible trace_index,
-or obtain a fresh observation; never reference an old local name such as
+or obtain a fresh observation. After a completion-gate retry, the host also
+preserves the exact prior return under
+context.memory.__openharness_completion_observation__; read its value before
+continuing when it is available. Never reference an old local name such as
 agent_ids unless this phase declares it with let or receives it as an entry input.
 A call is {"call":"TOOL","args":OBJECT_OR_EXPR,"save":"NAME"}; args may be
-omitted for a tool with no parameters and then mean {}. Optional on_error is
+omitted for a tool with no parameters and then mean {}. This rule also applies
+to bookkeeping tools such as complete_task: they are effects, not terminals, so
+save their returned envelope (for example, {"call":"complete_task","args":
+ARGS,"save":"completion"}) and then use the outer return or replan terminal.
+Never emit a bare {"call":...} without save. Optional on_error is
 {"save":"ERROR_NAME","plan":PLAN} and receives the actual raised error. A call
 without on_error causes a replan with the actual outcome. A pure assignment is
 {"let":"NAME","value":EXPR}. Conditional execution is {"if":EXPR,"then":[...],"else":[...]};

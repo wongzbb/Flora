@@ -8,6 +8,7 @@ from flora.language.compiler import LLMCompiler, _compile_structured_plan, _sema
 from flora.state.trace import GENESIS
 from flora.language.structured import lower_plan
 from flora.language.vm import new_machine, resume, run_until_boundary
+from flora.support.errors import ValidationError
 from tests.helpers import context, bundle, pure
 
 
@@ -98,6 +99,61 @@ class StructuredPlannerTests(unittest.TestCase):
         )
         self.assertEqual(boundary.kind, "return")
         self.assertEqual(boundary.value["status"], "returned")
+
+    def test_effect_call_without_save_is_rejected_with_observation_guidance(self):
+        with self.assertRaisesRegex(ValidationError, "effect calls require save"):
+            lower_plan({
+                "steps": [{"call": "complete_task", "args": {}}],
+                "return": {"literal": "done"},
+            })
+
+    def test_semantic_repair_exposes_missing_save_as_actionable_error(self):
+        arguments = {
+            "note": "done",
+            "evidence": [],
+            "expected_revision": 0,
+        }
+        invalid = {
+            "steps": [{"call": "complete_task", "args": arguments}],
+            "return": {"literal": "done"},
+        }
+        corrected = {
+            "steps": [{"call": "complete_task", "args": arguments, "save": "completion"}],
+            "return": {"var": "completion"},
+        }
+        provider = PlannerProvider(invalid, corrected)
+        compiler_context = context(tools=[{
+            "name": "complete_task",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "note": {"type": "string"},
+                    "evidence": {"type": "array"},
+                    "expected_revision": {"type": "integer"},
+                },
+                "required": ["note", "evidence", "expected_revision"],
+                "additionalProperties": False,
+            },
+        }])
+        compiler_context.reports = [
+            {"kind": "completion_rejected", "details": {"pending_steps": ["task"]}}
+        ]
+        compiler = LLMCompiler(
+            provider,
+            syntax="block-list-v3",
+            prompt_style="compact-v3",
+        )
+        result = compiler.compile(compiler_context)
+        self.assertEqual(len(provider.requests), 2)
+        self.assertIn("effect calls require save", provider.requests[1][1]["content"])
+        self.assertEqual(
+            [
+                block["term"].get("value")
+                for block in result["programs"][0]["program"]["blocks"].values()
+                if block["term"]["op"] == "return"
+            ],
+            [{"var": "completion"}],
+        )
 
     def test_semantic_bundle_preserves_candidates_and_anchors(self):
         semantic = {
@@ -247,6 +303,8 @@ class StructuredPlannerTests(unittest.TestCase):
         compiler.compile(compiler_context)
         self.assertIn("semantic action planner", provider.requests[0][0]["content"])
         self.assertIn("Each compiled phase starts with an empty local scope", provider.requests[0][0]["content"])
+        self.assertIn("bookkeeping tools such as complete_task", provider.requests[0][0]["content"])
+        self.assertIn("Never emit a bare {\"call\":...} without save", provider.requests[0][0]["content"])
 
     def test_semantic_first_skips_low_level_control_flow_for_complex_profiles(self):
         plan = {"steps": [], "return": {"literal": "semantic-first"}}

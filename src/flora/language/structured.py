@@ -300,6 +300,11 @@ def _normalize_semantic_plan(source, inputs=(), hoister=None):
                 if "return" in item:
                     item["return"] = _semantic_expression(item["return"], where + ".return")
             else:
+                if "call" in keys and "save" not in keys:
+                    raise ValidationError(
+                        f"{where}: effect calls require save; preserve the returned observation "
+                        "with a save name before the outer return or replan"
+                    )
                 raise ValidationError(f"{where}: unsupported semantic statement keys {sorted(keys)!r}")
             result.append(item)
         return result

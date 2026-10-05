@@ -49,6 +49,39 @@ class TaskCompletionTests(unittest.TestCase):
         rejected = next(r for r in result.reports if r["kind"] == "completion_rejected")
         self.assertEqual(rejected["details"]["work"]["pending_steps"], ["task"])
         self.assertFalse(rejected["correctness_feedback"])
+        observation = runtime.memory["__openharness_completion_observation__"]
+        self.assertEqual(observation["value"], runtime.trace.records[0]["value"])
+        self.assertEqual(observation["candidate"], "main")
+
+    def test_completion_retry_compiler_sees_exact_prior_return_observation(self):
+        class RecordingCompiler:
+            def __init__(self):
+                self.contexts = []
+
+            def compile(self, context):
+                self.contexts.append(context.to_dict())
+                value = "partial" if len(self.contexts) == 1 else "final"
+                return bundle(pure(value))
+
+        guard_calls = []
+
+        def completion_guard():
+            guard_calls.append(True)
+            return len(guard_calls) > 1
+
+        compiler = RecordingCompiler()
+        runtime = Runtime(
+            self.app.agent.tools,
+            compiler=compiler,
+            completion_guard=completion_guard,
+        )
+        result = runtime.run("finish after a bounded retry")
+        self.assertEqual(result.status, "completed")
+        self.assertEqual([item["memory"] for item in compiler.contexts[:1]], [{}])
+        self.assertEqual(
+            compiler.contexts[1]["memory"]["__openharness_completion_observation__"]["value"],
+            "partial",
+        )
 
     def test_required_obligations_cannot_be_removed_downgraded_or_rewritten(self):
         original = self.app.work.read_work()["steps"]
