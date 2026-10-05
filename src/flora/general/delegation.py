@@ -616,6 +616,28 @@ delegate. The parent must inspect your result; never claim it has been verified.
             self._submit(agent_id)
         return {"agent_id": agent_id, "status": "queued"}
 
+    def resume_agents(self, agent_ids: list[str]) -> dict:
+        """Resume selected unfinished children without rebuilding a parent plan.
+
+        Each child keeps its own trace, budget, contract and effect journal. per-child errors
+        are returned as observations so one unavailable child
+        does not hide the resumable state of its siblings; this operation does
+        not collect, review or accept any result.
+        """
+        ids = self._ids(agent_ids)
+        resumed = []
+        for ident in ids:
+            try:
+                resumed.append(self.resume_agent(ident))
+            except ValidationError as exc:
+                resumed.append({
+                    "agent_id": ident,
+                    "status": "error",
+                    "error": type(exc).__name__,
+                    "detail": str(exc),
+                })
+        return {"agents": resumed}
+
     def request_pause(self):
         with self.lock:
             self.stop.set()
@@ -665,6 +687,7 @@ delegate. The parent must inspect your result; never claim it has been verified.
                     self.collect_completed_agent,
                     self.collect_completed_agents,
                     self.resume_agent,
+                    self.resume_agents,
                 ]
             )._tools.values()
         ]

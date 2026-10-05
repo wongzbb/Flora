@@ -213,11 +213,12 @@ class HandoffAuthorityTests(unittest.TestCase):
             self.assertEqual(after[field], before[field])
         self.assertEqual(after["tool_calls"], 1)
 
-    def test_authority_profile_changes_only_handoff_version(self):
+    def test_authority_profile_changes_only_handoff_version_and_semantic_planning(self):
         configs = Path(__file__).resolve().parents[1] / "configs"
         phased = json.loads((configs / "deepseek-live-phased.json").read_text())
         authority = json.loads((configs / "deepseek-live-authority.json").read_text())
         self.assertEqual(authority["general"]["tool_schema_version"], 4)
+        self.assertTrue(authority["compiler"].pop("semantic_first"))
         if "tool_schema_version" in phased["general"]:
             authority["general"]["tool_schema_version"] = phased["general"]["tool_schema_version"]
         else:

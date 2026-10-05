@@ -218,13 +218,16 @@ def _normalize_semantic_plan(source, inputs=(), hoister=None):
                         if isinstance(nested, dict) and set(nested) in ({"return"}, {"replan"}):
                             nested = {"steps": [], **nested}
                         handler["plan"] = _normalize_semantic_plan(nested, hoister=hoister)
-            elif keys == {"if", "then", "else"}:
+            elif keys in ({"if", "then"}, {"if", "then", "else"}):
                 item["if"] = _semantic_expression(item["if"], where + ".if")
                 prefix, item["if"] = hoister.expression(item["if"], where + ".if")
                 if prefix:
                     result.extend(prefix)
                 item["then"] = steps(item["then"], where + ".then")
-                item["else"] = steps(item["else"], where + ".else")
+                # An omitted else branch is the semantic no-op branch. This
+                # keeps the action language total for models that express a
+                # one-sided guard, while the lowered IR remains explicit.
+                item["else"] = steps(item.get("else", []), where + ".else")
             elif keys == {"for_each", "in", "steps"}:
                 item["in"] = _semantic_expression(item["in"], where + ".in")
                 prefix, item["in"] = hoister.expression(item["in"], where + ".in")

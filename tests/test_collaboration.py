@@ -76,6 +76,7 @@ class CollaborationTests(unittest.TestCase):
         self.assertIn("complete observed child read view", host_descriptions["collect_completed_agent"])
         self.assertIn("one complete observed child read view per requested ID", host_descriptions["collect_completed_agents"])
         self.assertIn("one host review observation per requested child", host_descriptions["review_agents"])
+        self.assertIn("per-child errors", host_descriptions["resume_agents"])
 
     def test_delegation_guidance_does_not_contradict_exposed_nested_coordinator(self):
         self.assertIn("Recursive delegation is", self.app.delegation.instructions)
@@ -287,6 +288,17 @@ class CollaborationTests(unittest.TestCase):
         self.assertEqual([row["agent_id"] for row in collected["agents"]], rows["agent_ids"])
         self.assertTrue(all(row["result_available"] for row in collected["agents"]))
         self.assertTrue(all(row["next_offset"] is None for row in collected["agents"]))
+        self.assertTrue(all(self.app.delegation.records[i].get("review") is None for i in rows["agent_ids"]))
+
+    def test_resume_agents_preserves_each_child_boundary(self):
+        rows = self.app.delegation.spawn_agents(
+            [{"task": "resume batch one"}, {"task": "resume batch two"}]
+        )
+        for ident in rows["agent_ids"]:
+            self.app.delegation.futures[ident].result(timeout=5)
+        resumed = self.app.delegation.resume_agents(rows["agent_ids"])
+        self.assertEqual([item["agent_id"] for item in resumed["agents"]], rows["agent_ids"])
+        self.assertTrue(all(item["status"] == "completed" for item in resumed["agents"]))
         self.assertTrue(all(self.app.delegation.records[i].get("review") is None for i in rows["agent_ids"]))
 
     def test_batch_reviews_keep_individual_digests_and_expose_partial_failure(self):

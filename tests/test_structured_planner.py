@@ -4,7 +4,8 @@ import unittest
 from flora.integrations.providers import ModelResponse
 from flora.integrations.binding import make_registry
 from flora.engine.runtime import Runtime
-from flora.language.compiler import LLMCompiler
+from flora.language.compiler import LLMCompiler, _compile_structured_plan
+from flora.state.trace import GENESIS
 from flora.language.structured import lower_plan
 from flora.language.vm import new_machine, resume, run_until_boundary
 from tests.helpers import context, bundle, pure
@@ -21,6 +22,61 @@ class PlannerProvider:
 
 
 class StructuredPlannerTests(unittest.TestCase):
+    def test_semantic_bundle_preserves_candidates_and_anchors(self):
+        semantic = {
+            "programs": [
+                {"id": "main", "inputs": {}, "program": {"steps": [], "return": {"literal": 1}}},
+                {"id": "fallback", "inputs": {}, "program": {"steps": [], "return": {"literal": 2}}},
+            ],
+            "incumbent": "main",
+            "diagnostics": [],
+            "expected_epoch": 0,
+            "expected_digest": GENESIS,
+        }
+        result = _compile_structured_plan(semantic, context(), max_bytes=100000)
+        self.assertEqual([item["id"] for item in result["programs"]], ["main", "fallback"])
+        self.assertEqual(result["expected_epoch"], 0)
+        self.assertEqual(result["expected_digest"], GENESIS)
+
+    def test_semantic_bundle_keeps_diagnostics_and_revision_contracts(self):
+        semantic_program = {"steps": [], "return": {"literal": 1}}
+        semantic = {
+            "programs": [{"id": "old", "inputs": {}, "program": semantic_program}],
+            "incumbent": "old",
+            "diagnostics": [{
+                "id": "check_value",
+                "inputs": {},
+                "program": {
+                    "steps": [{"call": "read_value", "args": {}, "save": "value"}],
+                    "return": {"var": "value"},
+                },
+                "forecasts": [{
+                    "candidate_id": "old",
+                    "predicate": {"op": "eq", "path": [], "value": 1},
+                }],
+                "witnesses": [1],
+            }],
+            "revisions": [{
+                "id": "old_preserved",
+                "target_candidate": "old",
+                "parameters": [],
+                "program": semantic_program,
+                "migration": {"steps": [], "return": {"var": "context"}},
+                "mode": "PRESERVE",
+            }],
+            "expected_epoch": 0,
+            "expected_digest": GENESIS,
+        }
+        compiler_context = context(tools=[{
+            "name": "read_value",
+            "parameters": {"type": "object", "properties": {}, "additionalProperties": False},
+        }])
+        compiler_context.previous_programs = [{"id": "old"}]
+        result = _compile_structured_plan(semantic, compiler_context, max_bytes=100000)
+        self.assertEqual(result["diagnostics"][0]["id"], "check_value")
+        self.assertEqual(result["revisions"][0]["target_candidate"], "old")
+        self.assertEqual(result["revisions"][0]["migration"]["blocks"][result["revisions"][0]["migration"]["entry"]]["params"], ["context"])
+
     def test_host_builds_continuations_from_semantic_actions(self):
         plan = {
             "steps": [
@@ -56,6 +112,16 @@ class StructuredPlannerTests(unittest.TestCase):
         program = lower_plan(plan)
         boundary = run_until_boundary(new_machine(program))
         self.assertEqual(boundary.value, 4)
+
+    def test_one_sided_semantic_guard_defaults_to_empty_else(self):
+        program = lower_plan({
+            "steps": [{
+                "if": {"literal": True},
+                "then": [{"let": "answer", "value": {"literal": 4}}],
+            }],
+            "return": {"literal": "guarded"},
+        })
+        self.assertEqual(run_until_boundary(new_machine(program)).value, "guarded")
 
     def test_continuation_failure_uses_semantic_fallback(self):
         bad = bundle(pure(1))

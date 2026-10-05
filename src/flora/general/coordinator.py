@@ -184,7 +184,9 @@ If result_available is false or result is null, the answer is not observed yet;
 use the status and wait again or record the child limitation. Never index into a
 null result and never treat an empty result_digest as review evidence.
 Blocked/rejected work needs an explicit limitation note; do not conceal it in the
-answer. resume_agent continues the SAME unfinished task and budget. Unknown effect
+answer. resume_agent continues the SAME unfinished task and budget; use
+resume_agents for a bounded set of independent unfinished children. The batch
+resume returns per-child errors and never collects or accepts a result. Unknown effect
 outcomes require external evidence and are never automatically replayed. Completed
 workers do not consume the next user task's child quota. A changed task is a new
 child, never a disguised resume. read_work/update_work retain complex task goals
@@ -1739,6 +1741,7 @@ and evidence; do not discard required goals to bypass completion checks.
             self.collect_completed_agent,
             self.collect_completed_agents,
             self.resume_agent,
+            self.resume_agents,
             self.review_agent,
             self.review_agents,
         ]

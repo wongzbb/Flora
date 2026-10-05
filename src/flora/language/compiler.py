@@ -142,17 +142,63 @@ A call is {"call":"TOOL","args":OBJECT_OR_EXPR,"save":"NAME"}; args may be
 omitted for a tool with no parameters and then mean {}. Optional on_error is
 {"save":"ERROR_NAME","plan":PLAN} and receives the actual raised error. A call
 without on_error causes a replan with the actual outcome. A pure assignment is
-{"let":"NAME","value":EXPR}. Conditional execution is {"if":EXPR,"then":[...],"else":[...]}.
+{"let":"NAME","value":EXPR}. Conditional execution is {"if":EXPR,"then":[...],"else":[...]};
+omit else when the false branch is intentionally empty.
 For bounded arrays use {"for_each":"ITEM","in":EXPR,"steps":[...]}.
 EXPR is a JSON value containing vars/literals, or a pure operation
 {"op":"get|eq|length|add|...","args":[EXPR,...]}. A field projection may be
 written as {"get":{"from":EXPR,"path":["field",0]}}. To return a mapped array,
-use {"for_each":["ITEM","VALUE"],"in":EXPR,"yield":EXPR}; the host collects
-one yield value per observed item. Use these semantic forms instead of IR blocks.
+use {"for_each":["INDEX","VALUE"],"in":EXPR,"yield":EXPR}; INDEX and VALUE
+are identifier strings (not variable-reference objects). A map is an expression
+in any computed field, including tool arguments. The host collects one yield
+value per observed item. Use these semantic forms instead of IR blocks.
 Use only these keys and at most 32 calls in this phase. Do not repeat an effect
 whose successful receipt is already in context. A replan is appropriate when
 new observations must change the next decomposition or contract. The host will
 compile variables, error dispatch, and continuation parameters mechanically.
+
+DUAL CONTROL AND SYNTHESIZED CONSUMER CONTRACTS
+An action can advance the task and resolve uncertainty. Use its ACTUAL observation
+to choose subsequent actions, change the decomposition or propose a contract
+revision. Do not insert a diagnostic when current information suffices. Checks
+must compare user requirements with actual source data and outputs; a parsed
+object or an existing citation is not proof of task correctness.
+
+For a single phase, the PLAN object above is sufficient. To express competing
+candidates, diagnostics or revisions, return the COMPLETE semantic bundle:
+{"programs":[{"id":"main","inputs":{},"program":PLAN}],"incumbent":"main",
+ "diagnostics":[],"expected_epoch":EPOCH,"expected_digest":DIGEST}.
+Echo the current context anchors exactly. Every program uses PLAN, never IR.
+Candidate inputs declare entry bindings and their actual values; no hidden globals.
+Respect context.limits.max_programs/max_diagnostics. IDs start with a letter and
+contain only letters/digits/underscore/dot/hyphen/slash, at most 64 characters.
+
+DIAGNOSTIC={"id":ID,"inputs":{},"program":PLAN,
+ "forecasts":[{"candidate_id":NORMAL_ID,"predicate":PRED}],"witnesses":[JSON,...]}.
+It must reach a granted tool effect and consume its actual value. Forecasts refer
+to that event's raw returned VALUE. Witnesses are hypothetical raw values, never
+observations, truth evidence or result envelopes. PRED={"op":"eq|ne|has|type|len_ge|
+len_le|lt|le|gt|ge","path":[...],"value":JSON}; has omits value; composites are
+{"op":"all|any","args":[PRED,...]} or {"op":"not","arg":PRED}.
+Missing paths are UNKNOWN except has. Mechanically exclusive forecasts and
+different observed consumer boundaries determine discrimination; arbitrary
+different answers, identical requests, empty witnesses and constant consumers
+do not establish useful information. The host retains eligibility and quota checks.
+
+Optional revisions (at most 3, one per existing target) are:
+{"id":ID,"target_candidate":EXISTING_ID,"parameters":[ENTRY_NAME,...],
+ "program":PLAN,"migration":PLAN,"mode":"PRESERVE|EXTEND|CHANGE"}.
+The migration is PURE with the sole entry parameter context; it returns the
+new entry-binding object from context.inputs, context.receipts and context.memory.
+Each historical checkpoint has its own registers/receipt prefix; current data
+may be absent there. Use revision_state and actual observations. PRESERVE asserts
+recorded local compatibility; EXTEND preserves defined old cases and adds behavior;
+CHANGE claims no preservation benefit. PASS/FAIL/UNKNOWN historical AND current
+checks remain mandatory. To activate, include the target as a normal candidate
+with the SAME PLAN and the SAME entry names as parameters. Only an accepted
+migration supplies activation state; placeholder normal inputs cannot bypass it.
+Never repeat successful effects to recover state. These are empirical local
+contracts, not a perfect oracle or proof of future task success.
 """
     user = clone(view)
     user["compiler_validation_error"] = (error or "")[:4096]
@@ -753,21 +799,32 @@ def validate_bundle(
     return result
 
 
-def _compile_structured_plan(plan: dict, context: CompilerContext, *, max_bytes: int) -> dict:
-    """Lower a semantic plan into ordinary Flora IR and validate it normally."""
-    from flora.language.structured import lower_plan
+def _compile_structured_plan(
+    plan: dict, context: CompilerContext, *, max_bytes: int,
+    max_programs: int = 3, max_diagnostics: int = 2,
+) -> dict:
+    """Lower semantic programs with the full candidate/contract surface intact."""
+    from flora.language.structured import lower_bundle, lower_plan
 
     if not isinstance(plan, dict):
         raise ValidationError("semantic plan must be an object")
-    program = lower_plan(plan)
-    bundle = {
-        "programs": [{"id": "main", "program": program, "inputs": {}}],
-        "incumbent": "main",
-        "diagnostics": [],
-        "expected_epoch": context.epoch,
-        "expected_digest": context.trace_digest,
-    }
-    validated = validate_bundle(bundle, context, max_bytes=max_bytes)
+    if "programs" in plan:
+        # Bundles retain the proposed anchor; a stale bundle must not inherit
+        # the current anchor just because it uses the semantic representation.
+        bundle = lower_bundle(plan)
+    else:
+        program = lower_plan(plan)
+        bundle = {
+            "programs": [{"id": "main", "program": program, "inputs": {}}],
+            "incumbent": "main",
+            "diagnostics": [],
+            "expected_epoch": context.epoch,
+            "expected_digest": context.trace_digest,
+        }
+    validated = validate_bundle(
+        bundle, context, max_bytes=max_bytes,
+        max_programs=max_programs, max_diagnostics=max_diagnostics,
+    )
     from flora.language.toolcheck import validate_effect_arguments
 
     validate_effect_arguments(validated, context.tools)
@@ -1224,13 +1281,13 @@ class LLMCompiler:
         semantic_repair_left = 0
         attempt = 0
         completion_reason = _completion_semantic_reason(snapshot)
-        if (completion_reason or self.semantic_first) and self.max_repairs > 0:
+        if self.semantic_first or (completion_reason and self.max_repairs > 0):
             # A completion rejection is an observation that changes the next
             # action phase. Start directly with semantic actions so the model
             # does not rebuild fragile low-level continuation IR merely to
             # call the host completion bookkeeping tool.
             structured_mode = True
-            semantic_repair_left = 2
+            semantic_repair_left = 2 if self.max_repairs else 0
             try:
                 bounded_view = json.loads(messages[1]["content"])
             except (KeyError, TypeError, json.JSONDecodeError):
@@ -1249,10 +1306,10 @@ class LLMCompiler:
                     "trigger": trigger,
                 }
             )
-        # Semantic recovery has its own finite budget.  Do not let the phase
-        # marker itself keep issuing requests after that budget is exhausted;
-        # the branch below raises the bounded-recovery error instead.
-        while attempt <= self.max_repairs or semantic_repair_left > 0:
+        # Each failure branch either spends a finite repair allowance or raises.
+        # An outer attempt condition would skip the already-authorized final
+        # semantic repair as soon as its remaining allowance reached zero.
+        while True:
             response = self._request(messages, attempt)
             syntax_window = None
             try:
@@ -1288,7 +1345,8 @@ class LLMCompiler:
                             }
                         )
                     validated = _compile_structured_plan(
-                        plan, snapshot, max_bytes=self.max_output_bytes
+                        plan, snapshot, max_bytes=self.max_output_bytes,
+                        max_programs=self.max_programs, max_diagnostics=self.max_diagnostics,
                     )
                     self._check_deadline()
                     self._emit({"kind": "structured_plan_compiled", "attempt": attempt})
