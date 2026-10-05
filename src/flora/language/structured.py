@@ -80,6 +80,35 @@ def _semantic_expression(value, path="expression"):
             raise ValidationError(f"{path}: unknown semantic operation {op!r}")
         if not isinstance(args, list):
             raise ValidationError(f"{path}.args must be a list")
+        if op == "get_default" and len(args) == 2:
+            # A common semantic spelling is defaulting an already projected
+            # field: get_default({get:{from:OBJ,path:[KEY]}}, DEFAULT).
+            # Normalize that sugar to the IR's explicit object/key/default
+            # form. No value is inferred; missing fields still use the VM's
+            # ordinary default behavior and all other arities remain strict.
+            projection = args[0]
+            if isinstance(projection, dict) and set(projection) == {"get"}:
+                projection = projection["get"]
+                if (
+                    isinstance(projection, dict)
+                    and set(projection) == {"from", "path"}
+                    and isinstance(projection["path"], list)
+                    and len(projection["path"]) == 1
+                    and isinstance(projection["path"][0], (str, int))
+                    and not isinstance(projection["path"][0], bool)
+                ):
+                    return {
+                        "op": "get_default",
+                        "args": [
+                            _semantic_expression(projection["from"], f"{path}.args[0].get.from"),
+                            projection["path"][0],
+                            _semantic_expression(args[1], f"{path}.args[1]"),
+                        ],
+                    }
+            raise ValidationError(
+                f"{path}.get_default shorthand requires a one-key get projection; "
+                "use object,key,default for the canonical form"
+            )
         return {"op": op, "args": [_semantic_expression(item, f"{path}.args[{i}]")
                                       for i, item in enumerate(args)]}
     # A computed record is a useful result in its own right (for example
@@ -200,6 +229,37 @@ def _normalize_semantic_plan(source, inputs=(), hoister=None):
                 item["value"] = _semantic_expression(item["value"], where + ".value")
                 prefix, item["value"] = hoister.expression(item["value"], where + ".value")
                 result.extend(prefix)
+            elif (
+                keys in ({"call", "save"}, {"call", "args", "save"})
+                and item.get("call") in {"read_receipt", "read_memory"}
+            ):
+                # These are pure observations, not effect tools. Accept the
+                # readable call-shaped spelling at the semantic boundary and
+                # lower it to a let/op so it cannot enter the side-effect
+                # journal or be replayed. All other calls remain effects.
+                if item.get("call") == "read_receipt":
+                    raw_args = item.get("args")
+                    if isinstance(raw_args, dict) and set(raw_args) == {"index"}:
+                        raw_args = [raw_args["index"]]
+                    elif not isinstance(raw_args, list):
+                        raw_args = [raw_args]
+                else:
+                    raw_args = item.get("args", [])
+                    if isinstance(raw_args, dict):
+                        if set(raw_args) <= {"key", "default"}:
+                            raw_args = [raw_args[key] for key in ("key", "default") if key in raw_args]
+                        else:
+                            raise ValidationError(
+                                f"{where}.{item['call']} pure call args require key/default"
+                            )
+                    elif not isinstance(raw_args, list):
+                        raw_args = [raw_args]
+                value = {"op": item["call"], "args": raw_args}
+                value = _semantic_expression(value, where + ".args")
+                prefix, value = hoister.expression(value, where + ".args")
+                result.extend(prefix)
+                result.append({"let": item["save"], "value": value})
+                continue
             elif keys in (
                 {"call", "save"}, {"call", "save", "on_error"},
                 {"call", "args", "save"}, {"call", "args", "save", "on_error"},

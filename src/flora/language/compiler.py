@@ -174,6 +174,11 @@ types and contracts.
 A plan is {"steps":[...],"return":EXPR} or {"steps":[...],"replan":{"reason":STRING,"state":OBJECT}}.
 The outer object must contain the complete steps array and exactly one terminal;
 do not close it after an intermediate step and do not emit a second JSON object.
+Each compiled phase starts with an empty local scope. Variables saved by an
+earlier phase do not survive a replan or completion-gate retry. Recover a value
+from the actual context.receipts using read_receipt with its visible trace_index,
+or obtain a fresh observation; never reference an old local name such as
+agent_ids unless this phase declares it with let or receives it as an entry input.
 A call is {"call":"TOOL","args":OBJECT_OR_EXPR,"save":"NAME"}; args may be
 omitted for a tool with no parameters and then mean {}. Optional on_error is
 {"save":"ERROR_NAME","plan":PLAN} and receives the actual raised error. A call
@@ -188,6 +193,12 @@ use {"for_each":["INDEX","VALUE"],"in":EXPR,"yield":EXPR}; INDEX and VALUE
 are identifier strings (not variable-reference objects). A map is an expression
 in any computed field, including tool arguments. The host collects one yield
 value per observed item. Use these semantic forms instead of IR blocks.
+For a missing-field default, use {"op":"get_default","args":[OBJECT,KEY,DEFAULT]};
+the shorthand {"op":"get_default","args":[{"get":{"from":OBJECT,"path":[KEY]}},DEFAULT]}
+is also accepted and lowered to that same canonical operation.
+read_receipt and read_memory are pure EXPR operations, never effect calls; they
+read only the actual trace/memory already in context and do not create a tool
+receipt.
 Use only these keys and at most 32 calls in this phase. Do not repeat an effect
 whose successful receipt is already in context. A replan is appropriate when
 new observations must change the next decomposition or contract. The host will
@@ -1346,7 +1357,41 @@ class LLMCompiler:
         # An outer attempt condition would skip the already-authorized final
         # semantic repair as soon as its remaining allowance reached zero.
         while True:
-            response = self._request(messages, attempt)
+            try:
+                response = self._request(messages, attempt)
+            except TransportError as exc:
+                # A streamed semantic response can stop making progress after
+                # emitting a partial plan. The transport correctly discards
+                # that plan; the compiler must then ask for a fresh *complete*
+                # phase instead of terminating before semantic recovery can
+                # use the observation. This is limited to stream-progress
+                # failures: ordinary network/provider errors keep their normal
+                # failure semantics and are never disguised as plan repairs.
+                if structured_mode and semantic_repair_left > 0 and exc.category in {
+                    "model_no_progress", "stream_malformed"
+                }:
+                    semantic_repair_left -= 1
+                    try:
+                        bounded_view = json.loads(messages[1]["content"])
+                    except (KeyError, TypeError, json.JSONDecodeError):
+                        bounded_view = snapshot.to_dict()
+                    messages = _structured_prompt(
+                        bounded_view,
+                        "The previous semantic response stopped before a complete JSON plan; "
+                        "return a fresh compact plan with exactly one terminal now. "
+                        + str(exc),
+                    )
+                    self._emit(
+                        {
+                            "kind": "structured_plan_transport_repair_requested",
+                            "attempt": attempt,
+                            "reason": str(exc)[:1024],
+                            "retries_remaining": semantic_repair_left,
+                        }
+                    )
+                    attempt += 1
+                    continue
+                raise
             syntax_window = None
             try:
                 if len(response.text.encode("utf-8")) > self.max_output_bytes:

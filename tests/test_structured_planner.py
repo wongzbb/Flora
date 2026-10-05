@@ -1,7 +1,7 @@
 import json
 import unittest
 
-from flora.integrations.providers import ModelResponse
+from flora.integrations.providers import ModelResponse, TransportError
 from flora.integrations.binding import make_registry
 from flora.engine.runtime import Runtime
 from flora.language.compiler import LLMCompiler, _compile_structured_plan, _semantic_json_loads
@@ -22,6 +22,44 @@ class PlannerProvider:
 
 
 class StructuredPlannerTests(unittest.TestCase):
+    def test_semantic_stream_stall_gets_a_fresh_complete_phase(self):
+        plan = {"steps": [], "return": {"literal": "recovered"}}
+
+        class Provider:
+            def __init__(self):
+                self.calls = 0
+
+            def complete(self, messages, *, max_tokens):
+                self.calls += 1
+                if self.calls == 1:
+                    raise TransportError(
+                        "partial semantic response discarded",
+                        category="model_no_progress",
+                        diagnostics={"reason": "output_idle_timeout"},
+                    )
+                return ModelResponse(json.dumps(plan), 1, 1)
+
+        provider = Provider()
+        compiler = LLMCompiler(
+            provider,
+            syntax="block-list-v3",
+            prompt_style="compact-v3",
+            semantic_first=True,
+        )
+        compiler.transport_retries = 0
+        compiler_events = []
+        compiler.on_event = compiler_events.append
+        result = compiler.compile(context())
+        entry = result["programs"][0]["program"]["entry"]
+        self.assertEqual(
+            result["programs"][0]["program"]["blocks"][entry]["term"]["value"],
+            {"literal": "recovered"},
+        )
+        self.assertEqual(provider.calls, 2)
+        self.assertTrue(
+            any(event["kind"] == "structured_plan_transport_repair_requested" for event in compiler_events)
+        )
+
     def test_semantic_boundary_repairs_one_missing_comma_only(self):
         plan, trailing, repair = _semantic_json_loads(
             '{"steps":[] "return":{"literal":"ok"}}'
@@ -29,6 +67,37 @@ class StructuredPlannerTests(unittest.TestCase):
         self.assertEqual(plan, {"steps": [], "return": {"literal": "ok"}})
         self.assertEqual(trailing, 0)
         self.assertEqual(repair, "insert_missing_comma")
+
+    def test_get_default_projection_shorthand_uses_canonical_arity(self):
+        program = lower_plan({
+            "steps": [],
+            "return": {
+                "op": "get_default",
+                "args": [
+                    {"get": {"from": {"literal": {}}, "path": ["accepted"]}},
+                    {"literal": False},
+                ],
+            },
+        })
+        boundary = run_until_boundary(
+            new_machine(program), receipts=[{"status": "returned", "value": 4}]
+        )
+        self.assertEqual(boundary.value, False)
+
+    def test_pure_receipt_read_call_sugar_never_becomes_an_effect(self):
+        program = lower_plan({
+            "steps": [{
+                "call": "read_receipt",
+                "args": {"index": {"literal": 0}},
+                "save": "receipt",
+            }],
+            "return": {"var": "receipt"},
+        })
+        boundary = run_until_boundary(
+            new_machine(program), receipts=[{"status": "returned", "value": 4}]
+        )
+        self.assertEqual(boundary.kind, "return")
+        self.assertEqual(boundary.value["status"], "returned")
 
     def test_semantic_bundle_preserves_candidates_and_anchors(self):
         semantic = {
@@ -177,6 +246,7 @@ class StructuredPlannerTests(unittest.TestCase):
         compiler = LLMCompiler(provider, syntax="block-list-v2", prompt_style="compact-v2")
         compiler.compile(compiler_context)
         self.assertIn("semantic action planner", provider.requests[0][0]["content"])
+        self.assertIn("Each compiled phase starts with an empty local scope", provider.requests[0][0]["content"])
 
     def test_semantic_first_skips_low_level_control_flow_for_complex_profiles(self):
         plan = {"steps": [], "return": {"literal": "semantic-first"}}
