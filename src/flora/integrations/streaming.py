@@ -74,7 +74,12 @@ class _Progress:
 
     def deadline(self):
         deadlines = [float("inf")]
-        if self.idle is not None:
+        # Before the first program byte, the dedicated first-program window is
+        # the meaningful bound.  Applying a shorter idle window here can abort
+        # a model that is still producing reasoning, even though the profile
+        # explicitly granted it a longer initial compilation window.  Once a
+        # program has started, idle progress becomes the appropriate guard.
+        if self.idle is not None and (self.has_program or self.first is None):
             deadlines.append(self.last_output + self.idle)
         if self.first is not None and not self.has_program and not self.finished:
             deadlines.append(self.started + self.first)
@@ -84,7 +89,11 @@ class _Progress:
         if self.first is not None and not self.has_program and not self.finished:
             if now - self.started >= self.first:
                 raise StreamFailure("model_no_progress", "first_program_timeout")
-        if self.idle is not None and now - self.last_output >= self.idle:
+        if (
+            self.idle is not None
+            and (self.has_program or self.first is None)
+            and now - self.last_output >= self.idle
+        ):
             raise StreamFailure("model_no_progress", "output_idle_timeout")
 
     def text(self, text, channel):

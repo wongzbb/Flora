@@ -12,11 +12,12 @@ review control. A 330-second run used 10 parent/child model calls and 17 tool
 calls. That control flow was exposed to model-generated shape mistakes even
 though the required evidence and review gates were host responsibilities.
 
-The same test endpoint also showed intermittent transport failures. Four
-unprivileged DeepSeek attempts (using both supplied keys) and one GLM attempt
-stopped before a program was created with `failure.code=model_transport`. They
-created no child and had `effects_replayed=false`; these are provider
-availability observations, not semantic task failures.
+Some early attempts were made from the restricted local sandbox, where the
+network call failed with an operating-system `Operation not permitted` error.
+Those attempts created no child and had `effects_replayed=false`; they are
+environment outcomes, not evidence that the provider was unavailable. The
+endpoint and model catalog were later tested through the authorized network
+path.
 
 ## Change
 
@@ -74,8 +75,7 @@ compilation before review and completion.
 The batch API reduces protocol overhead only when the model selects it; old
 single-child calls remain supported, so latency is not bounded for arbitrary
 model plans. The live task still needed one compiler recovery, and model output
-correctness was not independently proven by a mathematical oracle. The test
-endpoint was unavailable for several unprivileged attempts and GLM remained
-unavailable in this run. No claim is made that ordinary, deep nested, multi-tool
+correctness was not independently proven by a mathematical oracle. The endpoint cannot be reached from the restricted sandbox; those attempts are
+not provider availability evidence. No claim is made that ordinary, deep nested, multi-tool
 or all model-family tasks are now broadly reliable. More real tasks are needed,
 especially nested tool delegation and side-effect uncertainty cases.

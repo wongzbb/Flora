@@ -6,7 +6,7 @@ from flora.integrations.binding import make_registry
 from flora.engine.runtime import Runtime
 from flora.language.compiler import LLMCompiler
 from flora.language.structured import lower_plan
-from flora.language.vm import new_machine, run_until_boundary
+from flora.language.vm import new_machine, resume, run_until_boundary
 from tests.helpers import context, bundle, pure
 
 
@@ -236,6 +236,70 @@ class StructuredPlannerTests(unittest.TestCase):
         }
         boundary = run_until_boundary(new_machine(lower_plan(plan)))
         self.assertEqual(boundary.value, {"questions": [2, 4]})
+
+    def test_map_expression_is_compositional_inside_effect_arguments(self):
+        plan = {
+            "steps": [
+                {
+                    "call": "review_agents",
+                    "args": {
+                        "reviews": {
+                            "for_each": ["index", "row"],
+                            "in": {"literal": [{"agent_id": "a", "result_digest": "d"}]},
+                            "yield": {
+                                "agent_id": {
+                                    "get": {"from": {"var": "row"}, "path": ["agent_id"]}
+                                },
+                                "result_digest": {
+                                    "get": {"from": {"var": "row"}, "path": ["result_digest"]}
+                                },
+                            },
+                        }
+                    },
+                    "save": "reviewed",
+                }
+            ],
+            "return": {"var": "reviewed"},
+        }
+        first = run_until_boundary(new_machine(lower_plan(plan)))
+        self.assertEqual(first.kind, "effect")
+        self.assertEqual(
+            first.request,
+            {
+                "tool": "review_agents",
+                "args": {"reviews": [{"agent_id": "a", "result_digest": "d"}]},
+            },
+        )
+
+    def test_nested_terminal_handler_is_an_explicit_empty_phase(self):
+        plan = {
+            "steps": [
+                {
+                    "call": "read_value",
+                    "args": {},
+                    "save": "value",
+                    "on_error": {
+                        "save": "failure",
+                        "plan": {
+                            "replan": {
+                                "reason": "Use the observed failure",
+                                "state": {"error": {"var": "failure"}},
+                            }
+                        },
+                    },
+                }
+            ],
+            "return": {"var": "value"},
+        }
+        first = run_until_boundary(new_machine(lower_plan(plan)))
+        failed = run_until_boundary(
+            resume(
+                first.machine,
+                {"status": "raised", "error": {"type": "read_error", "message": "offline"}},
+            )
+        )
+        self.assertEqual(failed.kind, "replan")
+        self.assertEqual(failed.value["state"]["error"]["message"], "offline")
 
 
 if __name__ == "__main__":

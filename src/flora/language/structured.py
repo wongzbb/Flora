@@ -28,6 +28,8 @@ _SEMANTIC_OPS = {
     "type",
 }
 
+_MAP_KEYS = {"for_each", "in", "yield"}
+
 
 def _semantic_expression(value, path="expression"):
     """Normalize the small semantic expression language before lowering.
@@ -58,7 +60,7 @@ def _semantic_expression(value, path="expression"):
                 raise ValidationError(f"{path}.get.path[{index}] must be a string or integer")
             result = expr("get", result, key)
         return result
-    if keys == {"for_each", "in", "yield"}:
+    if keys == _MAP_KEYS:
         binding = value["for_each"]
         if not isinstance(binding, list) or len(binding) != 2:
             raise ValidationError(f"{path}.for_each must be [KEY, VALUE]")
@@ -89,7 +91,9 @@ def _semantic_expression(value, path="expression"):
 
 def _semantic_record(value, path="record"):
     """Normalize a record of argument/state fields without evaluating it."""
-    if isinstance(value, dict) and set(value) in ({"var"}, {"literal"}, {"get"}, {"op", "args"}):
+    if isinstance(value, dict) and set(value) in (
+        {"var"}, {"literal"}, {"get"}, {"op", "args"}, _MAP_KEYS
+    ):
         return _semantic_expression(value, path)
     if not isinstance(value, dict):
         return _semantic_expression(value, path)
@@ -98,20 +102,91 @@ def _semantic_record(value, path="record"):
         child_path = f"{path}.{key}"
         # Nested records are common in contracts and tool arguments.  Recurse
         # as records unless the value is an explicit semantic wrapper.
-        if isinstance(item, dict) and set(item) not in ({"var"}, {"literal"}, {"get"}, {"op", "args"}):
+        if isinstance(item, dict) and set(item) not in (
+            {"var"}, {"literal"}, {"get"}, {"op", "args"}, _MAP_KEYS
+        ):
             result[key] = _semantic_record(item, child_path)
         else:
             result[key] = _semantic_expression(item, child_path)
     return result
 
 
-def _normalize_semantic_plan(source):
+class _MapHoister:
+    """Make map expressions compositional in ordinary expression positions.
+
+    The VM intentionally has no hidden map primitive: maps lower to bounded
+    loops.  A map nested in tool arguments, a condition, or a replan state must
+    therefore be made an explicit preceding ``let`` in the same lexical scope.
+    This is a language-level normalization, rather than a provider-specific
+    repair, and keeps the observed value and contract data unchanged.
+    """
+
+    def __init__(self, source, inputs=()):
+        self.reserved = set(inputs)
+        self.serial = 0
+
+        def collect(value):
+            if isinstance(value, str):
+                self.reserved.add(value)
+            elif isinstance(value, dict):
+                for key, item in value.items():
+                    self.reserved.add(key)
+                    collect(item)
+            elif isinstance(value, list):
+                for item in value:
+                    collect(item)
+
+        collect(source)
+
+    def fresh(self):
+        while True:
+            name = f"__flora_map_expr_{self.serial}"
+            self.serial += 1
+            if name not in self.reserved:
+                self.reserved.add(name)
+                return name
+
+    def expression(self, value, path="expression"):
+        """Return (prefix lets, expression) for one arbitrary expression."""
+        if isinstance(value, list):
+            prefix, result = [], []
+            for index, item in enumerate(value):
+                child_prefix, child = self.expression(item, f"{path}[{index}]")
+                prefix.extend(child_prefix)
+                result.append(child)
+            return prefix, result
+        if not isinstance(value, dict) or set(value) in ({"var"}, {"literal"}):
+            return [], clone(value)
+        if set(value) == _MAP_KEYS:
+            in_prefix, source = self.expression(value["in"], f"{path}.in")
+            yield_prefix, yielded = self.expression(value["yield"], f"{path}.yield")
+            name = self.fresh()
+            # Yield computations stay inside the outer iteration so nested
+            # maps can use its bindings without leaking them into outer scope.
+            prefix = in_prefix + [
+                {"let": name, "value": {"literal": []}},
+                {"for_each": list(value["for_each"]), "in": source,
+                 "steps": yield_prefix + [
+                     {"let": name, "value": expr("append", ref(name), yielded)}
+                 ]},
+            ]
+            return prefix, ref(name)
+        prefix, result = [], {}
+        for key, item in value.items():
+            child_prefix, child = self.expression(item, f"{path}.{key}")
+            prefix.extend(child_prefix)
+            result[key] = child
+        return prefix, result
+
+
+def _normalize_semantic_plan(source, inputs=(), hoister=None):
     """Copy and normalize every expression position in a semantic plan."""
     source = clone(source)
     if not isinstance(source, dict):
         raise ValidationError("structured program must be an object")
     if not isinstance(source.get("steps"), list):
         raise ValidationError("structured steps require a list")
+    hoister = hoister or _MapHoister(source, inputs)
 
     def steps(items, path):
         result = []
@@ -123,24 +198,38 @@ def _normalize_semantic_plan(source):
             where = f"{path}[{index}]"
             if keys == {"let", "value"}:
                 item["value"] = _semantic_expression(item["value"], where + ".value")
+                prefix, item["value"] = hoister.expression(item["value"], where + ".value")
+                result.extend(prefix)
             elif keys in (
                 {"call", "save"}, {"call", "save", "on_error"},
                 {"call", "args", "save"}, {"call", "args", "save", "on_error"},
             ):
                 item.setdefault("args", {})
                 item["args"] = _semantic_record(item["args"], where + ".args")
+                prefix, item["args"] = hoister.expression(item["args"], where + ".args")
+                if prefix:
+                    result.extend(prefix)
                 if "on_error" in item:
                     handler = item["on_error"]
                     if not isinstance(handler, dict) or set(handler) not in ({"save"}, {"save", "plan"}):
                         raise ValidationError(where + ".on_error requires save, optionally plan")
                     if "plan" in handler:
-                        handler["plan"] = _normalize_semantic_plan(handler["plan"])
+                        nested = handler["plan"]
+                        if isinstance(nested, dict) and set(nested) in ({"return"}, {"replan"}):
+                            nested = {"steps": [], **nested}
+                        handler["plan"] = _normalize_semantic_plan(nested, hoister=hoister)
             elif keys == {"if", "then", "else"}:
                 item["if"] = _semantic_expression(item["if"], where + ".if")
+                prefix, item["if"] = hoister.expression(item["if"], where + ".if")
+                if prefix:
+                    result.extend(prefix)
                 item["then"] = steps(item["then"], where + ".then")
                 item["else"] = steps(item["else"], where + ".else")
             elif keys == {"for_each", "in", "steps"}:
                 item["in"] = _semantic_expression(item["in"], where + ".in")
+                prefix, item["in"] = hoister.expression(item["in"], where + ".in")
+                if prefix:
+                    result.extend(prefix)
                 item["steps"] = steps(item["steps"], where + ".steps")
             elif keys in ({"return"}, {"replan"}):
                 # A nested terminal is checked by the normal planner; keep it
@@ -154,61 +243,17 @@ def _normalize_semantic_plan(source):
 
     source["steps"] = steps(source["steps"], "steps")
     if set(source) == {"steps", "return"}:
-        returned = source["return"]
-        if isinstance(returned, dict) and set(returned) == {"for_each", "in", "yield"}:
-            binding = returned["for_each"]
-            if not isinstance(binding, list) or len(binding) != 2:
-                raise ValidationError("return.for_each must be [KEY, VALUE]")
-            key_name, value_name = binding
-            for name in (key_name, value_name):
-                if not isinstance(name, str) or NAME.fullmatch(name) is None:
-                    raise ValidationError("return.for_each names must be valid identifiers")
-            if key_name == value_name:
-                raise ValidationError("return.for_each key and value names must differ")
-            source_expr = _semantic_expression(returned["in"], "return.in")
-            yield_expr = _semantic_expression(returned["yield"], "return.yield")
-            used = set()
-
-            def collect(value):
-                if isinstance(value, dict):
-                    if set(value) == {"var"} and isinstance(value["var"], str):
-                        used.add(value["var"])
-                    for item in value.values():
-                        collect(item)
-                elif isinstance(value, list):
-                    for item in value:
-                        collect(item)
-
-            collect(source)
-            serial = 0
-            while (accumulator := f"__flora_map_{serial}") in used:
-                serial += 1
-            source["steps"] += [
-                {"let": accumulator, "value": {"literal": []}},
-                {
-                    # The two-name form exposes the array index and value to a
-                    # mapped return.  It is lowered mechanically like a normal
-                    # loop, so no map/eval primitive is hidden in the host.
-                    "for_each": [key_name, value_name],
-                    "in": source_expr,
-                    "steps": [
-                        {
-                            "let": accumulator,
-                            "value": {"op": "append", "args": [
-                                {"var": accumulator}, yield_expr
-                            ]},
-                        }
-                    ],
-                },
-            ]
-            source["return"] = {"var": accumulator}
-        else:
-            source["return"] = _semantic_expression(returned, "return")
+        source["return"] = _semantic_expression(source["return"], "return")
+        prefix, source["return"] = hoister.expression(source["return"], "return")
+        source["steps"].extend(prefix)
     elif set(source) == {"steps", "replan"}:
         repl = source["replan"]
         if isinstance(repl, dict) and set(repl) == {"reason", "state"}:
             repl["reason"] = _semantic_expression(repl["reason"], "replan.reason")
             repl["state"] = _semantic_record(repl["state"], "replan.state")
+            reason_prefix, repl["reason"] = hoister.expression(repl["reason"], "replan.reason")
+            state_prefix, repl["state"] = hoister.expression(repl["state"], "replan.state")
+            source["steps"].extend(reason_prefix + state_prefix)
     return source
 
 
@@ -501,7 +546,7 @@ class _Lowerer:
 
 def lower_plan(source, inputs=()):
     """Build lexical continuations without evaluating expressions or tool calls."""
-    source = _normalize_semantic_plan(source)
+    source = _normalize_semantic_plan(source, inputs)
     if any(not isinstance(name, str) or not NAME.fullmatch(name) for name in inputs):
         raise ValidationError("structured inputs must have identifier keys")
     compiler = _Lowerer(source, inputs)

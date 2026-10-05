@@ -152,6 +152,22 @@ class StreamingTests(unittest.TestCase):
                     )
                     self.assertEqual(clock.now, 3)
 
+    def test_first_program_window_takes_precedence_over_short_idle_guard(self):
+        clock = Clock()
+        with patch("flora.integrations.streaming.time.monotonic", clock.monotonic):
+            # A provider may send transport keepalives while compiling.  They
+            # do not count as meaningful output, so the old idle guard would
+            # fire at t=2 and mask the explicitly larger first-program window.
+            response = self.timed(iter([b": keepalive\n\n"] * 6), clock, 1)
+            self.failure(
+                response,
+                "model_no_progress",
+                "first_program_timeout",
+                first_program_timeout=5,
+                progress_timeout=2,
+            )
+            self.assertEqual(clock.now, 5)
+
     def test_idle_guard_after_program(self):
         clock = Clock()
         with patch("flora.integrations.streaming.time.monotonic", clock.monotonic):
