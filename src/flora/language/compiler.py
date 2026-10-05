@@ -110,9 +110,11 @@ def _semantic_json_loads(text: str):
     try:
         return _strict_json_loads(text), 0, None
     except (json.JSONDecodeError, ValueError, RecursionError) as original:
-        repaired = _single_missing_comma_semantic(text, original)
+        repaired = _bounded_missing_commas_semantic(text, max_insertions=2)
         if repaired is not None:
-            return repaired, 0, "insert_missing_comma"
+            value, insertions = repaired
+            repair = "insert_missing_comma" if insertions == 1 else f"insert_missing_commas:{insertions}"
+            return value, 0, repair
         decoder = json.JSONDecoder()
         start = len(text) - len(text.lstrip())
         try:
@@ -161,7 +163,56 @@ def _single_missing_comma_semantic(text: str, error: Exception):
     return value if isinstance(value, dict) else None
 
 
-def _structured_prompt(view: dict, error: str) -> list[dict]:
+def _bounded_missing_commas_semantic(text: str, *, max_insertions: int):
+    """Repair a bounded number of unambiguous comma omissions.
+
+    This is a transport boundary repair, not a JSON fixer. Each candidate is
+    inserted only where the strict decoder currently reports a missing comma;
+    the count is bounded and exactly one strict object must result. Semantic
+    lowering and contract validation still run unchanged afterward.
+    """
+    if type(max_insertions) is not int or max_insertions < 1:
+        return None
+    frontier = {(text, 0)}
+    matches = []
+    for _ in range(max_insertions + 1):
+        next_frontier = set()
+        for candidate, count in frontier:
+            try:
+                value = _strict_json_loads(candidate)
+            except (json.JSONDecodeError, ValueError, RecursionError) as error:
+                if count >= max_insertions or not isinstance(error, json.JSONDecodeError):
+                    continue
+                position = error.pos
+                insertion = position
+                while insertion > 0 and candidate[insertion - 1].isspace():
+                    insertion -= 1
+                next_position = position
+                while next_position < len(candidate) and candidate[next_position].isspace():
+                    next_position += 1
+                if insertion <= 0 or next_position >= len(candidate):
+                    continue
+                if candidate[insertion - 1] not in '\"}]0123456789' or candidate[
+                    next_position
+                ] not in '\"[{0123456789-':
+                    continue
+                next_frontier.add(
+                    (candidate[:insertion] + "," + candidate[insertion:], count + 1)
+                )
+                continue
+            if isinstance(value, dict) and count:
+                matches.append((value, count))
+        frontier = next_frontier
+        if not frontier:
+            break
+    encoded = {(canonical_json(value), count) for value, count in matches}
+    if len(encoded) != 1:
+        return None
+    serialized, count = next(iter(encoded))
+    return _strict_json_loads(serialized), count
+
+
+def _structured_prompt(view: dict, error: str, *, repair: bool = False) -> list[dict]:
     """Ask for semantic actions; the host supplies continuation plumbing."""
     system = r"""You are Flora's semantic action planner. Return exactly one JSON object and no
 markdown. Do not emit Flora IR, blocks, params, resumes, or low-level branch
@@ -255,6 +306,15 @@ migration supplies activation state; placeholder normal inputs cannot bypass it.
 Never repeat successful effects to recover state. These are empirical local
 contracts, not a perfect oracle or proof of future task success.
 """
+    if repair:
+        system += (
+            "\n\nCORRECTION MODE: the previous semantic phase was rejected. Return the "
+            "smallest complete phase that can make progress: at most one effect "
+            "call (or one replan terminal) and one outer terminal. Use only actual "
+            "observations already supplied or the next required host action. Do not "
+            "repeat a successful effect, emit a large batch, or restate the whole "
+            "task. The host will continue the same task after this bounded phase."
+        )
     user = clone(view)
     user["compiler_validation_error"] = (error or "")[:4096]
     return [{"role": "system", "content": system},
@@ -1415,6 +1475,7 @@ class LLMCompiler:
                         "The previous semantic response stopped before a complete JSON plan; "
                         "return a fresh compact plan with exactly one terminal now. "
                         + str(exc),
+                        repair=True,
                     )
                     self._emit(
                         {
@@ -1584,7 +1645,7 @@ class LLMCompiler:
                             bounded_view = json.loads(messages[1]["content"])
                         except (KeyError, TypeError, json.JSONDecodeError):
                             bounded_view = snapshot.to_dict()
-                        messages = _structured_prompt(bounded_view, str(exc))
+                        messages = _structured_prompt(bounded_view, str(exc), repair=True)
                         self._emit(
                             {
                                 "kind": "structured_plan_repair_requested",
@@ -1616,7 +1677,7 @@ class LLMCompiler:
                         bounded_view = json.loads(messages[1]["content"])
                     except (KeyError, TypeError, json.JSONDecodeError):
                         bounded_view = snapshot.to_dict()
-                    messages = _structured_prompt(bounded_view, str(exc))
+                    messages = _structured_prompt(bounded_view, str(exc), repair=True)
                     self._emit(
                         {
                             "kind": "structured_fallback_requested",

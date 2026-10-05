@@ -69,6 +69,15 @@ class StructuredPlannerTests(unittest.TestCase):
         self.assertEqual(trailing, 0)
         self.assertEqual(repair, "insert_missing_comma")
 
+    def test_semantic_boundary_repairs_two_unique_missing_commas_without_guessing(self):
+        plan, trailing, repair = _semantic_json_loads(
+            '{"steps":[{"let":"x" "value":{"literal":1}}] "return":{"var":"x"}}'
+        )
+        self.assertEqual(plan["steps"][0]["value"], {"literal": 1})
+        self.assertEqual(plan["return"], {"var": "x"})
+        self.assertEqual(trailing, 0)
+        self.assertEqual(repair, "insert_missing_commas:2")
+
     def test_get_default_projection_shorthand_uses_canonical_arity(self):
         program = lower_plan({
             "steps": [],
@@ -146,6 +155,7 @@ class StructuredPlannerTests(unittest.TestCase):
         result = compiler.compile(compiler_context)
         self.assertEqual(len(provider.requests), 2)
         self.assertIn("effect calls require save", provider.requests[1][1]["content"])
+        self.assertIn("CORRECTION MODE", provider.requests[1][0]["content"])
         self.assertEqual(
             [
                 block["term"].get("value")
