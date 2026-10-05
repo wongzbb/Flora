@@ -104,6 +104,32 @@ class StructuredPlannerTests(unittest.TestCase):
         compiler.compile(compiler_context)
         self.assertIn("semantic action planner", provider.requests[0][0]["content"])
 
+    def test_semantic_first_skips_low_level_control_flow_for_complex_profiles(self):
+        plan = {"steps": [], "return": {"literal": "semantic-first"}}
+
+        class Provider:
+            def __init__(self):
+                self.requests = []
+
+            def complete(self, messages, *, max_tokens):
+                self.requests.append(messages)
+                return ModelResponse(json.dumps(plan), 1, 1)
+
+        provider = Provider()
+        compiler = LLMCompiler(
+            provider,
+            syntax="block-list-v3",
+            prompt_style="compact-v3",
+            semantic_first=True,
+        )
+        result = compiler.compile(context(tools=[{"name": "spawn_agents"}]))
+        entry = result["programs"][0]["program"]["entry"]
+        self.assertEqual(
+            result["programs"][0]["program"]["blocks"][entry]["term"]["value"],
+            {"literal": "semantic-first"},
+        )
+        self.assertIn("semantic action planner", provider.requests[0][0]["content"])
+
     def test_large_malformed_bundle_uses_semantic_fallback(self):
         provider = PlannerProvider("{" + (" " * 1200), {"steps": [], "return": {"literal": "ok"}})
         compiler = LLMCompiler(provider, syntax="block-list-v2", prompt_style="compact-v2")

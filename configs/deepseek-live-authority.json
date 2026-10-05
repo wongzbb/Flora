@@ -25,7 +25,8 @@
     "max_repairs": 1,
     "compilation_timeout": 300,
     "syntax": "block-list-v3",
-    "prompt_style": "compact-v3"
+    "prompt_style": "compact-v3",
+    "semantic_first": true
   },
   "budget": {
     "max_model_calls": 12,

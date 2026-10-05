@@ -155,7 +155,7 @@ new observations must change the next decomposition or contract. The host will
 compile variables, error dispatch, and continuation parameters mechanically.
 """
     user = clone(view)
-    user["compiler_validation_error"] = error[:4096]
+    user["compiler_validation_error"] = (error or "")[:4096]
     return [{"role": "system", "content": system},
             {"role": "user", "content": canonical_json(user)}]
 
@@ -822,6 +822,7 @@ class LLMCompiler:
         max_visible_receipts: int = 64,
         syntax: str = "ir-v1",
         prompt_style: str = "full-v1",
+        semantic_first: bool = False,
         compilation_timeout: float | None = None,
         before_call: Callable[[dict], None] | None = None,
         on_usage: Callable[[dict], None] | None = None,
@@ -841,6 +842,8 @@ class LLMCompiler:
                 raise ValidationError(f"{name} must be a positive integer")
         if type(max_visible_receipts) is not int or max_visible_receipts < 0:
             raise ValidationError("max_visible_receipts must be a nonnegative integer")
+        if type(semantic_first) is not bool:
+            raise ValidationError("semantic_first must be a boolean")
         if not callable(getattr(provider, "complete", None)):
             raise ValidationError("provider must implement complete")
         if any(
@@ -876,6 +879,7 @@ class LLMCompiler:
         ) and not prompt_style.startswith("compact-"):
             raise ValidationError("block-list syntax requires a compact prompt_style")
         self.prompt_style = prompt_style
+        self.semantic_first = semantic_first
         self.syntax, self.compilation_timeout = syntax, compilation_timeout
         self._deadline = None
         self.provider = provider
@@ -1220,7 +1224,7 @@ class LLMCompiler:
         semantic_repair_left = 0
         attempt = 0
         completion_reason = _completion_semantic_reason(snapshot)
-        if completion_reason and self.max_repairs > 0:
+        if (completion_reason or self.semantic_first) and self.max_repairs > 0:
             # A completion rejection is an observation that changes the next
             # action phase. Start directly with semantic actions so the model
             # does not rebuild fragile low-level continuation IR merely to
@@ -1232,13 +1236,17 @@ class LLMCompiler:
             except (KeyError, TypeError, json.JSONDecodeError):
                 bounded_view = snapshot.to_dict()
             messages = _structured_prompt(bounded_view, completion_reason)
+            trigger = "completion_rejected" if completion_reason else "semantic_first"
+            reason = completion_reason or (
+                "Use the bounded semantic action language first; keep continuation plumbing in the host"
+            )
             self._emit(
                 {
                     "kind": "structured_fallback_requested",
                     "attempt": attempt,
-                    "reason": completion_reason[:1024],
+                    "reason": reason[:1024],
                     "semantic_retries": semantic_repair_left,
-                    "trigger": "completion_rejected",
+                    "trigger": trigger,
                 }
             )
         # Semantic recovery has its own finite budget.  Do not let the phase
