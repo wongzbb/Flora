@@ -145,6 +145,34 @@ class ConsumerRecoveryTests(unittest.TestCase):
         self.assertEqual(seen[0]["compiler_recovery"]["settled_receipts"][0]["trace_index"], 0)
         self.assertTrue(any(r.get("kind") == "local_execution" for r in result.reports))
 
+    def test_context_omission_retains_phase_handoff_and_user_data(self):
+        c = self.fixture()
+        c.memory = {
+            "data": {"requested": "value"},
+            "__openharness_continuation__": {
+                "reason": "continue from the observed failure",
+                "state": {"pending": "review"},
+            },
+            "unrelated": "x" * 50000,
+        }
+        compiler = LLMCompiler(
+            SequenceProvider(), syntax="block-list-v2", prompt_style="compact-v1",
+            max_context_bytes=12000,
+        )
+        _, user = compiler.build_messages(c)
+        view = json.loads(user["content"])
+        self.assertTrue(view["visibility"]["memory_omitted"])
+        self.assertEqual(
+            set(view["visibility"]["memory_retained_keys"]),
+            {"data", "__openharness_continuation__"},
+        )
+        self.assertEqual(view["memory"]["data"], {"requested": "value"})
+        self.assertEqual(
+            view["memory"]["__openharness_continuation__"]["state"]["pending"],
+            "review",
+        )
+        self.assertNotIn("unrelated", view["memory"])
+
 
 class RecoveryHarnessTests(unittest.TestCase):
     def test_entire_opt_in_harness_offline_preflight(self):

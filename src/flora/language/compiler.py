@@ -25,6 +25,7 @@ from flora.integrations.providers import (
 )
 from flora.language.ir import parse_program
 from flora.support.errors import CompilerError, StaleAnchor, ValidationError
+from flora.support.resources import ResourceLimitExceeded, encoded_size
 from flora.support.values import canonical_json, clone, digest
 
 
@@ -1126,9 +1127,36 @@ class LLMCompiler:
                 view["previous_programs"].pop(0)
                 visibility["previous_programs_omitted"] += 1
             elif not visibility["memory_omitted"] and view["memory"]:
-                visibility["memory_digest"] = digest(view["memory"])
+                full_memory = view["memory"]
+                visibility["memory_digest"] = digest(full_memory)
+                # A phase handoff is not disposable context. Retain the
+                # bounded host control observations and user data while
+                # omitting unrelated memory, so a later compilation can still
+                # choose its next action from the actual continuation. Large
+                # retained values are represented by a digest marker rather
+                # than silently truncated data.
+                retained = {}
+                retained_limit = max(1, min(self.max_context_bytes // 4, 65536))
+                retained_keys = [
+                    key for key in full_memory
+                    if isinstance(key, str)
+                    and (key == "data" or key.startswith("__openharness_"))
+                ]
+                for key in sorted(retained_keys):
+                    value = full_memory[key]
+                    try:
+                        encoded_size(value, limit=retained_limit, resource=f"memory.{key}")
+                    except (ResourceLimitExceeded, ValidationError):
+                        value = {
+                            "omitted": True,
+                            "sha256": digest(full_memory[key]),
+                            "recover_with": "read_memory",
+                        }
+                    retained[key] = value
+                if retained:
+                    visibility["memory_retained_keys"] = list(retained)
                 visibility["memory_omitted"] = True
-                view["memory"] = None
+                view["memory"] = retained or None
             else:
                 raise CompilerError(
                     "task, tools and required compiler metadata exceed max_context_bytes"
