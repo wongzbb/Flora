@@ -341,6 +341,17 @@ and evidence; do not discard required goals to bypass completion checks.
         deps = [] if not depends_on else self._ids(depends_on)
         if len(deps) > 8:
             raise ValidationError("At most eight dependency IDs are supported")
+        signature_payload = {
+            "task": task,
+            "context": context,
+            "dependencies": deps,
+        }
+        # Keep the legacy identity for ordinary handoffs.  ``replaces`` is
+        # lineage, not part of an unchanged task's semantic identity; adding a
+        # null field here would make a recovered pre-lineage handoff look new
+        # and could admit a duplicate after restart.
+        if replaces is not None:
+            signature_payload["replaces"] = replaces
         return {
             "task": task,
             "name": name,
@@ -348,14 +359,7 @@ and evidence; do not discard required goals to bypass completion checks.
             "dependencies": deps,
             "required": required,
             "replaces": replaces,
-            "signature": digest(
-                {
-                    "task": task,
-                    "context": context,
-                    "dependencies": deps,
-                    "replaces": replaces,
-                }
-            ),
+            "signature": digest(signature_payload),
         }
 
     def _admit_handoff(self, prepared):
@@ -402,6 +406,44 @@ and evidence; do not discard required goals to bypass completion checks.
                 }:
                     raise ValidationError(
                         "A replacement requires an observed blocked or rejected review of the target"
+                    )
+                # A replacement is a semantic reassignment after an observed
+                # failure.  Revalidate that observation while holding the
+                # admission lock; otherwise a stale review or a changed result
+                # could authorize a new child against an unobserved state.
+                target_view = self._result_view(target)
+                target_state = self._result_state(row, target_view)
+                target_digest = digest(target_view) if target_view is not None else ""
+                if (
+                    review.get("state_digest") != target_state
+                    or review.get("result_digest") != target_digest
+                ):
+                    raise ValidationError(
+                        "Replacement requires a review of the target's current result"
+                    )
+                if row.get("status") == "interrupted_unknown":
+                    raise ValidationError(
+                        "Resolve an unknown side effect before replacing the target"
+                    )
+                old_required = row.get("required", True)
+                if old_required and not item.get("required", True):
+                    raise ValidationError(
+                        "A replacement cannot weaken a required child into an optional child"
+                    )
+                old_context = row.get("context") or {}
+                old_contract = old_context.get("contract")
+                new_contract = (item.get("context") or {}).get("contract")
+                if old_contract is not None and new_contract is None:
+                    raise ValidationError(
+                        "A replacement must declare a contract when the target had one"
+                    )
+                old_delegation = (old_contract or {}).get("delegation", {})
+                new_delegation = (new_contract or {}).get("delegation", {})
+                if old_delegation.get("min_children", 0) > 0 and not new_delegation.get(
+                    "min_children", 0
+                ):
+                    raise ValidationError(
+                        "A replacement cannot silently remove the target's nested delegation obligation"
                     )
                 replacement_targets[target] = item
             new = []
@@ -476,10 +518,28 @@ and evidence; do not discard required goals to bypass completion checks.
                             "read_windows": [],
                             "replaces": item.get("replaces"),
                         }
+                        target = item.get("replaces")
+                        if target is not None:
+                            prior = self.records[target]
+                            prior_review = deepcopy(prior.get("review") or {})
+                            # Preserve the actual failure observation as input
+                            # to the replacement planner.  This is bounded and
+                            # explicitly unverified; it prevents a retry from
+                            # silently forgetting why the prior contract was
+                            # rejected while leaving the historical row intact.
+                            row["replacement_observation"] = {
+                                "target_id": target,
+                                "status": prior.get("status"),
+                                "disposition": prior_review.get("disposition"),
+                                "note": prior_review.get("note", ""),
+                                "contract_check": prior_review.get("contract_check", {}),
+                                "result_digest": prior_review.get("result_digest", ""),
+                                "state_digest": prior_review.get("state_digest", ""),
+                                "claims_verified": False,
+                            }
                         if self.owner.profile["general"].get("tool_schema_version", 1) >= 4:
                             row["handoff_version"] = 1
                         self.records[ident] = row
-                        target = item.get("replaces")
                         if target is not None:
                             self.records[target]["superseded_by"] = ident
                             self.records[target]["superseded_at"] = datetime.now(UTC).isoformat()
@@ -1298,6 +1358,14 @@ and evidence; do not discard required goals to bypass completion checks.
                     )
             if "handoff_version" in row:
                 instructions += self.authority_instructions
+                if row.get("replacement_observation"):
+                    instructions += (
+                        "\nThis is a replacement handoff. The host supplied a bounded "
+                        "replacement_observation in memory.data. Treat it as the reason "
+                        "the prior child was blocked/rejected: inspect it, preserve any "
+                        "still-required guarantees, and revise only the affected interface "
+                        "or evidence. Do not erase the prior failure or claim it was accepted."
+                    )
                 if compiler.get("prompt_style") == "compact-v3":
                     instructions = instructions.replace(
                         "Replan only when new semantic reasoning is needed, not after every tool call.",
@@ -1352,6 +1420,8 @@ and evidence; do not discard required goals to bypass completion checks.
                 ),
                 "claims_verified": False,
             }
+            if row.get("replacement_observation"):
+                data["replacement_observation"] = deepcopy(row["replacement_observation"])
             if agent.status()["requires_resume"]:
                 result = agent.resume(slice_steps=32, repeated_error_limit=3).to_dict()
             elif agent.status()["completed_turns"]:
@@ -1576,6 +1646,10 @@ and evidence; do not discard required goals to bypass completion checks.
             row = self.records[agent_id]
             if row.get("task_key") != self.owner.task["key"]:
                 raise ValidationError("Cannot review a previous task's child as current work")
+            if row.get("superseded_by"):
+                raise ValidationError(
+                    "A superseded child is historical; review its current replacement instead"
+                )
             view = self._result_view(agent_id)
             if row["status"] in {"queued", "running"}:
                 raise ValidationError("Child is still running")
@@ -1781,6 +1855,10 @@ and evidence; do not discard required goals to bypass completion checks.
             if row.get("task_key") != self.owner.task["key"]:
                 raise ValidationError(
                     "Resume belongs to the original parent task; do not move workers across tasks"
+                )
+            if row.get("superseded_by"):
+                raise ValidationError(
+                    "A superseded child is historical; resume its current replacement instead"
                 )
             if row["status"] == "interrupted_unknown":
                 raise ValidationError(

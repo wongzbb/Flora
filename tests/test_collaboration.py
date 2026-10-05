@@ -723,6 +723,45 @@ class CollaborationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "blocked or rejected review"):
             self.app.delegation.spawn_agent("Replace too early", replaces=original)
 
+    def test_replacement_preserves_requiredness_and_contract_obligation(self):
+        original = self.spawn(context={"contract": {"outputs": {"result": "number"}}})
+        fingerprint = self.collect(original)
+        self.app.delegation.review_agent(
+            original, fingerprint, "rejected", "The required numeric output was absent"
+        )
+        with self.assertRaisesRegex(ValidationError, "cannot weaken"):
+            self.app.delegation.spawn_agent(
+                "Optional retry", required=False, replaces=original
+            )
+        with self.assertRaisesRegex(ValidationError, "must declare a contract"):
+            self.app.delegation.spawn_agent("Uncontracted retry", replaces=original)
+
+    def test_superseded_children_are_historical_and_cannot_be_resumed_or_re_reviewed(self):
+        original = self.spawn(context={"contract": {"outputs": {"result": "number"}}})
+        fingerprint = self.collect(original)
+        self.app.delegation.review_agent(
+            original, fingerprint, "rejected", "The required numeric output was absent"
+        )
+        replacement = self.app.delegation.spawn_agent(
+            "Return a numeric result", context={"contract": {"outputs": {"result": "number"}}}, replaces=original
+        )["agent_id"]
+        with self.assertRaisesRegex(ValidationError, "historical"):
+            self.app.delegation.resume_agent(original)
+        with self.assertRaisesRegex(ValidationError, "historical"):
+            self.app.delegation.review_agent(
+                original, fingerprint, "rejected", "re-review should be impossible"
+            )
+        self.assertNotEqual(original, replacement)
+
+    def test_ordinary_handoff_signature_does_not_depend_on_null_replacement_lineage(self):
+        plain = self.app.delegation._prepare_handoff(
+            "Same semantic task", "Researcher", None, None, True
+        )
+        explicit_none = self.app.delegation._prepare_handoff(
+            "Same semantic task", "Researcher", None, None, True, None
+        )
+        self.assertEqual(plain["signature"], explicit_none["signature"])
+
     def test_contract_type_labels_accept_bounded_human_readable_aliases(self):
         self.assertEqual(
             self.app.delegation._contract_observation(
