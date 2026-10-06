@@ -236,6 +236,21 @@ class CollaborationTests(unittest.TestCase):
         descriptions = {item["name"] for item in self.app.agent.tools.descriptions()}
         self.assertIn("spawn_agents", descriptions)
 
+    def test_completion_exposes_host_derived_worker_observations(self):
+        ident = self.spawn("Observed child")
+        fingerprint = self.collect(ident)
+        self.app.delegation.review_agent(
+            ident, fingerprint, "accepted", "Collected and reviewed the child result"
+        )
+        observed = self.app.delegation.completion()["observed_workers"]
+        self.assertEqual(len(observed), 1)
+        self.assertEqual(observed[0]["agent_id"], ident)
+        self.assertEqual(observed[0]["status"], "completed")
+        self.assertTrue(observed[0]["result_available"])
+        self.assertEqual(observed[0]["review_disposition"], "accepted")
+        self.assertEqual(len(observed[0]["result_digest"]), 64)
+        self.assertFalse(observed[0]["claims_verified"])
+
     def test_batch_spawn_rejects_duplicate_handoffs_before_side_effects(self):
         with self.assertRaisesRegex(ValidationError, "duplicate task/context/dependency"):
             self.app.delegation.spawn_agents(
@@ -907,6 +922,24 @@ class CollaborationTests(unittest.TestCase):
                 coord.review_agent(ident, fingerprint, "accepted", "Reviewed")
         finally:
             coord.close()
+
+    def test_close_persists_queued_children_as_paused(self):
+        from flora.general.coordinator import Coordinator
+
+        coord = Coordinator(
+            self.app,
+            {"enabled": True, "max_children": 2, "max_depth": 1},
+            provider=self.provider,
+            root=self.root / "queued-close",
+        )
+        with patch.object(coord, "_submit"):
+            ident = coord.spawn_agent("A child waiting for dispatch")["agent_id"]
+        self.assertEqual(coord.records[ident]["status"], "queued")
+        coord.close()
+        self.assertEqual(coord.records[ident]["status"], "paused")
+        self.assertEqual(coord.records[ident]["failure"]["code"], "paused")
+        self.assertTrue(coord.completion()["waiting"] is False)
+        self.assertIn(ident, coord.completion()["unreviewed_workers"])
 
     def test_zero_minimum_nested_contract_is_vacuously_reviewable_at_depth_limit(self):
         from flora.general.coordinator import Coordinator

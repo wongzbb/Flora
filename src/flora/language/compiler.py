@@ -8,9 +8,12 @@ callbacks. A stale execution anchor is rejected instead of silently rewritten.
 
 from __future__ import annotations
 
+import ast
+import io
 import json
 import math
 import time
+import tokenize
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Protocol
@@ -115,6 +118,9 @@ def _semantic_json_loads(text: str):
             value, insertions = repaired
             repair = "insert_missing_comma" if insertions == 1 else f"insert_missing_commas:{insertions}"
             return value, 0, repair
+        literal = _python_literal_boundary(text)
+        if literal is not None:
+            return literal, 0, "python_literal_boundary"
         decoder = json.JSONDecoder()
         start = len(text) - len(text.lstrip())
         try:
@@ -212,6 +218,97 @@ def _bounded_missing_commas_semantic(text: str, *, max_insertions: int):
     return _strict_json_loads(serialized), count
 
 
+def _python_literal_boundary(text: str):
+    """Accept one JSON-equivalent Python literal emitted by a relay/model.
+
+    This is intentionally a boundary-only compatibility path. ``literal_eval``
+    executes no code; the resulting value must contain only JSON value types,
+    string object keys, finite numbers and no duplicate dictionary keys. No
+    names, calls, tuples, sets, comments or trailing prose are accepted.
+    """
+    if not isinstance(text, str) or not text.strip() or len(text.encode("utf-8")) > 1_048_576:
+        return None
+    # ``ast.parse`` intentionally ignores comments and folds adjacent string
+    # literals.  Those are Python conveniences rather than JSON-equivalent
+    # representations, so reject them before evaluating the tree.  Names are
+    # limited to the three JSON-compatible constants.
+    try:
+        tokens = list(tokenize.generate_tokens(io.StringIO(text).readline))
+    except (tokenize.TokenError, IndentationError, SyntaxError):
+        return None
+    previous_string = False
+    for token in tokens:
+        if token.type == tokenize.COMMENT:
+            return None
+        if token.type == tokenize.NAME and token.string not in {"True", "False", "None"}:
+            return None
+        if token.type == tokenize.STRING:
+            if previous_string:
+                return None
+            previous_string = True
+        elif token.type not in {tokenize.NL, tokenize.NEWLINE, tokenize.ENCODING}:
+            previous_string = False
+    try:
+        tree = ast.parse(text, mode="eval")
+    except (SyntaxError, ValueError, RecursionError):
+        return None
+    limits = {"nodes": 0}
+
+    def no_duplicate_dict_keys(node, depth=0):
+        limits["nodes"] += 1
+        if depth > 64 or limits["nodes"] > 4096:
+            return False
+        if isinstance(node, ast.Dict):
+            seen = set()
+            for key in node.keys:
+                if key is None:
+                    return False
+                try:
+                    literal_key = ast.literal_eval(key)
+                except (ValueError, TypeError, SyntaxError, RecursionError):
+                    return False
+                if type(literal_key) is not str or literal_key in seen:
+                    return False
+                seen.add(literal_key)
+            return all(no_duplicate_dict_keys(child, depth + 1) for child in node.values)
+        return all(no_duplicate_dict_keys(child, depth + 1) for child in ast.iter_child_nodes(node))
+
+    if not no_duplicate_dict_keys(tree):
+        return None
+    try:
+        value = ast.literal_eval(tree)
+    except (ValueError, TypeError, SyntaxError, RecursionError, MemoryError):
+        return None
+
+    def json_value(item, depth=0):
+        if depth > 64:
+            return False
+        if item is None or type(item) is bool or isinstance(item, str):
+            return True
+        if type(item) is int:
+            return True
+        if type(item) is float:
+            return math.isfinite(item)
+        if isinstance(item, list):
+            return all(json_value(child, depth + 1) for child in item)
+        if isinstance(item, dict):
+            return all(
+                type(key) is str and json_value(child, depth + 1)
+                for key, child in item.items()
+            )
+        return False
+
+    if not json_value(value):
+        return None
+    # ``literal_eval`` has already required a complete expression. Re-encode
+    # through the project's strict loader to apply the same finite/duplicate
+    # JSON boundary policy as ordinary responses.
+    try:
+        return _strict_json_loads(canonical_json(value))
+    except (ValueError, RecursionError):
+        return None
+
+
 def _structured_prompt(view: dict, error: str, *, repair: bool = False) -> list[dict]:
     """Ask for semantic actions; the host supplies continuation plumbing."""
     system = r"""You are Flora's semantic action planner. Return exactly one JSON object and no
@@ -226,6 +323,13 @@ types and contracts.
 A plan is {"steps":[...],"return":EXPR} or {"steps":[...],"replan":{"reason":STRING,"state":OBJECT}}.
 The outer object must contain the complete steps array and exactly one terminal;
 do not close it after an intermediate step and do not emit a second JSON object.
+Keep each semantic phase small: when a phase performs an effect, emit at most one
+effect call and then use a replan terminal so the host can expose its actual
+observation before the next action. Do not combine spawning, collection, review,
+and final aggregation in one phase. For an effect handoff, use a short literal
+reason and a state containing only the saved receipt; do not put a prose status
+claim or an unobserved result in the terminal. The host owns the continuation
+and will ask for the next phase after the observation.
 Each compiled phase starts with an empty local scope. Variables saved by an
 earlier phase do not survive a replan or completion-gate retry. Recover a value
 from the actual context.receipts using read_receipt with its visible trace_index,
@@ -313,7 +417,10 @@ contracts, not a perfect oracle or proof of future task success.
             "call (or one replan terminal) and one outer terminal. Use only actual "
             "observations already supplied or the next required host action. Do not "
             "repeat a successful effect, emit a large batch, or restate the whole "
-            "task. The host will continue the same task after this bounded phase."
+            "task. If the phase performs an effect, end with a replan and a short "
+            "literal reason; do not embed a natural-language completion claim in "
+            "the return value. The host will continue the same task after this "
+            "bounded phase."
         )
     user = clone(view)
     user["compiler_validation_error"] = (error or "")[:4096]
@@ -921,14 +1028,69 @@ def _compile_structured_plan(
     """Lower semantic programs with the full candidate/contract surface intact."""
     from flora.language.structured import lower_bundle, lower_plan
 
+    def normalize_plan_shape(source):
+        """Normalize one unambiguous single-step shorthand at the boundary."""
+        if not isinstance(source, dict):
+            return source
+        result = clone(source)
+        if isinstance(result.get("steps"), dict):
+            # A lone step object has exactly the same meaning as a one-item
+            # sequence. Do not walk arbitrary nested values: user data named
+            # ``steps`` must remain untouched.
+            result["steps"] = [result["steps"]]
+        steps = result.get("steps")
+        if isinstance(steps, list):
+            normalized = []
+            for step in steps:
+                if isinstance(step, dict):
+                    step = clone(step)
+                    if isinstance(step.get("on_error"), dict):
+                        handler = dict(step["on_error"])
+                        if isinstance(handler.get("plan"), dict):
+                            handler["plan"] = normalize_plan_shape(handler["plan"])
+                        step["on_error"] = handler
+                    if isinstance(step.get("then"), list):
+                        step["then"] = [
+                            normalize_plan_shape({"steps": step["then"], "return": {"literal": None}})[
+                                "steps"
+                            ]
+                        ][0]
+                    if isinstance(step.get("else"), list):
+                        step["else"] = [
+                            normalize_plan_shape({"steps": step["else"], "return": {"literal": None}})[
+                                "steps"
+                            ]
+                        ][0]
+                normalized.append(step)
+            result["steps"] = normalized
+        return result
+
+    def normalize_bundle_shape(source):
+        if not isinstance(source, dict):
+            return source
+        result = clone(source)
+        for item in result.get("programs", []):
+            if isinstance(item, dict) and isinstance(item.get("program"), dict):
+                item["program"] = normalize_plan_shape(item["program"])
+        for item in result.get("diagnostics", []):
+            if isinstance(item, dict) and isinstance(item.get("program"), dict):
+                item["program"] = normalize_plan_shape(item["program"])
+        for item in result.get("revisions", []):
+            if isinstance(item, dict):
+                if isinstance(item.get("program"), dict):
+                    item["program"] = normalize_plan_shape(item["program"])
+                if isinstance(item.get("migration"), dict):
+                    item["migration"] = normalize_plan_shape(item["migration"])
+        return result
+
     if not isinstance(plan, dict):
         raise ValidationError("semantic plan must be an object")
     if "programs" in plan:
         # Bundles retain the proposed anchor; a stale bundle must not inherit
         # the current anchor just because it uses the semantic representation.
-        bundle = lower_bundle(plan)
+        bundle = lower_bundle(normalize_bundle_shape(plan))
     else:
-        program = lower_plan(plan)
+        program = lower_plan(normalize_plan_shape(plan))
         bundle = {
             "programs": [{"id": "main", "program": program, "inputs": {}}],
             "incumbent": "main",

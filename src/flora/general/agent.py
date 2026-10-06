@@ -8,6 +8,7 @@ import json
 import os
 import threading
 import uuid
+from copy import deepcopy
 from pathlib import Path
 
 from flora.agent.api import Agent
@@ -791,6 +792,16 @@ discarding their history. Updating work does not roll back successful effects.
                 result["failure"] = failure_info(result["status"], result.get("reason"))
                 result["work"] = self.work.read_work()
                 result["completion_checks"] = self._ready_to_finish()
+                if self.delegation:
+                    # Keep the model's answer intact, but expose the host's
+                    # per-child observations as a separate authoritative
+                    # projection. Consumers can report nested status and
+                    # limitations without parsing free-form model fields.
+                    result["delegation_observation"] = deepcopy(
+                        result["completion_checks"].get("children", {}).get(
+                            "observed_workers", []
+                        )
+                    )
             atomic_json(self.directory / "result.json", result)
             self.last_result = result
             self.store.event(

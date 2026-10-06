@@ -1048,6 +1048,11 @@ and evidence; do not discard required goals to bypass completion checks.
 
     def _pause_pending(self):
         self._dispatch_ready()
+        # Settle rows without a logical future as well as futures waiting on
+        # the dependency dispatcher.  Otherwise a close during admission can
+        # leave a queued row in the durable registry forever.  Dispatch first
+        # so its existing per-future failure handling remains authoritative.
+        super()._pause_pending()
 
     def _dispatch_ready(self):
         with self.lock:
@@ -1231,6 +1236,7 @@ and evidence; do not discard required goals to bypass completion checks.
 
     def _run(self, ident):
         agent = dialogue = nested = None
+        nested_closed = False
         try:
             with self.lock:
                 row = deepcopy(self.records[ident])
@@ -1464,6 +1470,13 @@ and evidence; do not discard required goals to bypass completion checks.
                     nested.wait_for_boundary(timeout=1)
                 result = agent.resume(slice_steps=32, repeated_error_limit=3).to_dict()
             if nested is not None:
+                # A terminal parent result must not retain a live nested
+                # scheduler. Close it before projecting nested_completion so a
+                # budget/transport failure is represented as a durable paused
+                # child rather than a terminal-looking parent with a hidden
+                # running descendant.
+                nested.close()
+                nested_closed = True
                 result["nested_completion"] = nested.completion()
             result["evidence_witnesses"] = self._child_evidence_witnesses(ident)
             # Public answers never expose internal reports, prompts or huge traces.
@@ -1514,7 +1527,7 @@ and evidence; do not discard required goals to bypass completion checks.
                     agent.provider.set_session_key(None)
             if dialogue:
                 dialogue.close()
-            if nested:
+            if nested and not nested_closed:
                 nested.close()
 
     def _result_view(self, ident):
@@ -1879,6 +1892,33 @@ and evidence; do not discard required goals to bypass completion checks.
     def completion(self):
         with self.lock:
             current = self._current()
+            observed_workers = []
+            for row in current:
+                view = self._result_view(row["id"])
+                review = row.get("review") or {}
+                contract = (row.get("context") or {}).get("contract") or {}
+                contract_status = None
+                if view is not None:
+                    contract_status = self._contract_observation(
+                        contract, view.get("value")
+                    ).get("status")
+                observed_workers.append(
+                    {
+                        "agent_id": row["id"],
+                        "name": row.get("name"),
+                        "status": row.get("status"),
+                        "required": row.get("required", True),
+                        "result_available": view is not None,
+                        "result_digest": digest(view) if view is not None else "",
+                        "review_disposition": review.get("disposition"),
+                        "contract_status": contract_status,
+                        "nested_completion": (
+                            deepcopy(view.get("nested_completion")) if view is not None else None
+                        ),
+                        "failure": deepcopy(row.get("failure")),
+                        "claims_verified": False,
+                    }
+                )
             superseded = [
                 {
                     "agent_id": row["id"],
@@ -1966,6 +2006,11 @@ and evidence; do not discard required goals to bypass completion checks.
                 "unaccepted_workers": unaccepted,
                 "stale_review_evidence": stale_evidence,
                 "superseded_workers": superseded,
+                # This is a host-derived observation, not a child claim. It is
+                # intentionally separate from the model's returned value so a
+                # free-form summary cannot turn a result digest into a
+                # limitation or hide an unreviewed layer.
+                "observed_workers": observed_workers,
                 "limitations": limits,
                 "delegation": delegation_state,
                 "claims_verified": False,

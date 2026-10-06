@@ -78,6 +78,42 @@ class StructuredPlannerTests(unittest.TestCase):
         self.assertEqual(trailing, 0)
         self.assertEqual(repair, "insert_missing_commas:2")
 
+    def test_semantic_boundary_accepts_json_equivalent_python_literal_once(self):
+        plan, trailing, repair = _semantic_json_loads(
+            "{'steps': [], 'return': {'literal': 'ok'},}"
+        )
+        self.assertEqual(plan, {"steps": [], "return": {"literal": "ok"}})
+        self.assertEqual(trailing, 0)
+        self.assertEqual(repair, "python_literal_boundary")
+
+    def test_semantic_boundary_rejects_duplicate_python_literal_keys(self):
+        with self.assertRaises(json.JSONDecodeError):
+            _semantic_json_loads("{'steps': [], 'steps': [], 'return': {'literal': 1}}")
+
+    def test_semantic_boundary_rejects_python_only_comments_and_string_concatenation(self):
+        for text in (
+            "{'steps': [# comment\n], 'return': {'literal': 'ok'}}",
+            "{'steps': [], 'return': {'literal': 'a' 'b'}}",
+        ):
+            with self.subTest(text=text), self.assertRaises(json.JSONDecodeError):
+                _semantic_json_loads(text)
+
+    def test_single_step_object_is_normalized_without_touching_nested_literal_data(self):
+        result = _compile_structured_plan(
+            {
+                "steps": {"let": "answer", "value": {"literal": {"steps": {"keep": 1}}}},
+                "return": {"var": "answer"},
+            },
+            context(),
+            max_bytes=100000,
+        )
+        terms = [
+            block["term"]
+            for block in result["programs"][0]["program"]["blocks"].values()
+            if block["term"]["op"] == "return"
+        ]
+        self.assertEqual(terms, [{"op": "return", "value": {"var": "answer"}}])
+
     def test_get_default_projection_shorthand_uses_canonical_arity(self):
         program = lower_plan({
             "steps": [],
@@ -315,6 +351,7 @@ class StructuredPlannerTests(unittest.TestCase):
         self.assertIn("Each compiled phase starts with an empty local scope", provider.requests[0][0]["content"])
         self.assertIn("bookkeeping tools such as complete_task", provider.requests[0][0]["content"])
         self.assertIn("Never emit a bare {\"call\":...} without save", provider.requests[0][0]["content"])
+        self.assertIn("Do not combine spawning, collection, review", provider.requests[0][0]["content"])
 
     def test_semantic_first_skips_low_level_control_flow_for_complex_profiles(self):
         plan = {"steps": [], "return": {"literal": "semantic-first"}}

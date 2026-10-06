@@ -300,7 +300,28 @@ delegate. The parent must inspect your result; never claim it has been verified.
         """Invalidate subclass receipts only after all resume guards have passed."""
 
     def _pause_pending(self):
-        """Settle subclass work that has not been dispatched to the pool."""
+        """Persist work that cannot be dispatched after a pause/close.
+
+        A pool future may still be queued even though its registry row has not
+        entered ``running``.  Leaving that row as ``queued`` makes a parent
+        completion snapshot depend on whether the executor happened to start
+        it before shutdown.  Queued work has no external effect, so settling
+        it as paused is safe and gives resume a durable boundary.
+        """
+        with self.lock:
+            changed = False
+            for row in self.records.values():
+                if row.get("status") != "queued":
+                    continue
+                row.update(
+                    status="paused",
+                    detail="Paused before dispatch",
+                    failure={"code": "paused", "effects_replayed": False},
+                    updated=datetime.now(UTC).isoformat(),
+                )
+                changed = True
+            if changed:
+                self._save()
 
     def _event(self, ident, event):
         self.owner._child_event(
