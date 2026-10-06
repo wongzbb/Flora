@@ -753,8 +753,68 @@ and evidence; do not discard required goals to bypass completion checks.
         ):
             raise ValidationError("contract.delegation child bounds are invalid")
 
-    def _child_evidence_witnesses(self, ident):
+    @staticmethod
+    def _evidence_witnesses_from_records(records):
+        """Extract evidence witnesses from an in-memory trace snapshot."""
+        witnesses = []
+        for record in records:
+            if record.get("status") != "returned":
+                continue
+            tool, value, args = record.get("tool"), record.get("value"), record.get("args", {})
+            if tool == "read_file" and isinstance(value, dict):
+                file_path, sha = value.get("path"), value.get("sha256")
+                if isinstance(file_path, str) and isinstance(sha, str) and re.fullmatch(
+                    r"[0-9a-f]{64}", sha
+                ):
+                    witnesses.append(
+                        {
+                            "kind": "file_read",
+                            "path": file_path,
+                            "sha256": sha,
+                            "complete": (
+                                value.get("offset") == 0
+                                and value.get("has_more") is False
+                                and value.get("truncated") is False
+                            ),
+                        }
+                    )
+            elif tool == "read_source" and isinstance(args, dict):
+                source_id = args.get("source_id")
+                if isinstance(source_id, str) and source_id:
+                    witnesses.append(
+                        {
+                            "kind": "source_read",
+                            "source_id": source_id,
+                            **(
+                                {"sha256": value["sha256"]}
+                                if isinstance(value, dict)
+                                and isinstance(value.get("sha256"), str)
+                                else {}
+                            ),
+                            **(
+                                {
+                                    "complete": (
+                                        isinstance(value, dict)
+                                        and value.get("offset") == 0
+                                        and type(value.get("offset")) is int
+                                        and type(value.get("total_characters")) is int
+                                        and isinstance(value.get("text"), str)
+                                        and value["offset"] + len(value["text"])
+                                        >= value["total_characters"]
+                                    )
+                                }
+                                if isinstance(value, dict)
+                                else {}
+                            ),
+                        }
+                    )
+        unique = {canonical_json(item): item for item in witnesses}
+        return list(unique.values())[:64]
+
+    def _child_evidence_witnesses(self, ident, records=None):
         """Extract only successful host tool receipts from the child's journal."""
+        if records is not None:
+            return self._evidence_witnesses_from_records(records)
         from flora.state.trace import SQLiteTrace
 
         witnesses = []
@@ -980,6 +1040,35 @@ and evidence; do not discard required goals to bypass completion checks.
             check(field, value[field], expected)
         status = "violation" if violations else ("unknown" if unknown else "pass")
         return {"status": status, "violations": violations, "unknown": unknown}
+
+    def _child_return_observation(self, ident, contract, value, records=None):
+        """Validate a worker's actual return at its own completion boundary.
+
+        This is deliberately an observation-only adapter: it checks the
+        model-authored local contract and receipts already present in the
+        worker journal, but never coerces the returned value or invents a
+        semantic answer.  Returning ``ready=False`` keeps the same worker
+        resumable, so the runtime can expose the mismatch to its next compiler
+        phase before the parent has to create a replacement handoff.
+        """
+        contract = contract if isinstance(contract, dict) else {}
+        contract_check = self._contract_observation(contract, value)
+        witnesses = (
+            self._child_evidence_witnesses(ident, records)
+            if records is not None
+            else self._child_evidence_witnesses(ident)
+        )
+        evidence_check = self._evidence_observation(contract, witnesses)
+        ready = contract_check["status"] in {"pass", "not_applicable"} and evidence_check[
+            "status"
+        ] == "pass"
+        contract_check["evidence"] = evidence_check
+        return {
+            "ready": ready,
+            "contract": contract_check,
+            "evidence": evidence_check,
+            "claims_verified": False,
+        }
 
     def spawn_agents(self, tasks: list[dict]) -> dict:
         """Start several independent workers from one bounded planning action.
@@ -1423,6 +1512,13 @@ and evidence; do not discard required goals to bypass completion checks.
                     expected_children=nested_bounds,
                 )
                 tool_specs += nested.specs()
+            return_validator = None
+            if local_contract:
+                return_validator = (
+                    lambda value, records, worker_id=ident, worker_contract=deepcopy(local_contract): self._child_return_observation(
+                        worker_id, worker_contract, value, records
+                    )
+                )
             agent = Agent(
                 model=model if provider is None else None,
                 provider=provider,
@@ -1445,6 +1541,7 @@ and evidence; do not discard required goals to bypass completion checks.
                 budget_limits=self.child_limits,
                 on_event=lambda e: self._event(ident, e),
                 completion_guard=nested.completion if nested is not None else None,
+                return_validator=return_validator,
             )
             if self.owner._session_key is not None:
                 agent.provider.set_session_key(self.owner._session_key)

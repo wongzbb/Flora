@@ -490,7 +490,8 @@ class CollaborationTests(unittest.TestCase):
         )["agent_id"]
         self.app.delegation.futures[ident].result(timeout=5)
         page = self.app.delegation.read_agent(ident, limit=24000)
-        with self.assertRaisesRegex(ValidationError, "evidence requirement"):
+        self.assertEqual(page["status"], "needs_program")
+        with self.assertRaisesRegex(ValidationError, "unfinished child"):
             self.app.delegation.review_agent(
                 ident, page["result_digest"], "accepted", "The answer was collected"
             )
@@ -641,10 +642,13 @@ class CollaborationTests(unittest.TestCase):
                 "contract": {
                     "assumptions": ["facts.txt is UTF-8 text"],
                     "inputs": {"kind": "text"},
-                    "outputs": {"finding": "string"},
+                    "outputs": {
+                        "finding": "string",
+                        "handoff": {"type": "object"},
+                    },
                     "guarantees": ["preserve observed text as a string"],
                     "dependencies": ["facts.txt"],
-                    "evidence_requirements": ["read the complete file before reporting"],
+                    "evidence_requirements": [],
                 },
             }
         )
@@ -673,7 +677,7 @@ class CollaborationTests(unittest.TestCase):
         fingerprint = self.collect(ident)
         observed = self.app.delegation.read_agent(ident, limit=24000)
         self.assertEqual(observed["contract_check"]["status"], "violation")
-        with self.assertRaisesRegex(ValidationError, "Contract output guarantee"):
+        with self.assertRaisesRegex(ValidationError, "unfinished child"):
             self.app.delegation.review_agent(
                 ident, fingerprint, "accepted", "The child result was reviewed"
             )

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import threading
 from dataclasses import asdict, dataclass, field, replace
 from typing import Any
@@ -206,6 +207,7 @@ class Runtime:
         config: RuntimeConfig | None = None,
         memory: dict | None = None,
         completion_guard=None,
+        return_validator=None,
         on_event=None,
     ) -> None:
         self.tools, self.compiler = tools, compiler
@@ -214,6 +216,9 @@ class Runtime:
         if completion_guard is not None and not callable(completion_guard):
             raise ValidationError("Completion guard must be a callable workflow-completion check")
         self.completion_guard = completion_guard
+        if return_validator is not None and not callable(return_validator):
+            raise ValidationError("Return validator must be a callable observed-output check")
+        self.return_validator = return_validator
         if on_event is not None and not callable(on_event):
             raise ValidationError("on_event must be callable")
         self.on_event = on_event
@@ -808,6 +813,7 @@ class Runtime:
             "error_recovery": self._error_recovery,
             "retention": self.retention,
             "requires_completion_guard": self.completion_guard is not None,
+            "requires_return_validator": self.return_validator is not None,
             "reuse": self.reuse.to_dict(),
         }
         compacted = False
@@ -848,6 +854,55 @@ class Runtime:
                     raise ResourceLimitExceeded(
                         "runtime checkpoint JSON structure", self.trace.max_checkpoint_bytes
                     ) from exc
+
+    def _completion_check(self, value):
+        """Combine workflow readiness with a check of the actual proposed value.
+
+        Adapters declare their return contract; the kernel never invents one.
+        The validator receives a copy so a check cannot silently coerce the
+        proposed answer.  Both observations are required for completion, and
+        an output rejection remains visible in the next semantic phase.
+        """
+        workflow = self.completion_guard() if self.completion_guard is not None else True
+        if self.return_validator is None:
+            return workflow
+        observed = self._invoke_return_validator(value)
+        def ready(check):
+            return check is True or (isinstance(check, dict) and check.get("ready") is True)
+        return {
+            "ready": ready(workflow) and ready(observed),
+            "waiting": isinstance(workflow, dict) and workflow.get("waiting") is True,
+            "workflow": workflow,
+            "return_contract": observed,
+            "claims_verified": False,
+        }
+
+    def _invoke_return_validator(self, value):
+        """Call an output validator with an optional read-only receipt snapshot.
+
+        Existing one-argument validators remain valid.  Host adapters that
+        need evidence can opt into a second positional argument containing the
+        current trace records, avoiding a second SQLite connection while an
+        effect journal is active.
+        """
+        validator = self.return_validator
+        try:
+            parameters = list(inspect.signature(validator).parameters.values())
+            accepts_records = any(
+                parameter.kind is inspect.Parameter.VAR_POSITIONAL for parameter in parameters
+            ) or len(
+                [
+                    parameter
+                    for parameter in parameters
+                    if parameter.kind
+                    in {inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD}
+                ]
+            ) >= 2
+        except (TypeError, ValueError):
+            accepts_records = False
+        if accepts_records:
+            return validator(clone(value), clone(self.trace.records))
+        return validator(clone(value))
 
     def _result(self, status: str, reason: str = "", value=None) -> RunResult:
         if status == "completed":
@@ -914,7 +969,7 @@ class Runtime:
                     self._completed.get("epoch") == self.trace.epoch
                     and self._completed.get("trace_digest") == self.trace.digest
                 )
-                completion = self.completion_guard() if self.completion_guard is not None else True
+                completion = self._completion_check(self._completed["value"])
                 guard_accepts = same_history and (
                     completion is True
                     or (isinstance(completion, dict) and completion.get("ready") is True)
@@ -1046,9 +1101,7 @@ class Runtime:
                     continue
                 # Final-answer uncertainty is resolved by incumbent, never by fabricated labels.
                 if boundaries[self.incumbent].kind == "return":
-                    completion = (
-                        self.completion_guard() if self.completion_guard is not None else True
-                    )
+                    completion = self._completion_check(boundaries[self.incumbent].value)
                     ready = completion is True or (
                         isinstance(completion, dict) and completion.get("ready") is True
                     )
@@ -1311,6 +1364,7 @@ class Runtime:
         *,
         compiler=None,
         completion_guard=None,
+        return_validator=None,
         on_event=None,
     ) -> Runtime:
         checkpoint = trace.load_checkpoint()
@@ -1330,6 +1384,10 @@ class Runtime:
             raise ValidationError("Invalid completion guard requirement flag")
         if checkpoint.get("requires_completion_guard", False) and completion_guard is None:
             raise ValidationError("Restore requires the original environment completion guard")
+        if type(checkpoint.get("requires_return_validator", False)) is not bool:
+            raise ValidationError("Invalid return validator requirement flag")
+        if checkpoint.get("requires_return_validator", False) and return_validator is None:
+            raise ValidationError("Restore requires the original return validator")
         obj = cls(
             tools,
             compiler=compiler,
@@ -1338,6 +1396,7 @@ class Runtime:
             config=RuntimeConfig(**checkpoint["config"]),
             memory=checkpoint["memory"],
             completion_guard=completion_guard,
+            return_validator=return_validator,
             on_event=on_event,
         )
         if hasattr(obj, "retention"):

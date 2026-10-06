@@ -8,6 +8,7 @@ from pathlib import Path
 
 from flora.engine.runtime import Runtime
 from flora.general.agent import GeneralAgent, _normalize
+from flora.language.compiler import ScriptedCompiler
 from flora.general.storage import atomic_json
 from flora.language.frontend import lower_bundle
 from flora.support.errors import ValidationError
@@ -81,6 +82,30 @@ class TaskCompletionTests(unittest.TestCase):
         self.assertEqual(
             compiler.contexts[1]["memory"]["__openharness_completion_observation__"]["value"],
             "partial",
+        )
+
+    def test_return_validator_rejects_actual_value_before_terminal_completion(self):
+        compiler = ScriptedCompiler(
+            [bundle(pure({"answer": "7"})), bundle(pure({"answer": 7}))]
+        )
+
+        def validate(value):
+            return {
+                "ready": isinstance(value, dict) and type(value.get("answer")) is int,
+                "observed": value,
+            }
+
+        runtime = Runtime(
+            self.app.agent.tools,
+            compiler=compiler,
+            return_validator=validate,
+        )
+        result = runtime.run("return a numeric answer")
+        self.assertEqual(result.status, "completed")
+        self.assertEqual(result.value, {"answer": 7})
+        rejection = next(r for r in result.reports if r["kind"] == "completion_rejected")
+        self.assertEqual(
+            rejection["details"]["return_contract"]["observed"], {"answer": "7"}
         )
 
     def test_required_obligations_cannot_be_removed_downgraded_or_rewritten(self):

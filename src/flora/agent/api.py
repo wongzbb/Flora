@@ -119,6 +119,7 @@ class Agent:
         provider_options=None,
         compiler_options=None,
         completion_guard=None,
+        return_validator=None,
     ):
         if not isinstance(instructions, str):
             raise ValidationError("instructions must be a string")
@@ -126,6 +127,8 @@ class Agent:
             raise ValidationError("on_event must be a callable")
         if completion_guard is not None and not callable(completion_guard):
             raise ValidationError("completion_guard must be a callable")
+        if return_validator is not None and not callable(return_validator):
+            raise ValidationError("return_validator must be a callable")
         if type(allow_commands) is not bool:
             raise ValidationError("allow_commands must be a boolean")
         if allow_commands and workspace is None:
@@ -135,6 +138,7 @@ class Agent:
         self.instructions = instructions
         self.on_event = on_event
         self.completion_guard = completion_guard
+        self.return_validator = return_validator
         if provider_options is not None and not isinstance(provider_options, dict):
             raise ValidationError("provider_options must be a dictionary")
         if compiler_options is not None and not isinstance(compiler_options, dict):
@@ -205,6 +209,7 @@ class Agent:
             "budget_limits": asdict(limits),
             "instructions": instructions,
             "completion_guard_required": completion_guard is not None,
+            **({"return_validator_required": True} if return_validator is not None else {}),
             "provider": {
                 "class": (
                     "flora.providers.OpenAICompatibleProvider"
@@ -423,6 +428,7 @@ class Agent:
                     trace,
                     compiler=self.compiler,
                     completion_guard=self.completion_guard,
+                    return_validator=self.return_validator,
                     on_event=self.on_event,
                 )
                 # Metadata can be newer after a host exception; the checkpoint can
@@ -459,6 +465,7 @@ class Agent:
                     config=self.config,
                     memory=active["memory"],
                     completion_guard=self.completion_guard,
+                    return_validator=self.return_validator,
                     on_event=self.on_event,
                 )
                 runtime.reuse = ReuseLibrary.from_dict(self._state["reuse"])

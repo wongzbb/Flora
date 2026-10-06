@@ -213,6 +213,38 @@ class HandoffAuthorityTests(unittest.TestCase):
             self.assertEqual(after[field], before[field])
         self.assertEqual(after["tool_calls"], 1)
 
+    def test_contract_mismatch_is_visible_to_same_worker_before_parent_review(self):
+        class ContractProvider(CaptureProvider):
+            def complete(self, messages, *, max_tokens):
+                view = json.loads(messages[1]["content"])
+                self.views.append(view)
+                if len(self.views) == 1:
+                    response = bundle(pure({"answer": "7"}), view["epoch"], view["trace_digest"])
+                else:
+                    response = {"steps": [], "return": {"literal": {"answer": 7}}}
+                return ModelResponse(
+                    json.dumps(response),
+                    1,
+                    1,
+                )
+
+        self.provider = ContractProvider()
+        c = self.open_app()
+        with patch.object(c, "_submit"):
+            ident = c.spawn_agent(
+                "Return the assigned numeric answer",
+                context={"contract": {"outputs": {"answer": {"type": "number"}}}},
+            )["agent_id"]
+        c._run(ident)
+        self.assertEqual(c.records[ident]["status"], "completed")
+        self.assertEqual(len(self.provider.views), 2)
+        self.assertEqual(
+            self.provider.views[1]["memory"]["__openharness_completion_observation__"]["value"],
+            {"answer": "7"},
+        )
+        result = json.loads((c.root / ident / "result.json").read_text())
+        self.assertEqual(result["value"], {"answer": 7})
+
     def test_authority_profile_changes_only_handoff_version_and_semantic_planning(self):
         configs = Path(__file__).resolve().parents[1] / "configs"
         phased = json.loads((configs / "deepseek-live-phased.json").read_text())
