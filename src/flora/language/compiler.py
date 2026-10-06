@@ -61,6 +61,16 @@ _STRUCTURED_FALLBACK_MARKERS = (
     "inline operation",
 )
 
+_SEMANTIC_BUNDLE_FALLBACK_MARKERS = (
+    # Ambiguous or unusable semantic envelopes are not safe to repair by
+    # guessing duplicate fields or control flow.  A bounded representation
+    # switch can preserve the same task, anchor and capabilities.
+    "semantic plan must be strict json",
+    "duplicate json key",
+    "semantic plan must be an object",
+    "structured steps require",
+)
+
 
 def _needs_structured_fallback(error: Exception) -> bool:
     """Recognise an interface failure, not a task or tool failure."""
@@ -72,6 +82,12 @@ def _needs_structured_fallback(error: Exception) -> bool:
     # tool schema or external API error containing the word "expects" does not
     # get a semantic fallback that could weaken capability validation.
     return ".ops[" in message and " expects " in message and " arguments" in message
+
+
+def _needs_semantic_bundle_fallback(error: Exception) -> bool:
+    """Recognise a semantic representation failure without repairing its data."""
+    message = str(error).lower()
+    return any(marker in message for marker in _SEMANTIC_BUNDLE_FALLBACK_MARKERS)
 
 
 def _completion_semantic_reason(context: CompilerContext) -> str | None:
@@ -1575,6 +1591,7 @@ class LLMCompiler:
             raise ValidationError("transport_retries must be between 0 and 3")
         self._recovery_left = self.transport_retries
         structured_mode = False
+        representation_switched = False
         # ``max_repairs`` governs the ordinary low-level bundle repair.  A
         # semantic fallback is a different compilation phase: it changes the
         # representation handed to the model, so it gets one independently
@@ -1801,6 +1818,40 @@ class LLMCompiler:
                 # of max_repairs so a semantically coherent plan can still be
                 # recovered after the ordinary allowance was consumed.
                 if structured_mode:
+                    if (
+                        not representation_switched
+                        and self.max_repairs > 0
+                        and _needs_semantic_bundle_fallback(exc)
+                    ):
+                        # Do not infer which duplicate field or control-flow
+                        # fragment was intended. Move once to the existing
+                        # low-level bundle representation with the exact same
+                        # context snapshot. This bounded phase change avoids
+                        # both unsafe format repair and representation loops.
+                        representation_switched = True
+                        structured_mode = False
+                        semantic_repair_left = 0
+                        messages = self.build_messages(snapshot) + [
+                            {
+                                "role": "user",
+                                "content": canonical_json(
+                                    {
+                                        "representation_fallback": "The semantic action representation was rejected as ambiguous or structurally unusable. Return one complete low-level JSON bundle for the SAME task, anchor and tool capabilities. Do not repeat the semantic plan, repair duplicate fields by guessing, or change the requested semantics.",
+                                        "validation_error": str(exc)[:4096],
+                                    }
+                                ),
+                            }
+                        ]
+                        self._emit(
+                            {
+                                "kind": "structured_to_bundle_fallback_requested",
+                                "attempt": attempt,
+                                "reason": str(exc)[:1024],
+                                "representation_switches_remaining": 0,
+                            }
+                        )
+                        attempt += 1
+                        continue
                     if semantic_repair_left > 0:
                         semantic_repair_left -= 1
                         try:
@@ -1829,6 +1880,7 @@ class LLMCompiler:
                 # max_repairs=0 remains an explicit no-retry mode used by
                 # deterministic tests and callers that want strict rejection.
                 if structural_failure and self.max_repairs > 0:
+                    representation_switched = True
                     structured_mode = True
                     # Semantic planning is a separate bounded phase.  Give it
                     # two corrections because a model can first repair an

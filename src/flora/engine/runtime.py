@@ -247,6 +247,7 @@ class Runtime:
         self._last_inserted_diagnostic = False
         self._run_lock = threading.Lock()
         self._completed: dict | None = None
+        self._progress_observation_digest = None
         # Operational recovery accounting is separate from model-owned memory.
         # Scheduling slices and reopen must not grant another recovery attempt.
         self._error_recovery: dict | None = None
@@ -778,6 +779,7 @@ class Runtime:
         return report
 
     def _save(self) -> None:
+        self._retain_progress_observation()
         self.contexts, context_stats = retain_newest(
             self.contexts, max_bytes=self.config.max_context_bytes, resource="consumer contexts"
         )
@@ -854,6 +856,47 @@ class Runtime:
                     raise ResourceLimitExceeded(
                         "runtime checkpoint JSON structure", self.trace.max_checkpoint_bytes
                     ) from exc
+
+    def _retain_progress_observation(self) -> None:
+        """Persist a bounded host progress view when context retention may occur.
+
+        Durable child/workflow state is not model memory and must not disappear
+        merely because old replay contexts are compacted.  The projection is
+        an observation for the next compiler call; it never marks work
+        complete and never contains a guessed answer.
+        """
+        if self.completion_guard is None or self.steps <= 0:
+            return
+        try:
+            observed = self.completion_guard()
+        except Exception:
+            # A guard failure is handled by the normal completion path.  It
+            # must not make checkpointing itself fail or invent progress.
+            return
+        payload = {
+            "epoch": self.trace.epoch,
+            "trace_digest": self.trace.digest,
+            "completion": clone(observed),
+            "claims_verified": False,
+        }
+        try:
+            encoded_size(
+                payload,
+                limit=min(self.config.max_context_bytes, 65536),
+                resource="progress observation",
+            )
+        except (ResourceLimitExceeded, ValidationError):
+            payload = {
+                "epoch": self.trace.epoch,
+                "trace_digest": self.trace.digest,
+                "completion_omitted": True,
+                "completion_digest": digest(observed),
+                "claims_verified": False,
+            }
+        signature = digest(payload)
+        if signature != self._progress_observation_digest:
+            self.memory["__openharness_progress_observation__"] = payload
+            self._progress_observation_digest = signature
 
     def _completion_check(self, value):
         """Combine workflow readiness with a check of the actual proposed value.

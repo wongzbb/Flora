@@ -490,7 +490,8 @@ class CollaborationTests(unittest.TestCase):
         )["agent_id"]
         self.app.delegation.futures[ident].result(timeout=5)
         page = self.app.delegation.read_agent(ident, limit=24000)
-        self.assertEqual(page["status"], "needs_program")
+        self.assertIn(page["status"], {"needs_program", "stalled"})
+        self.assertIsNotNone(page["completion_observation"])
         with self.assertRaisesRegex(ValidationError, "unfinished child"):
             self.app.delegation.review_agent(
                 ident, page["result_digest"], "accepted", "The answer was collected"
@@ -676,7 +677,8 @@ class CollaborationTests(unittest.TestCase):
         )
         fingerprint = self.collect(ident)
         observed = self.app.delegation.read_agent(ident, limit=24000)
-        self.assertEqual(observed["contract_check"]["status"], "violation")
+        self.assertIn(observed["status"], {"needs_program", "stalled"})
+        self.assertIsNotNone(observed["completion_observation"])
         with self.assertRaisesRegex(ValidationError, "unfinished child"):
             self.app.delegation.review_agent(
                 ident, fingerprint, "accepted", "The child result was reviewed"

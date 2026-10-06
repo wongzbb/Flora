@@ -1245,6 +1245,14 @@ and evidence; do not discard required goals to bypass completion checks.
             self._dispatch_ready()
 
     def _event(self, ident, event):
+        if event.get("kind") == "completion_rejected":
+            details = event.get("details")
+            # Keep a bounded host observation independently of the worker's
+            # in-memory result.  A later stall or process interruption must
+            # still let the parent revise its contract instead of treating
+            # the missing result as an unexplained failure.
+            projection = self._project_completion_details(details)
+            atomic_json(self.root / ident / "completion_observation.json", projection)
         if event.get("kind") == "bundle_installed":
             with self.lock:
                 row = self.records[ident]
@@ -1608,6 +1616,11 @@ and evidence; do not discard required goals to bypass completion checks.
                 nested.close()
                 nested_closed = True
                 result["nested_completion"] = nested.completion()
+            completion_observation = self._completion_observation(result)
+            if completion_observation is None:
+                completion_observation = self._stored_completion_observation(ident)
+            if completion_observation is not None:
+                result["completion_observation"] = completion_observation
             result["evidence_witnesses"] = self._child_evidence_witnesses(ident)
             # Public answers never expose internal reports, prompts or huge traces.
             atomic_json(self.root / ident / "result.json", result)
@@ -1619,6 +1632,32 @@ and evidence; do not discard required goals to bypass completion checks.
                 failure=failure_info(result["status"], result.get("reason")),
             )
         except ChildStall:
+            # The stall boundary is a host interruption, not a model answer.
+            # Persist the latest rejected-completion observation before
+            # changing the registry row so parent recovery can distinguish a
+            # contract/evidence rejection from an unavailable worker result.
+            if agent is not None and agent.last_result is not None:
+                partial = agent.last_result.to_dict()
+                partial["status"] = "stalled"
+                partial["reason"] = "Repeated compilation without a new observation"
+                completion_observation = self._completion_observation(partial)
+                if completion_observation is None:
+                    completion_observation = self._stored_completion_observation(ident)
+                if completion_observation is not None:
+                    partial["completion_observation"] = completion_observation
+                partial["evidence_witnesses"] = self._child_evidence_witnesses(ident)
+                atomic_json(self.root / ident / "result.json", partial)
+            elif self._stored_completion_observation(ident) is not None:
+                atomic_json(
+                    self.root / ident / "result.json",
+                    {
+                        "status": "stalled",
+                        "value": None,
+                        "reason": "Repeated compilation without a new observation",
+                        "completion_observation": self._stored_completion_observation(ident),
+                        "evidence_witnesses": self._child_evidence_witnesses(ident),
+                    },
+                )
             self._update(
                 ident,
                 status="stalled",
@@ -1660,6 +1699,36 @@ and evidence; do not discard required goals to bypass completion checks.
             if nested and not nested_closed:
                 nested.close()
 
+    @staticmethod
+    def _completion_observation(result):
+        """Project the latest host completion rejection for parent replanning."""
+        reports = result.get("reports", []) if isinstance(result, dict) else []
+        for report in reversed(reports if isinstance(reports, list) else []):
+            if not isinstance(report, dict) or report.get("kind") != "completion_rejected":
+                continue
+            details = report.get("details")
+            return Coordinator._project_completion_details(details)
+        return None
+
+    @staticmethod
+    def _project_completion_details(details):
+        if not isinstance(details, dict):
+            return {"ready": False, "claims_verified": False}
+        if len(canonical_json(details).encode("utf-8")) > 65536:
+            return {"omitted": True, "sha256": digest(details), "claims_verified": False}
+        return {"observed": deepcopy(details), "claims_verified": False}
+
+    def _stored_completion_observation(self, ident):
+        path = self.root / ident / "completion_observation.json"
+        if not path.exists():
+            return None
+        try:
+            from .agent import read_profile
+
+            return read_profile(path, max_bytes=65536)
+        except (OSError, ValidationError):
+            return None
+
     def _result_view(self, ident):
         from .agent import read_profile
 
@@ -1667,6 +1736,9 @@ and evidence; do not discard required goals to bypass completion checks.
         if not path.exists():
             return None
         result = read_profile(path, max_bytes=8 * 1024 * 1024)
+        completion_observation = result.get("completion_observation")
+        if completion_observation is None:
+            completion_observation = self._stored_completion_observation(ident)
         return {
             "status": result["status"],
             "value": result.get("value"),
@@ -1676,6 +1748,7 @@ and evidence; do not discard required goals to bypass completion checks.
             "claims_verified": False,
             "nested_completion": result.get("nested_completion"),
             "evidence_witnesses": result.get("evidence_witnesses", []),
+            "completion_observation": completion_observation,
         }
 
     @staticmethod
@@ -1745,6 +1818,7 @@ and evidence; do not discard required goals to bypass completion checks.
                 "result_digest": fingerprint,
                 "detail": row.get("detail"),
                 "failure": row.get("failure"),
+                "completion_observation": view.get("completion_observation"),
                 "text": text[offset : offset + limit],
                 "next_offset": offset + limit if offset + limit < len(text) else None,
                 "total_chars": len(text),

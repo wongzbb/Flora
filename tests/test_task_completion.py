@@ -84,6 +84,24 @@ class TaskCompletionTests(unittest.TestCase):
             "partial",
         )
 
+    def test_host_progress_observation_survives_after_context_phase(self):
+        runtime = Runtime(
+            self.app.agent.tools,
+            completion_guard=lambda: {
+                "ready": False,
+                "pending_steps": ["task"],
+                "claims_verified": False,
+            },
+        )
+        result = runtime.run(
+            "finish only after the required task is done",
+            bundle=lower_bundle(bundle(pure("premature"))),
+        )
+        self.assertEqual(result.status, "needs_program")
+        progress = runtime.memory["__openharness_progress_observation__"]
+        self.assertEqual(progress["completion"]["pending_steps"], ["task"])
+        self.assertFalse(progress["claims_verified"])
+
     def test_return_validator_rejects_actual_value_before_terminal_completion(self):
         compiler = ScriptedCompiler(
             [bundle(pure({"answer": "7"})), bundle(pure({"answer": 7}))]

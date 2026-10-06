@@ -90,6 +90,46 @@ class StructuredPlannerTests(unittest.TestCase):
         with self.assertRaises(json.JSONDecodeError):
             _semantic_json_loads("{'steps': [], 'steps': [], 'return': {'literal': 1}}")
 
+    def test_duplicate_semantic_envelope_switches_representation_once(self):
+        class Provider:
+            def __init__(self):
+                self.calls = 0
+                self.events = []
+
+            def complete(self, messages, *, max_tokens):
+                self.calls += 1
+                if self.calls == 1:
+                    return ModelResponse(
+                        '{"steps": [], "steps": [], "return": {"literal": "ambiguous"}}',
+                        1,
+                        1,
+                    )
+                return ModelResponse(
+                    json.dumps(bundle(pure("bundle-recovery"))),
+                    1,
+                    1,
+                )
+
+        provider = Provider()
+        compiler = LLMCompiler(
+            provider,
+            syntax="ir-v1",
+            prompt_style="full-v1",
+            semantic_first=True,
+        )
+        compiler.on_event = provider.events.append
+        result = compiler.compile(context())
+        entry = result["programs"][0]["program"]["entry"]
+        self.assertEqual(
+            result["programs"][0]["program"]["blocks"][entry]["term"]["value"],
+            "bundle-recovery",
+        )
+        self.assertEqual(provider.calls, 2)
+        self.assertEqual(
+            [e["kind"] for e in provider.events if e["kind"].endswith("fallback_requested")],
+            ["structured_fallback_requested", "structured_to_bundle_fallback_requested"],
+        )
+
     def test_semantic_boundary_rejects_python_only_comments_and_string_concatenation(self):
         for text in (
             "{'steps': [# comment\n], 'return': {'literal': 'ok'}}",
