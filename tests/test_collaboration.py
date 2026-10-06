@@ -751,6 +751,31 @@ class CollaborationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "must declare a contract"):
             self.app.delegation.spawn_agent("Uncontracted retry", replaces=original)
 
+    def test_replacement_lineage_has_a_durable_retry_bound(self):
+        from flora.general.coordinator import Coordinator
+
+        coord = Coordinator(
+            self.app,
+            {"enabled": True, "max_children": 2, "max_replacements": 1},
+            provider=self.provider,
+            root=self.root / "replacement-bound",
+        )
+        try:
+            original = coord.spawn_agent("Original child")["agent_id"]
+            coord.futures[original].result(timeout=5)
+            first_digest = coord.collect_agent(original)["result_digest"]
+            coord.review_agent(original, first_digest, "rejected", "Observed contract mismatch")
+            replacement = coord.spawn_agent("Revised child", replaces=original)["agent_id"]
+            coord.futures[replacement].result(timeout=5)
+            replacement_digest = coord.collect_agent(replacement)["result_digest"]
+            coord.review_agent(
+                replacement, replacement_digest, "rejected", "The revised contract still failed"
+            )
+            with self.assertRaisesRegex(ValidationError, "lineage limit"):
+                coord.spawn_agent("Third attempt", replaces=replacement)
+        finally:
+            coord.close()
+
     def test_superseded_children_are_historical_and_cannot_be_resumed_or_re_reviewed(self):
         original = self.spawn(context={"contract": {"outputs": {"result": "number"}}})
         fingerprint = self.collect(original)

@@ -247,6 +247,7 @@ and evidence; do not discard required goals to bypass completion checks.
             "max_parallel": self.options.get("max_parallel", 3),
             "max_depth": self.options.get("max_depth", 0),
             "depth": self.depth,
+            "max_replacements": self.options.get("max_replacements", 3),
             "budget_per_child": dict(self.child_limits),
             "recursive_delegation": self.depth < self.options.get("max_depth", 0),
             "handoff": "explicit-context-and-dependencies",
@@ -366,6 +367,32 @@ and evidence; do not discard required goals to bypass completion checks.
         """Reuse or atomically register one already-validated handoff."""
         return self._admit_prepared([prepared])[0]
 
+    def _replacement_lineage_count(self, ident):
+        """Count admitted replacements before ``ident`` in its audit chain.
+
+        Replacement is a semantic reassignment after an observed failure, not
+        an unbounded retry loop.  The count is derived from durable lineage
+        while the admission lock is held, so a restart or concurrent batch
+        cannot reset the retry budget.  A cycle is treated as corrupt state
+        rather than permitting another child.
+        """
+        count = 0
+        seen = set()
+        current = ident
+        while current is not None:
+            if current in seen:
+                raise ValidationError("Replacement lineage contains a cycle")
+            seen.add(current)
+            row = self.records.get(current)
+            if row is None:
+                raise ValidationError("Replacement lineage target is missing")
+            previous = row.get("replaces")
+            if previous is None:
+                return count
+            count += 1
+            current = previous
+        return count
+
     def _admit_prepared(self, prepared):
         """Atomically reserve and persist a batch before dispatching workers.
 
@@ -399,6 +426,12 @@ and evidence; do not discard required goals to bypass completion checks.
                     if existing is not None and row.get("superseded_by") == existing.get("id"):
                         continue
                     raise ValidationError("Replacement target already has an admitted replacement")
+                lineage_count = self._replacement_lineage_count(target)
+                replacement_limit = self.options.get("max_replacements", 3)
+                if lineage_count >= replacement_limit:
+                    raise ValidationError(
+                        "Replacement lineage limit reached; record the limitation or revise the parent plan"
+                    )
                 review = row.get("review")
                 if not isinstance(review, dict) or review.get("disposition") not in {
                     "blocked",

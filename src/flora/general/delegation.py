@@ -50,10 +50,11 @@ def validate_options(options):
         "max_parallel",
         "max_depth",
         "max_total_children",
+        "max_replacements",
         "budget",
     }:
         raise ValidationError(
-            "subagents accepts enabled, max_children, max_parallel, max_depth, max_total_children and budget"
+            "subagents accepts enabled, max_children, max_parallel, max_depth, max_total_children, max_replacements and budget"
         )
     if type(options.get("enabled", False)) is not bool:
         raise ValidationError("subagents.enabled must be boolean")
@@ -62,6 +63,7 @@ def validate_options(options):
         ("max_parallel", 3, 4),
         ("max_depth", 0, 8),
         ("max_total_children", 64, 256),
+        ("max_replacements", 3, 8),
     ):
         value = options.get(key, default)
         lower = 0 if key == "max_depth" else 1
@@ -243,6 +245,7 @@ delegate. The parent must inspect your result; never claim it has been verified.
             "max_depth": self.options.get("max_depth", 0),
             "depth": self.depth,
             "max_total_children": self.options.get("max_total_children", 64),
+            "max_replacements": self.options.get("max_replacements", 3),
             "budget_per_child": dict(self.child_limits),
             "recursive_delegation": False,
         }

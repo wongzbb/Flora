@@ -58,6 +58,7 @@ def apply_default_subagent_options(general):
         "max_children": 8,
         "max_depth": 5,
         "max_total_children": 64,
+        "max_replacements": 3,
     }
     for key, value in defaults.items():
         subagents.setdefault(key, value)

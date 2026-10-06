@@ -101,6 +101,7 @@ class TerminalProbeTests(unittest.TestCase):
         options = apply_default_subagent_options(profile)
         self.assertEqual(options["max_depth"], 5)
         self.assertEqual(options["max_total_children"], 64)
+        self.assertEqual(options["max_replacements"], 3)
         self.assertTrue(options["enabled"])
         explicit = {"subagents": {"enabled": True, "max_depth": 0}}
         self.assertEqual(apply_default_subagent_options(explicit)["max_depth"], 0)
